@@ -14,6 +14,8 @@ import { BOATS_SPEC } from './boats.js';
 import { GROUND_TACKLE_SPEC } from './ground-tackle.js';
 import { FLAGS_SPEC } from './flags.js';
 import { RIG_SPEC } from './rig.js';
+import { CREW_SPEC } from './crew.js';
+import { MOTION_SPEC } from './motion.js';
 
 const FRAGMENTS = {
   stern: STERN_SPEC,
@@ -25,6 +27,8 @@ const FRAGMENTS = {
   groundTackle: GROUND_TACKLE_SPEC,
   flags: FLAGS_SPEC,
   rig: RIG_SPEC,
+  crew: CREW_SPEC,
+  motion: MOTION_SPEC,
 };
 
 export const PART_SPECS = {};

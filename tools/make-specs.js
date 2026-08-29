@@ -50,6 +50,8 @@ const GROUPS = [
   ['Boats', /^(boat_|launch_|pinnace_|cutter_|jolly_|davit_)/],
   ['Ground tackle', /^(anchor|cable_|hawse|cat_block|fish_|sheet_anchor|kedge_anchor|stowed_anchor|stowed_stock|shank_painter)/],
   ['Colours', /^(ensign_|pennant_|jack_|union_|flag_|canton_)/],
+  ['The watch on deck', /^crew_/],
+  ['Motion', /^motion_/],
 ];
 
 const used = new Set();

@@ -196,12 +196,42 @@ export function copperSheathing({
  * Sail canvas. Period sails were sewn from cloths about two feet wide, so the seams
  * run the length of the sail at a fixed spacing, with heavier bands at the reef
  * points and a bolt rope round the edge.
+ *
+ * The map is drawn as a `variants` x `variants` grid of independently seeded sails, and
+ * each sail in the rig is given one square of it. That is worth the memory: this ship
+ * carries fifteen sails, and fifteen sails wearing the same stain and the same patch in
+ * the same place is the plainest possible statement that they came out of a generator.
+ * `stain` is a callback rather than an import so that this module stays what it is — a
+ * drawing library that knows no ship — and the weathering keeps its own file.
  */
 export function sailCloth({
   base = '#ddd6c4', seam = '#c6bda7', size = 1024, cloths = 14, reefs = 2, seed = 31,
+  variants = 1, stain = null,
 } = {}) {
-  return memo(`sail:${base}:${cloths}:${reefs}:${seed}`, () => {
+  // The size belongs in the key. It did not use to be, and the consequence was invisible
+  // until the map grew: every level of detail was handed whichever cloth was drawn first,
+  // so the silhouette on the horizon carried the hero level's canvas and the exported GLB
+  // for it carried an eight-megabyte texture of a sail nobody can see.
+  return memo(`sail:${base}:${cloths}:${reefs}:${seed}:${size}:${variants}:${!!stain}`, () => {
     const { c, g } = canvas(size);
+    const n = Math.max(1, Math.round(variants));
+    for (let vy = 0; vy < n; vy++) {
+      for (let vx = 0; vx < n; vx++) {
+        const tile = sailTile({
+          base, seam, size: Math.round(size / n), cloths: Math.round(cloths / n),
+          reefs, seed: seed + vy * 7 + vx * 13, stain,
+        });
+        g.drawImage(tile, (vx * size) / n, (vy * size) / n);
+      }
+    }
+    return c;
+  });
+}
+
+/** One sail's worth of cloth, which sailCloth tiles into its variant grid. */
+function sailTile({ base, seam, size, cloths, reefs, seed, stain }) {
+  const { c, g } = canvas(size);
+  {
     const r = rng(seed);
     g.fillStyle = base;
     g.fillRect(0, 0, size, size);
@@ -211,7 +241,11 @@ export function sailCloth({
       g.fillRect(i, 0, 1, size);
       g.fillRect(0, i, size, 1);
     }
+    // The general staining, under the seams.
+    if (stain) stain(g, { size, seed: seed + 3, stage: 'ground' });
+
     // Cloth seams, vertical, at the width of a bolt of canvas.
+    g.globalAlpha = 1;
     const step = size / cloths;
     for (let i = 1; i < cloths; i++) {
       g.fillStyle = seam;
@@ -224,12 +258,77 @@ export function sailCloth({
       g.fillStyle = seam;
       g.fillRect(0, (i / (reefs + 5)) * size, size, size * 0.016);
     }
+    // The patches, over the seams, because a patch is a piece of cloth sewn on top of
+    // them. The rest of the weathering has already gone on underneath — see `stain`
+    // above the seams — because the cloth is what is stained and the seams are sewn
+    // through it.
+    g.globalAlpha = 1;
+    if (stain) stain(g, { size, seed: seed + 3, stage: 'patches' });
     // Tabling: the doubled hem all round.
     g.globalAlpha = 0.5;
     g.strokeStyle = seam;
     g.lineWidth = size * 0.018;
     g.strokeRect(0, 0, size, size);
     g.globalAlpha = 1;
+    return c;
+  }
+}
+
+/**
+ * Painted timber: a near-white modulation map, not a colour.
+ *
+ * Most of the ship's painted surfaces — the red inboard works, the black port lids and
+ * carriages, the ochre gunport strake, the white boats — were flat colours with no map
+ * at all, and a large flat colour is the single loudest way a model says it is a model.
+ * A real painted surface is paint over sawn timber: the grain is under it, the brush
+ * left it uneven, and three years of weather has taken the gloss off it in patches.
+ *
+ * Because it is a modulation about white rather than a colour, one map serves every
+ * painted surface on the ship: the material keeps its own sourced colour and this only
+ * decides where that colour is a little lighter and a little darker. Multiplying by
+ * white is what makes that safe — nothing here can shift a hue.
+ */
+export function paintedSurface({ size = 512, seed = 91, boards = 9, wear = 0.5 } = {}) {
+  return memo(`paint:${size}:${seed}:${boards}:${wear}`, () => {
+    const { c, g } = canvas(size);
+    const r = rng(seed);
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, size, size);
+
+    // The grain of the timber under the paint, and the joints between boards. Faint:
+    // paint fills grain, it does not disappear into it.
+    const step = size / boards;
+    for (let i = 0; i < boards; i++) {
+      const shade = 1 - (r() * 0.05 + 0.01) * wear;
+      g.fillStyle = `rgba(0,0,0,${((1 - shade) * 2).toFixed(3)})`;
+      g.fillRect(0, i * step, size, step);
+      g.fillStyle = `rgba(0,0,0,${(0.10 * wear).toFixed(3)})`;
+      g.fillRect(0, i * step, size, Math.max(1, size / 340));
+    }
+    for (let i = 0; i < size * 0.9; i++) {
+      const y = r() * size;
+      g.strokeStyle = `rgba(0,0,0,${(0.02 + r() * 0.05 * wear).toFixed(3)})`;
+      g.lineWidth = 0.5 + r() * 1.5;
+      g.beginPath();
+      g.moveTo(0, y);
+      for (let x = 0; x <= size; x += 48) g.lineTo(x, y + Math.sin(x * 0.01 + i) * 1.8);
+      g.stroke();
+    }
+
+    // Wear: where the paint has been rubbed thin and where the weather has darkened it.
+    for (let i = 0; i < size * 0.35 * wear; i++) {
+      const x = r() * size, y = r() * size;
+      const rad = size * (0.004 + r() * r() * 0.05);
+      const dark = r() > 0.45;
+      const grad = g.createRadialGradient(x, y, 0, x, y, rad);
+      const a = (0.04 + r() * 0.12) * wear;
+      grad.addColorStop(0, dark ? `rgba(0,0,0,${a.toFixed(3)})` : `rgba(255,255,255,${a.toFixed(3)})`);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad;
+      g.beginPath();
+      g.arc(x, y, rad, 0, 7);
+      g.fill();
+    }
     return c;
   });
 }

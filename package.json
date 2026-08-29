@@ -30,7 +30,9 @@
     "./hull": "./src/ship/hull.js",
     "./lod": "./src/ship/lod.js",
     "./views": "./viewer/views.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./motion": "./src/ship/motion.js",
+    "./crew": "./src/ship/crew.js"
   },
   "files": [
     "src",

@@ -15,8 +15,10 @@ this.model = buildShip({ lod: 'game', sails: 'storm' });
 this.group.add(this.model);
 ```
 
-The host keeps everything the model knows nothing about — the wave field, the motion, the
-wake, the spray, the mood lighting — and takes only the mesh. It reads her dimensions from
+The host keeps what the model still knows nothing about — the wave field, the hull's own
+heave and roll, the wake, the spray, the mood lighting — and takes the mesh. What the model
+now brings with it, if the host asks for it, is everything that moves *on* her: see the
+motion layer below. It reads her dimensions from
 `SPEC` rather than repeating them, so the wake and the flag stations follow the hull.
 
 Its flags are animated, and the model's are baked into one attitude, so the model's are
@@ -27,9 +29,9 @@ flag flies and the animation the host's.
 
 | | |
 | --- | --- |
-| Build | about 920 ms cold, 80 ms after. Materials are cached per level, so changing canvas at runtime is a geometry rebuild and not another download. |
-| Triangles | 58,832 at the `game` level |
-| Materials | 19, all `MeshStandardMaterial` with baked procedural maps |
+| Build | about 920 ms cold, 90 ms after. Materials are cached per level, so changing canvas at runtime is a geometry rebuild and not another download. |
+| Triangles | 59,888 at the `game` level, of which about 1,900 are the thirteen figures of the watch |
+| Materials | 23, all `MeshStandardMaterial` with baked procedural maps |
 | three | a peer dependency, so the host provides it and there is exactly one copy |
 
 ## What already matches
@@ -56,11 +58,42 @@ for a hull whose perpendiculars are 36.9 m apart: the fore and aft sample points
 about 0.70 of the half-length, which is a reasonable place to take a ship's trim from and
 is what the existing ship uses.
 
-**2. The flags are baked.** The model flies the ensign, the pennant and the jack as static
-meshes with a wind curve frozen into them. A host that animates its own should hide these
-and read their positions — the meshes are named `ensign`, `pennant` and `jack` inside the
-`flags` group. That is what hms-surprise does, and it is the recommended arrangement: the
-model stays the authority on where a flag flies, and the motion stays the host's.
+**2. The flags are baked — unless the motion layer is running.** `buildShip` flies the
+ensign, the pennant and the jack as static meshes with a wind curve frozen into them. A
+host that animates its own should hide these and read their positions: the meshes are
+named `ensign`, `pennant` and `jack` inside the `flags` group. That is what hms-surprise
+does today, and it remains a perfectly good arrangement.
+
+The alternative, now, is to let the model fly them: `createMotion(ship)` re-evaluates each
+flag's own surface every frame at a running phase, which is the same curve the static mesh
+has, moving. A host doing that should drop its own flag animation rather than run both.
+
+**2a. The motion layer.** `createMotion(ship)` is opt-in and additive — it clones the
+materials it patches, so the built ship and the exported GLB are untouched. Call it once
+after building and then once a frame, *after* the host has set the hull's own heave, pitch
+and roll:
+
+```js
+import { buildShip, createMotion } from 'surprise-model';
+
+const ship = buildShip({ lod: 'game', sails: 'storm' });
+const motion = createMotion(ship);
+
+// in the frame loop, after ship.position/rotation have been set for this frame:
+motion.update(elapsedSeconds, {
+  windSpeed: 24,     // m/s; the spec's amplitudes are written for a 22 m/s gale
+  windDeg: 155,      // where the wind is going, from dead ahead, turning to starboard
+  heel: ship.rotation.z,
+  pitch: ship.rotation.x,
+  helm: -0.35,       // -1 hard a-port to +1 hard a-starboard; the wheel and the two men on it follow
+  spray: bowBuried ? 1 : 0,   // she goes dark and glossy where the sea has been, and dries over ~9 s
+});
+```
+
+It reads the ship's own world matrix each frame, so a host may move, rotate and scale her
+freely. Costs: no geometry is rebuilt, three flags of about 150 vertices each are rewritten
+on the processor, and everything else is a vertex shader. The one thing to get right is the
+order — `update` last, after the hull has been moved, or the rig lags a frame behind her.
 
 **3. Sail state.** Building from source rather than loading a GLB is what makes this
 cheap: the materials are cached per level, so a second `buildShip` at a different sail
@@ -72,9 +105,14 @@ exchange, but it is a real cost on a scene that also carries a wave field, spume
 cloud. Measure before committing; if it is too much, the levers in
 `src/ship/lod.js` under `game` are, in order of triangles saved per unit of appearance
 lost: `gunCarriages` to `'simple'`, `boats` to `'block'`, `deckFurniture` to `'none'`,
-`ratlines` to `false`.
+`ratlines` to `false`. `crew` to `false` is on that list too, and it is the last one to
+reach for rather than the first: thirteen figures cost about 1,900 triangles and they are
+what give the ship her scale.
 
-**5. Materials.** 19 materials at the game LOD, all `MeshStandardMaterial` with baked
+The budget itself was raised from 60 k to 80 k when the watch came aboard, so a host that
+was measuring against the old ceiling should measure again.
+
+**5. Materials.** 23 materials at the game LOD, all `MeshStandardMaterial` with baked
 procedural maps. Nothing needs the host's lighting to change. If the host batches by
 material, the count could come down by merging the timber and mast materials, which differ
 only in roughness.

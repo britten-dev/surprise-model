@@ -8,17 +8,30 @@ at three levels of detail and four states of canvas.
 This is an asset project, not a game. Nothing here is downloaded: the hull is lofted
 from an offset table, every fitting is generated, and every texture is drawn in code.
 
+She is built as a ship that has been at sea rather than one that has just left the
+dockyard, and that is a deliberate part of the brief: the sheathing is weathered, the
+topsides are salt-bleached and streaked with rust from every bolt in them, the canvas is
+stained and patched, her watch of thirteen is on deck — and an optional runtime layer
+makes her canvas shiver, her rigging swing, her masts work, her colours fly and her men
+lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
+
 ## What it produces
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
 | `hero` | 200–500 k | Close inspection. Every ratline, gun, port lid and gallery light. |
-| `game` | 30–60 k | A ship at gameplay range. Hull about 38 m. |
+| `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
 
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
 close-reefed main topsail) and `furled`.
+
+The watch on deck comes with her at the `hero` and `game` levels — thirteen figures, at
+the wheel, at the con, at the pumps, at the braces and two in the main top. They are not
+decoration. A ship with nobody on her has no scale at all: the eye has nothing it knows
+the height of, so her gunports could be a foot high or four, and that is most of why a
+rendered ship reads as a model. One man at the wheel fixes every dimension on board.
 
 Live at **[hms-surprise-model.netlify.app](https://hms-surprise-model.netlify.app)** — the
 viewer builds the ship in your browser from this source, in about 400 ms, and the exported
@@ -56,10 +69,15 @@ npm i github:britten-dev/surprise-model
 ```
 
 ```js
-import { buildShip, LODS, SAIL_STATES } from 'surprise-model';
+import { buildShip, createMotion, LODS, SAIL_STATES } from 'surprise-model';
 
 const ship = buildShip({ lod: 'game', sails: 'storm' });
 scene.add(ship);
+
+// Optional, and the difference between a ship and a model of one.
+const motion = createMotion(ship);
+// each frame, after the host has moved the hull:
+motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 ```
 
 `buildShip` returns a `THREE.Group` in the conventions of `docs/CONVENTIONS.md`: metres,
@@ -77,6 +95,7 @@ Other entry points, for a host that wants more than the finished object:
 | `surprise-model/hull` | `hullModel()`, for siting your own parts against her lines |
 | `surprise-model/lod` | the level-of-detail table and the triangle budgets |
 | `surprise-model/views` | the named camera stations used for the verification renders |
+| `surprise-model/motion` | `createMotion`, the runtime movement layer |
 
 **three is a peer dependency.** The host provides it, and there is exactly one copy. If
 it were a dependency of this package instead, a host resolving three differently would
@@ -93,11 +112,76 @@ docs/research/        the sourced research the spec was synthesised from
 docs/CONVENTIONS.md   axes, units and origin
 src/spec/spec.js      the spec as code; the only place a number may be written
 src/ship/             the generator, one module per region of the ship
+src/ship/weathering.js  what the sea does to her, drawn as a layer over the paint
+src/ship/crew.js      the watch on deck
+src/ship/motion.js    the runtime movement layer — the only part of her that is not static
 src/util/             lofting, interpolation, solid primitives
 src/audit/            measures built geometry and pairs it with the spec
 tools/                build, audit, trace, render, serve
 viewer/               the inspection page and the render harness
 ```
+
+## A ship, not a model
+
+Everything above builds a ship that is *correct*. Correct is not the same as convincing,
+and the four things that gave her away had nothing to do with her dimensions:
+
+**1. Nothing had ever been to sea.** The paint was evidence, read off a museum model's
+photograph, and it was perfectly clean. `src/ship/weathering.js` draws what a commission
+does to her — weed and slime in the wind-and-water band, salt bleaching the topsides where
+the sea comes over them, rust running down from every gunport hinge and chain bolt,
+verdigris mottling the copper, and the black wash out of every scupper. It is drawn as a
+separate overlay and composited on top, never mixed into the paint, because *the paint is
+evidence and the dirt is not*, and a stain invented here must never be able to move a
+colour that was measured.
+
+It is counted in metres of the ship's side, and that is the only part of it that really
+matters. One width of the hull map covers three metres, so it is laid along her thirteen
+times: a modest two hundred streaks drawn in the map becomes two and a half thousand on
+the ship, they overlap into a solid wash, and the result is not a weathered hull but a
+repainted one. That was the first version, and it bleached her white.
+
+**2. Half her surfaces had no texture at all.** The inboard works, the port lids, the gun
+carriages and the boats were flat colours with no map, and a large flat colour is the
+loudest thing on a model after its shape. They now share one modulation map about white,
+so each keeps its own sourced colour and gains the unevenness of paint over sawn timber.
+
+**3. Nobody was aboard.** See the watch, above.
+
+**4. She moved as one solid piece.** On a real ship nothing above the deck is still, and
+that is what `src/ship/motion.js` is for. It is a layer over a built ship rather than a
+change to how she is built, so `buildShip` and the GLB export are untouched and a host
+that never calls it gets exactly the ship it had before.
+
+```js
+const motion = createMotion(ship);
+motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
+```
+
+| what moves | how |
+| --- | --- |
+| The rig | Every spar, rope and sail leans and recovers together, going as the square of the height above the deck and lagging the hull's roll. This is the *whip*, and everything aloft has to agree about it or the topmen stand in mid-air. |
+| Canvas | A ripple runs across each sail from luff to leech and the whole belly breathes with the gusts, dying to nothing at the head, the foot and both leeches, which are bent to a spar and cannot move. The normal is bent with it, or a shivering sail stays evenly lit and reads as plastic. |
+| Cordage | Shrouds and stays swing a little at the middle of their span, running rigging three times as far. |
+| Colours | The ensign, pennant and jack are re-evaluated on the processor each frame — they are a hundred and fifty vertices between them and the exact surface is worth the microsecond. |
+| The wheel | Turns with the helm, and the two men on it follow it with their shoulders. |
+| The watch | Every man stands upright in the world rather than square to a heeled deck, and each has a period of his own so that thirteen of them do not sway as one. |
+| Wetness | A sea comes aboard and she goes dark and glossy below the line it reached, then dries over about nine seconds. |
+
+Three mechanisms, chosen per part by what that part is: a vertex shader for the merged
+meshes aloft, node transforms for the rigid things that have nodes, and rewritten vertices
+for the flags. The head of `src/ship/motion.js` says why each.
+
+**The weather.** `npm run viewer` has a **gale** button. It puts her in the third light
+rig — a daylight Southern Ocean gale, which is a bright grey day and not a dark one — on a
+sea of three crossed swells with the wind tearing spume off the crests, floats her on it
+by sampling the water under her bow and her quarters exactly as a host would, and runs the
+motion layer. `A`/`D` put the wheel over. `node tools/render.js quarter --storm` shoots the
+same thing to a file, at one stated instant so the render stays repeatable.
+
+The sea and the wake are the viewer's scenery, not part of the package: a host game has
+its own ocean. They are here because a frigate sitting in a mirror is a frigate in a bath,
+and she cannot be judged that way.
 
 ## The rule about numbers
 

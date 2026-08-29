@@ -10,9 +10,29 @@
 import * as THREE from 'three';
 import { PAINT } from '../spec/spec.js';
 import { V } from './hull.js';
-import { planking, copperSheathing, sailCloth, ropeTexture, woodGrain, normalFrom, asTexture } from './textures.js';
+import {
+  planking, copperSheathing, sailCloth, ropeTexture, woodGrain, paintedSurface, normalFrom, asTexture,
+} from './textures.js';
+import { hullStains, deckStains, sailStains } from './weathering.js';
 
 const col = (key) => new THREE.Color(PAINT[key].hex);
+
+/**
+ * Lay a weathering overlay over a drawn map, on a copy.
+ *
+ * A copy because the generators in textures.js memoise their canvases by their
+ * arguments: staining one in place would stain every other part of the ship that had
+ * asked for the same oak.
+ */
+function stainOver(base, overlay) {
+  const size = base.width;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(base, 0, 0, size, size);
+  g.drawImage(overlay, 0, 0, size, size);
+  return c;
+}
 
 /**
  * The hull's paint strip: a tall, one-pixel-wide image whose rows are the bands, drawn
@@ -121,7 +141,7 @@ function hullSurfaceStrip(size = 512) {
 const materialCache = new Map();
 
 export function makeMaterials(cfg) {
-  const key = cfg.textureSize + ':' + cfg.copperNails + ':' + cfg.mouldingSweeps;
+  const key = [cfg.textureSize, cfg.copperNails, cfg.hullRelief, cfg.mouldingSweeps].join(':');
   if (!materialCache.has(key)) materialCache.set(key, buildMaterials(cfg));
   return materialCache.get(key);
 }
@@ -156,36 +176,70 @@ function buildMaterials(cfg) {
     { repeat: [1, 1] }
   );
 
+  // The deck, then what is walked and washed into it. A holystoned deck is the palest
+  // thing on the ship and it is the first surface to give the game away when it is
+  // clean, because it is large, flat, and lit straight down.
   const deckTex = asTexture(
-    planking({
-      base: PAINT.deck.hex, dark: '#a3937a', light: '#dccfb6', seam: PAINT.deck_seam.hex,
-      planks: 30, size: N, seed: 5,
-    }),
+    stainOver(
+      planking({
+        base: PAINT.deck.hex, dark: '#a3937a', light: '#dccfb6', seam: PAINT.deck_seam.hex,
+        planks: 30, size: N, seed: 5,
+      }),
+      deckStains({ size: N })
+    ),
     { repeat: [1, 6] }
   );
 
   const oak = asTexture(woodGrain({ base: PAINT.timber.hex, dark: '#5a4529', light: '#b08a5a', size: N / 2, seed: 9 }));
   const brightWood = asTexture(woodGrain({ base: PAINT.mast_bright.hex, dark: '#6d5330', light: '#c19a63', size: N / 2, seed: 13 }));
 
+  // The canvas, drawn as a grid of independent variants. sails.js gives each sail one
+  // square of it, so no two sails in the suit carry the same patch in the same place.
   const sailTex = asTexture(
-    sailCloth({ base: PAINT.sail.hex, seam: PAINT.sail_seam.hex, size: N, cloths: 16, reefs: 3 }),
+    sailCloth({
+      base: PAINT.sail.hex, seam: PAINT.sail_seam.hex,
+      // The map stays the level's own texture size and is divided between the variants,
+      // rather than being multiplied by them: four sails at half the resolution read
+      // better than one at full, because what is wrong with one is that it is the same
+      // sail four times over.
+      size: N, cloths: 16 * PAINT.weather_sail_variants.value,
+      reefs: 3,
+      variants: PAINT.weather_sail_variants.value,
+      stain: (g, o) => sailStains(g, o),
+    }),
     { repeat: [1, 1] }
   );
 
+  // One modulation map for every painted surface on the ship. It carries no colour of
+  // its own — it is a light-and-shade map about white — so each material keeps the
+  // sourced colour PAINT gives it and only gains the unevenness of paint on timber.
+  // Without it the inboard works, the port lids, the carriages and the boats are large
+  // areas of one exact colour, which is the loudest thing on the ship after the shape.
+  // The repeat is a compromise and has to be. This one map is laid on parts whose UVs
+  // run from a whole ship's length of inner bulwark down to a single port lid, and no
+  // repeat is right for both. Ten is chosen so the largest of them — the inboard works
+  // through the waist — reads as boards rather than as stretched bands; on the small
+  // parts it lands as the fine tooth of paint, which is what those want anyway.
+  const paintedTex = asTexture(paintedSurface({ size: Math.max(256, N / 2) }), { repeat: [10, 10] });
+
   const std = (o) => new THREE.MeshStandardMaterial(o);
+  // A painted surface: the sourced colour, modulated.
+  const painted = (key, o = {}) => std({
+    map: paintedTex, color: col(key), roughness: PAINT[key].roughness, metalness: 0, ...o,
+  });
 
   const mats = {
     copper: std({ map: copperTex, color: col('copper'), roughness: PAINT.copper.roughness, metalness: 1.0 }),
     deck: std({ map: deckTex, color: 0xffffff, roughness: PAINT.deck.roughness, metalness: 0 }),
     timber: std({ map: oak, color: 0xffffff, roughness: 0.7, metalness: 0 }),
     mast: std({ map: brightWood, color: 0xffffff, roughness: PAINT.mast_bright.roughness, metalness: 0 }),
-    mastBlack: std({ color: col('mast_black'), roughness: PAINT.mast_black.roughness, metalness: 0 }),
-    black: std({ color: col('topside_black'), roughness: PAINT.topside_black.roughness, metalness: 0 }),
-    ochre: std({ color: col('ochre_trim'), roughness: PAINT.ochre_trim.roughness, metalness: 0 }),
-    red: std({ color: col('inboard_red'), roughness: PAINT.inboard_red.roughness, metalness: 0 }),
-    white: std({ color: col('boat_white'), roughness: PAINT.boat_white.roughness, metalness: 0 }),
+    mastBlack: painted('mast_black'),
+    black: painted('topside_black'),
+    ochre: painted('ochre_trim'),
+    red: painted('inboard_red'),
+    white: painted('boat_white'),
     gilt: std({ color: col('gilt'), roughness: PAINT.gilt.roughness, metalness: 1.0 }),
-    iron: std({ color: col('iron'), roughness: PAINT.iron.roughness, metalness: PAINT.iron.metalness }),
+    iron: painted('iron', { metalness: PAINT.iron.metalness }),
     brass: std({ color: col('brass'), roughness: PAINT.brass.roughness, metalness: 1.0 }),
 
     // Sails are thin cloth with the sun behind them as often as not, and they must be
@@ -215,6 +269,12 @@ function buildMaterials(cfg) {
       emissiveMap: sailTex,
       emissiveIntensity: PAINT.sail_glow.value,
     }),
+
+    // The watch. Slop clothing takes the same painted-timber modulation as everything
+    // else, which sounds wrong and is not: what that map actually does is break up a
+    // flat colour, and wet tarpaulin needs it as much as a port lid does.
+    crewSlop: painted('slop_tarpaulin'),
+    crewCoat: painted('officer_coat'),
 
     standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness, metalness: 0 }),
     runningRigging: std({ color: col('rigging_hemp'), roughness: PAINT.rigging_hemp.roughness, metalness: 0 }),
@@ -251,8 +311,25 @@ function buildMaterials(cfg) {
     // is the only thing lighting it. Turn this down and the bottom of the ship goes
     // black; leave it at unity and it reads as dark brick.
     envMapIntensity: PAINT.hull_env_intensity.value,
-    normalMap: cfg.copperNails
-      ? asTexture(normalFrom(copperSheathing({ ...copperArgs, height: true }), 1.1), { srgb: false })
+    // The relief. It used to be the sheathing alone, which meant the underwater body had
+    // texture and the twenty feet of topside above it — the part anyone actually looks
+    // at — was a perfectly smooth surface with the planking painted on. A hull whose
+    // planks catch no light along their seams is the flattest thing on the ship.
+    normalMap: cfg.hullRelief
+      ? asTexture(
+        normalFrom(
+          hullHeightField(
+            hullPlank.image,
+            // The sheathing's own relief is the more expensive half — it is a second full
+            // pass of the copper generator — and it is only ever read from alongside, so
+            // below the game level the bottom keeps its colour and loses its laps.
+            cfg.copperNails ? copperSheathing({ ...copperArgs, height: true }) : null,
+            cfg.textureSize
+          ),
+          1.1
+        ),
+        { srgb: false }
+      )
       : null,
     normalScale: new THREE.Vector2(PAINT.hull_normal_scale.value, PAINT.hull_normal_scale.value),
   });
@@ -315,9 +392,54 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
   }
   g.putImageData(img, 0, 0);
 
+  // The weathering last, over the finished paint: rust from the ironwork, salt where the
+  // sea has been over her, weed in the wind-and-water band, and the black wash down from
+  // every scupper. It is drawn on top rather than mixed in because the paint underneath
+  // is evidence and this is not — see the head of src/ship/weathering.js.
+  g.drawImage(hullStains({ size }), 0, 0, size, size);
+
   const tex = new THREE.CanvasTexture(out);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;
   return tex;
+}
+
+/**
+ * The hull's height field: the sheathing below the copper line and the planking above
+ * it, joined at the same row the colour changes at. `normalFrom` reads relief out of
+ * this, so plank seams cast the thin shadow a plank seam casts and the copper keeps the
+ * laps and nails it had before.
+ *
+ * The planking is flattened toward the middle grey first. Its luminance swings the whole
+ * range, and fed to a normal map at that strength every board would stand a hand's
+ * breadth proud of the one beside it.
+ */
+function hullHeightField(plankCanvas, copperHeightCanvas, size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d', { willReadFrequently: true });
+
+  g.fillStyle = 'rgb(128,128,128)';
+  g.fillRect(0, 0, size, size);
+
+  const copperTopV = V.waterline + PAINT.copper_line_above_wl_v.value;
+  const copperFirstRow = Math.round((1 - copperTopV) * size);
+
+  // The planking, flattened about mid-grey, down to the copper line.
+  g.save();
+  g.globalAlpha = PAINT.hull_plank_relief.value;
+  g.drawImage(plankCanvas, 0, 0, size, copperFirstRow, 0, 0, size, copperFirstRow);
+  g.restore();
+
+  // The sheathing below it, at full strength: its laps and nails are already drawn as a
+  // height field about mid-grey by copperSheathing({ height: true }).
+  if (copperHeightCanvas) {
+    g.drawImage(
+      copperHeightCanvas,
+      0, copperFirstRow, size, size - copperFirstRow,
+      0, copperFirstRow, size, size - copperFirstRow
+    );
+  }
+  return c;
 }

@@ -18,9 +18,17 @@ import { buildBoats } from './boats.js';
 import { buildGroundTackle } from './ground-tackle.js';
 import { buildFlags } from './flags.js';
 import { buildRig } from './rig.js';
+import { buildCrew } from './crew.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
+
+// The ship this module builds does not move. `createMotion` is the layer that makes her:
+// a host calls it once on a built ship and then once a frame, and her canvas shivers, her
+// rigging swings, her masts work, her colours fly and her watch leans against the heel.
+// It is re-exported here rather than only from its own module so that a host has one
+// import for the whole package.
+export { createMotion } from './motion.js';
 
 export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   if (!SAIL_STATES.includes(sails)) {
@@ -59,6 +67,9 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   ship.add(buildGroundTackle(cfg, mats, model, ctx));
   ship.add(buildRig(cfg, mats, model, ctx));
   ship.add(buildFlags(cfg, mats, model, ctx));
+  // The watch last, because two of them stand in the main top and the rig has to have
+  // been built before anything can be stood on it.
+  ship.add(buildCrew(cfg, mats, model, ctx));
 
   return ship;
 }

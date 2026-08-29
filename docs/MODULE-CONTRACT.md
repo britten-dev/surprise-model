@@ -29,11 +29,13 @@ export function buildStern(cfg, mats, model, ctx) {
   levels in `lod.js` — that file is shared, so keep the edit to your own new keys.
 * `mats` — the materials from `src/ship/materials.js`: `hull`, `deck`, `timber`,
   `mast`, `mastBlack`, `black`, `ochre`, `red`, `white`, `gilt`, `iron`, `brass`,
-  `glass`, `sail`, `copper`, `standingRigging`, `runningRigging`, and
-  `mats.bunting(key)`. Use them. Do not construct a new material for a colour that
-  already exists.
+  `glass`, `sail`, `copper`, `crewSlop`, `crewCoat`, `standingRigging`,
+  `runningRigging`, and `mats.bunting(key)`. Use them. Do not construct a new material
+  for a colour that already exists.
 * `model` — the hull, described below.
-* `ctx` — `{ cfg, mats, model, sails, lod, zFcBreak, zQdBreak, ports }`.
+* `ctx` — `{ cfg, mats, model, sails, lod, zFcBreak, zQdBreak, ports }`, and after the
+  rig has been built, `ctx.rig`, `ctx.yards` and `ctx.spanker`. A module that needs to
+  stand something aloft — the crew's two topmen do — must be assembled after the rig.
 
 Return one `THREE.Group`. Do not add it to the scene yourself; `src/ship/index.js`
 does the assembling.
@@ -102,10 +104,28 @@ Tag at least the two or three dimensions that would be most obviously wrong if t
 module drifted. Not every row needs a tag; a row that will never be measured gets
 `noAudit: true` instead.
 
+## If your region should move
+
+`src/ship/motion.js` is a layer over the finished ship, not part of the build, and it
+finds what it moves **by mesh name**. A new region needs nothing done to it to be still,
+and two things to move:
+
+* **Name the mesh.** Anything inside the `rig` group moves with the rig automatically. A
+  moving part anywhere else — something rigid with a node of its own, like the wheel — is
+  found by name and posed there.
+* **Do not bake an attitude into geometry that has to change.** The flags used to have
+  their wind curve frozen into their vertices; making them fly meant pulling the surface
+  back out into `poseFlag`, which now writes it at any phase. If your region has a pose,
+  keep the function that produced it and the parameters it took.
+
+Amplitudes and periods are dimensions like any other and go in `src/spec/parts/motion.js`
+with `noAudit: true` — the audit measures geometry, and how far a thing may move is not
+geometry.
+
 ## Triangles
 
-The budget is real and the build fails when it is missed: hero 200–500 k, game 30–60 k,
-distant under 5 k. Merge repeated geometry with `mergeGeometries` from
+The budget is real and the build fails when it is missed: hero 200–500 k, game 30–80 k,
+distant under 5 k. It is written once, as `TRI_BUDGET` in `src/ship/lod.js`. Merge repeated geometry with `mergeGeometries` from
 `src/util/loft.js` or use `THREE.InstancedMesh`. Twelve gun carriages as twelve
 separate object trees is a waste of both triangles and draw calls.
 

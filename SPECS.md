@@ -936,6 +936,66 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `flag_halliard_diameter` | 0.016 | 0 ft 0.6 in | RECONSTRUCTED | §6.4 signal halliard, small stuff rove through a block at the peak |
 | `flag_halliard_sag` | 0.015 | — | RECONSTRUCTED | §6.4 a halliard swigged up taut carries very little sag |
 
+### The watch on deck
+
+| key | metric | period figure | grade | source |
+|---|---|---|---|---|
+| `crew_figure_height` | 1.6764 | 5 ft 6 in | RECONSTRUCTED | §9 the average height of a British seaman in the 1790s, from the surviving Marine and Navy muster descriptions. This is the number that gives the ship her scale |
+| `crew_officer_height` | 1.7526 | 5 ft 9 in | RECONSTRUCTED | §9 officers ran two to three inches taller than the people, being better fed as children |
+| `crew_shoulder_breadth` | 0.4318 | 1 ft 5 in | RECONSTRUCTED | §9 across the shoulders of a working man in a jacket |
+| `crew_hip_breadth` | 0.3302 | 1 ft 1 in | RECONSTRUCTED | §9 across the hips |
+| `crew_depth` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §9 front to back through the chest, in slops |
+| `crew_head_height` | 0.2413 | 0 ft 9.5 in | RECONSTRUCTED | §9 crown to chin, about an eighth of the whole figure |
+| `crew_head_breadth` | 0.1651 | 0 ft 6.5 in | RECONSTRUCTED | §9 across the skull, and a little more with a tarpaulin hat on it |
+| `crew_leg_fraction` | 0.47 | — | RECONSTRUCTED | §9 the ground to the fork is a little under half the whole height, which is what makes a figure read as a man and not as a doll |
+| `crew_arm_fraction` | 0.44 | — | RECONSTRUCTED | §9 shoulder to fingertip as a fraction of height |
+| `crew_arm_thickness` | 0.1143 | 0 ft 4.5 in | RECONSTRUCTED | §9 through a sleeve |
+| `crew_leg_thickness` | 0.1397 | 0 ft 5.5 in | RECONSTRUCTED | §9 through a trouser leg |
+| `crew_stance` | 0.3556 | — | RECONSTRUCTED | §9 how wide a man stands with the deck moving under him. It is wider than a man stands ashore, and it is one of the few things about a figure that reads at any distance |
+| `crew_helm_abaft_wheel` | 0.4572 | — | RECONSTRUCTED | §9 a helmsman stands close abaft the wheel with the spokes at arm's length |
+| `crew_helm_spread` | 1.0668 | — | RECONSTRUCTED | §9 the two men of a double wheel stand one at each wheel, which is what the second wheel is for |
+| `crew_con_abaft_binnacle` | 0.6096 | — | RECONSTRUCTED | §9 the officer of the watch cons her from beside the binnacle, where he can see the compass and the weather leech together |
+| `crew_lookout_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §9 the forecastle lookout, well forward and at the weather rail |
+| `crew_waist_from_stem` | 21.336 | 70 ft 0 in | RECONSTRUCTED | §9 the hands at the chain pumps, which are immediately either side of the mainmast |
+| `crew_brace_from_stem` | 28.956 | 95 ft 0 in | RECONSTRUCTED | §9 the after braces are belayed abaft the mizzen, and in a gale there are hands standing by them |
+| `crew_taffrail_from_stem` | 37.1856 | 122 ft 0 in | RECONSTRUCTED | §9 an officer aft at the taffrail, watching the following sea, which is the whole business of running before a gale |
+| `crew_rail_inset` | 0.62 | — | RECONSTRUCTED | §9 how far out toward the ship's side a man stands, as a fraction of the half-breadth at his station. He stands by the rail, not on the centreline |
+| `crew_top_inset` | 0.55 | — | RECONSTRUCTED | §9 how far out on the top platform a man stands, as a fraction of its half-breadth |
+| `crew_arm_rest_deg` | 8 | — | RECONSTRUCTED | §9 arms hanging, a little forward of the body, which is where a man's arms are when he is not using them |
+| `crew_arm_rest_splay_deg` | 7 | — | RECONSTRUCTED | §9 and a little out from his sides, over his hips |
+| `crew_arm_helm_deg` | -62 | — | RECONSTRUCTED | §9 forward and down onto the spokes of the wheel, which stands about chest high |
+| `crew_arm_helm_splay_deg` | 10 | — | RECONSTRUCTED | §9 his hands are the width of the wheel apart |
+| `crew_arm_reach_deg` | -58 | — | RECONSTRUCTED | §9 one hand out to a shroud or a rail, which is what every man on a wet deck has hold of |
+| `crew_arm_reach_splay_deg` | 34 | — | RECONSTRUCTED | §9 and out to the side, because what he is holding is beside him |
+| `crew_arm_haul_deg` | -74 | — | RECONSTRUCTED | §9 hauling on a fall: both arms forward, hands together |
+| `crew_arm_haul_splay_deg` | 15 | — | RECONSTRUCTED | §9 hands a little apart on the rope, one above the other |
+| `crew_haul_lean_deg` | 9 | — | RECONSTRUCTED | §9 a man hauling puts his weight back against the rope. It is the lean and not the arms that says what he is doing |
+| `crew_count` | 13 | — | RECONSTRUCTED | §9 the watch on deck of a frigate with a company of about two hundred, in weather that has driven everyone else below: two at the wheel, two officers, seven of the watch and two in the main top |
+| `crew_lean_deg` | 6 | — | RECONSTRUCTED | §9 a man standing on a deck heeled and moving stands out of the vertical, braced against it. Figures standing bolt upright on a ship that is not upright are one of the plainest tells in a rendered scene |
+
+### Motion
+
+| key | metric | period figure | grade | source |
+|---|---|---|---|---|
+| `motion_whip_amplitude` | 0.55 | — | RECONSTRUCTED | §10 how far the main truck swings out of line at the height of a roll. Measured against her own mast: half a metre in forty-five is about a degree and a half of bend, which is what a rig this size takes |
+| `motion_whip_exponent` | 2 | — | RECONSTRUCTED | §10 the bend goes as the square of the height above the deck, which is what a tapered spar loaded at its head does. Linear is wrong and reads as the whole ship leaning |
+| `motion_whip_lag` | 0.55 | — | RECONSTRUCTED | §10 how far behind the hull's own roll the rig runs, in seconds. Without the lag the masts and the hull move as one piece, which is exactly the look this is meant to break |
+| `motion_whip_period` | 7.4 | — | RECONSTRUCTED | §10 the rig's own period when nothing is driving it, in seconds — a slow working, so that a ship lying quietly is not perfectly still |
+| `motion_sail_flutter` | 0.22 | — | RECONSTRUCTED | §10 how far the belly of a set sail moves, at the middle of it, in a hard breeze. A quarter of a metre on a sail ten metres across is a shiver, not a flap: a drawing sail is a taut curved surface and it must not billow like a bedsheet |
+| `motion_sail_wave_length` | 3.4 | 11 ft 1.9 in | RECONSTRUCTED | §10 the length of the ripple that travels across a sail from luff to leech |
+| `motion_sail_wave_speed` | 1.35 | — | RECONSTRUCTED | §10 ripples per second across a sail; the wave runs to leeward, as the wind does |
+| `motion_sail_breathe` | 0.22 | — | RECONSTRUCTED | §10 how much the whole belly of a sail comes and goes with the gusts, as a fraction of the flutter. This is the slow one, and it is what separates canvas from a curved plate |
+| `motion_sail_luff_shiver` | 2.2 | — | RECONSTRUCTED | §10 how much harder the leech of a sail shivers than its middle. The leech is the free edge and it is where the eye looks |
+| `motion_rope_sway` | 0.1 | — | RECONSTRUCTED | §10 how far the middle of a shroud swings. A shroud is set up taut and moves very little; a slack brace or a buntline moves several times this, and the running rigging is given that multiple below |
+| `motion_rope_period` | 2.6 | — | RECONSTRUCTED | §10 the period of a set-up shroud, in seconds |
+| `motion_running_rope_factor` | 3 | — | RECONSTRUCTED | §10 running rigging is not set up taut and swings this many times as far as a shroud |
+| `motion_flag_wave_speed` | 2.4 | — | RECONSTRUCTED | §10 how fast the wave runs down a flag, in wave lengths per second at the wind speed the model is drawn for. A flag is the fastest thing on the ship and the only part of her that moves at a speed the eye can follow |
+| `motion_crew_sway_deg` | 3.5 | — | RECONSTRUCTED | §10 how far a man standing on a moving deck sways out of his own upright, over and above the heel of the ship he is standing on |
+| `motion_crew_sway_period` | 4.2 | — | RECONSTRUCTED | §10 his period, in seconds — near the ship's roll but not locked to it, so that thirteen men do not sway as one |
+| `motion_helm_throw_deg` | 140 | — | RECONSTRUCTED | §10 how far the wheel turns from midships to hard over. A little under half a turn each way, which is the usual four spokes |
+| `motion_helmsman_reach_deg` | 26 | — | RECONSTRUCTED | §10 how far a helmsman's shoulders follow the wheel. His hands go round with the spokes and his body does not |
+| `motion_wet_dry_seconds` | 9 | — | RECONSTRUCTED | §10 how long the topsides take to dry after a sea has been over them. It is slow, and it is what makes the wetness read as something that happened rather than as a setting |
+
 
 ---
 
@@ -1017,6 +1077,8 @@ and the ochre strake follow the sheer.
 | `copper_sheets_up` | 26 | — | — | SECONDARY §8 sheets 14 in on the short edge; the courses that fit between the keel and the sheathing line, counted over the whole V range of the base map |
 | `copper_lap_relief` | 0.34 | — | — | RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation |
 | `copper_nail_relief` | 0.55 | — | — | RECONSTRUCTED §8 a raised nail head; tuned so the nails catch the sun at beam distance |
+| `hull_map_metres` | 3 | — | — | RECONSTRUCTED §8 how many metres of the ship's side one width of the hull map covers. It is what makes the planking read at the right size, and it is also the unit the weathering counts in: a streak drawn once in the map is drawn thirteen times along her |
+| `hull_plank_relief` | 0.55 | — | — | RECONSTRUCTED §8 how much of the planking's own light and shade is read as height for the normal map. At 1.0 every board stands a hand's breadth proud of the one beside it; this is the strength at which a seam catches the sun and a plank does not |
 | `hull_normal_scale` | 1.15 | — | — | RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance |
 | `copper_pattern_depth` | 0.62 | — | — | RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance |
 | `copper_sheet_variation` | 0.16 | — | — | RECONSTRUCTED §8 no two sheets weather alike, and it is the spread between them that stops the bottom reading as one printed panel |
@@ -1042,6 +1104,32 @@ and the ochre strake follow the sheer.
 | `ensign_blue` | #22375E | 0.9 | 0 | SECONDARY §8 blue ensign bunting, desaturated from the Flag Institute blue |
 | `ensign_red` | #A32D34 | 0.9 | 0 | SECONDARY §8 bunting red |
 | `ensign_white` | #E8E2D4 | 0.9 | 0 | SECONDARY §8 bunting white |
+| `slop_tarpaulin` | #3A342B | 0.88 | 0 | RECONSTRUCTED §9 a seaman's foul-weather rig is canvas soaked in tar and oil: near-black, and darker still when it is wet, which on this ship it always is |
+| `officer_coat` | #1E2A44 | 0.82 | 0 | RECONSTRUCTED §9 undress blue coat, faded by sun and salt from the deep indigo of a new one |
+| `weather_rust` | #7A3A18 | — | 0 | RECONSTRUCTED §8 wet iron oxide on paint: redder and darker than dry rust, which is what runs from a chain bolt in a seaway |
+| `weather_rust_alpha` | 0.42 | — | — | RECONSTRUCTED §8 strong enough to read on a black topside at gameplay range; above about 0.55 the ship looks derelict rather than used |
+| `weather_salt` | #C6C2B4 | — | 0 | RECONSTRUCTED §8 dried salt: not white, but a grey-buff bloom that takes the depth out of black paint |
+| `weather_salt_alpha` | 0.2 | — | — | RECONSTRUCTED §8 enough to lift the topsides where the sea has been over them and leave the rail dark |
+| `weather_slime` | #2C3524 | — | 0 | RECONSTRUCTED §8 weed and slime in the wind-and-water band, green-black rather than green |
+| `weather_slime_alpha` | 0.55 | — | — | RECONSTRUCTED §8 the dirtiest line on the ship, and the single strongest cue that a hull has been floating rather than standing on a bench |
+| `weather_slime_band_v` | 0.075 | — | — | RECONSTRUCTED §8 how far above the copper line and below the load line the wind-and-water band reaches, as a fraction of the hull's paint coordinate. A ship in a seaway wets a band far wider than her still waterline |
+| `weather_verdigris` | #4C6B4E | — | 0 | RECONSTRUCTED §8 copper goes brown within weeks and mottled green within a commission; without this the sheathing reads as brick-red paint |
+| `weather_verdigris_alpha` | 0.26 | — | — | RECONSTRUCTED §8 mottled, not covered — the bottom must still read as metal, and metal is what the metalness map says it is |
+| `weather_grime` | #231D16 | — | 0 | RECONSTRUCTED §8 the black wash off a wet ship: tar, soot from the galley funnel, and dirt |
+| `weather_grime_alpha` | 0.3 | — | — | RECONSTRUCTED §8 weaker than the rust and there is much more of it |
+| `weather_streak_density` | 1.1 | — | — | RECONSTRUCTED §8 streaks per texel of texture width, scaled per line of ironwork. Tuned so that the streaks read as many at a distance and as individual runs from alongside |
+| `weather_deck_wet` | #4A4335 | — | 0 | RECONSTRUCTED §8 wet deck planking is several times darker than dry, and a deck in a gale is wet |
+| `weather_deck_wet_alpha` | 0.34 | — | — | RECONSTRUCTED §8 patchy rather than uniform; a uniformly wet deck is as flat-looking as a uniformly dry one |
+| `weather_deck_bleach_alpha` | 0.16 | — | — | RECONSTRUCTED §8 the pale patches the holystone leaves, which are what make the dark ones read as wet |
+| `weather_sail_stain` | #8C7F63 | — | 0 | RECONSTRUCTED §8 water staining and general dirt in old flax canvas |
+| `weather_sail_stain_alpha` | 0.13 | — | — | RECONSTRUCTED §8 enough that no two square feet of a sail are the same colour |
+| `weather_mildew` | #5B5540 | — | 0 | RECONSTRUCTED §8 mildew in canvas handed wet, worst at the foot |
+| `weather_sail_patch` | #CFC7B0 | — | 0 | RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker |
+| `weather_sail_patch_alpha` | 0.16 | — | — | RECONSTRUCTED §8 visible as a change of cloth at a cable's distance, not as a white rectangle |
+| `weather_sail_variants` | 2 | — | — | RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator |
+| `wet_darken` | 0.55 | — | — | RECONSTRUCTED §8 wet paint and wet timber are about half the brightness of dry; measured off any photograph of a ship in a seaway |
+| `wet_roughness` | 0.13 | — | — | RECONSTRUCTED §8 a film of water is nearly smooth, and the specular sheet it puts on the topsides is what actually says "wet" — the darkening alone reads as a repaint |
+| `wet_line_v` | 0.8 | — | — | RECONSTRUCTED §8 how far up the hull's paint coordinate the sea reaches when she is running hard: to about the sheer strake, which is where the rail begins |
 | `sun_colour` | #FFF1DA | — | 0 | RECONSTRUCTED §8 direct sunlight a few hours off noon, about 5000 K |
 | `sun_intensity` | 2.6 | — | — | RECONSTRUCTED §8 bright enough for a sunny day, not so bright that the deck, the boats and the canvas clip to white and lose their colour |
 | `sun_distance` | 70 | — | — | RECONSTRUCTED §8 far enough outside a ship 59 m over all that the shadow camera can see all of her |
@@ -1068,6 +1156,25 @@ and the ochre strake follow the sheer.
 | `sea_surface_colour` | #153549 | — | 0 | RECONSTRUCTED §8 deep water on a sunny day, dark enough that a black hull still reads against it |
 | `sea_surface_roughness` | 0.4 | — | — | RECONSTRUCTED §8 a light chop rather than a mirror; at 0.16 the sun's path across the water came back as a hard white wall |
 | `sea_surface_env_intensity` | 0.42 | — | — | RECONSTRUCTED §8 the water is held back from the environment so that warming the sky for the ship's sake does not bleach the sea |
+| `storm_sun_colour` | #C8CCC9 | — | 0 | RECONSTRUCTED §8 the sun behind heavy overcast: not warm, not blue, and barely a direction at all |
+| `storm_sun_intensity` | 1.7 | — | — | RECONSTRUCTED §8 a third of the fine-weather key. It is kept at all so that the ship still has a lit side and a shaded side; at zero she goes completely flat |
+| `storm_sun_azimuth_deg` | 300 | — | — | RECONSTRUCTED §8 the same quarter as the fine-weather sun, so the two rigs can be compared |
+| `storm_sun_elevation_deg` | 26 | — | — | RECONSTRUCTED §8 low: in this weather the brightest part of the sky is the horizon under the cloud base |
+| `storm_sky_colour` | #BAC1C0 | — | 0 | RECONSTRUCTED §8 the overcast overhead, which in a gale is the whole of the light there is |
+| `storm_water_colour` | #3A4A4C | — | 0 | RECONSTRUCTED §8 bounce off a black sea: almost nothing, and cold |
+| `storm_fill_intensity` | 2.5 | — | — | RECONSTRUCTED §8 four times the fine-weather fill, because here it is not fill — it is the key. A daylight gale is a bright grey day, not a dark one: the mistake to avoid is lighting it for the mood rather than for the hour, which gives a ship at two in the afternoon the exposure of one at dusk |
+| `storm_env_colour` | #98A4A5 | — | 0 | RECONSTRUCTED §8 what the copper and the wet paint reflect: grey sky, and a great deal of it |
+| `storm_sky_top` | #6C787E | — | 0 | RECONSTRUCTED §8 the cloud base overhead, dark and even |
+| `storm_sky_bottom` | #B2BAB9 | — | 0 | RECONSTRUCTED §8 the lighter band under the cloud at the horizon, which is where a gale keeps its light |
+| `storm_sea_colour` | #273236 | — | 0 | RECONSTRUCTED §8 a Southern Ocean sea under cloud is nearly black, and its colour is almost entirely what it reflects |
+| `storm_sea_roughness` | 0.62 | — | — | RECONSTRUCTED §8 rougher than a fine-weather sea: the surface is broken everywhere and mirrors nothing cleanly |
+| `storm_sea_env_intensity` | 0.75 | — | — | RECONSTRUCTED §8 a broken sea under an even sky returns much of it, which is what makes a storm sea read as bright grey where it faces up and black where it faces away |
+| `storm_wave_height` | 3.4 | — | — | RECONSTRUCTED §8 crest to trough in a Southern Ocean gale, in metres. It is the viewer's scenery and not part of the ship, but it decides how she sits: a frigate whose waterline is a flat plane is a frigate in a bath |
+| `storm_wave_length` | 74 | — | — | RECONSTRUCTED §8 metres between crests. Twice her own length, which is why she pitches so slowly and so far |
+| `storm_wave_period` | 8.6 | — | — | RECONSTRUCTED §8 seconds between crests, which follows from the length in deep water |
+| `storm_cloud_break` | 0.85 | — | — | RECONSTRUCTED §8 how torn the overcast is. A gale sky is not an even grey card: it is cloud in ragged bands lying with the wind, and a still render finds fault with a flat backdrop before it finds fault with anything on the ship |
+| `storm_wake_alpha` | 0.3 | — | — | RECONSTRUCTED §8 how white the water is where the ship breaks it. It is the last thing that separates a ship at sea from a model standing on one: with a clean waterline and nothing happening along it, the eye reads the whole picture as an object placed on a surface |
+| `storm_spume_alpha` | 0.38 | — | — | RECONSTRUCTED §8 how much of the sea surface is streaked white. In a full gale the whole surface is marked with it, in long streaks lying with the wind |
 | `shadow_taps` | 3 | — | — | RECONSTRUCTED §8 three is the fewest that reads as a penumbra rather than as a double image, and each one costs a full shadow pass |
 | `shadow_spread_deg` | 2.6 | — | — | RECONSTRUCTED §8 five times the sun's true half-degree, which is what it takes for the penumbra to be visible at this scale; tuned on the ship's shadow on the sea in the beam view |
 | `shadow_map_size` | 2048 | — | — | RECONSTRUCTED §8 over a shadow camera 96 m across this is 47 mm to the texel. Three of these are rendered every frame, one per tap, so the size is a third of what a single map could afford — and it can be, because the taps blend away the staircase a single map has to resolve out with resolution |
