@@ -22,7 +22,10 @@ export const VIEWS = {
   quarter: { azimuth: 218, elevation: 14, fill: 1.05, fov: 34, aim: [0, 0.46, 0] },
   stern: { azimuth: 183, elevation: 10, fill: 1.02, fov: 34, aim: [0, 0.42, 0] },
   masthead: { azimuth: 296, elevation: 44, fill: 0.80, fov: 40, aim: [0, 0.62, 0] },
-  deck: { azimuth: 184, elevation: 5, fill: 0.30, fov: 58, aim: [0, 0.26, 0.12] },
+  // Standing on the quarterdeck looking forward along the ship, which is the view that
+  // shows the guns, the boats on the skid beams and the waist. Far enough aft and high
+  // enough to clear the spanker and the ensign, which otherwise fill the frame.
+  deck: { azimuth: 209, elevation: 19, fill: 0.44, fov: 50, aim: [0, 0.26, 0.02] },
 
   // Close studies, used when iterating on one region.
   head: { azimuth: 322, elevation: 6, fill: 0.30, fov: 36, aim: [0, 0.17, -0.40] },

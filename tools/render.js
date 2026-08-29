@@ -13,6 +13,13 @@ const studio = args.includes('--studio');
 const ALL = ['reference', 'bow', 'beam', 'quarter', 'stern', 'masthead', 'deck'];
 const views = only.length ? only : ALL;
 
+// Some views exist to show something the canvas covers up. Under a full suit the deck of
+// a square-rigged ship really is hidden — the courses come down almost to the rail — so
+// shooting the deck, the waist and the head with every sail set produces a picture of a
+// sail. Those views take the furled state unless the caller asks for something else.
+const FURLED_BY_DEFAULT = new Set(['deck', 'waist', 'head', 'channels', 'gallery']);
+const sailsGiven = args.some((a) => a.startsWith('--sails='));
+
 const h = await openHarness({ page: '/viewer/render.html' });
 await fs.mkdir(path.join(ROOT, 'renders'), { recursive: true });
 
@@ -20,10 +27,11 @@ await fs.mkdir(path.join(ROOT, 'renders'), { recursive: true });
 // sea, so the two images can be laid side by side without the background fighting.
 for (const view of views) {
   const asStudio = studio || view === 'reference';
-  await h.page.evaluate((o) => window.setup(o), { lod, sails, studio: asStudio, sea: !asStudio });
+  const useSails = !sailsGiven && FURLED_BY_DEFAULT.has(view) ? 'furled' : sails;
+  await h.page.evaluate((o) => window.setup(o), { lod, sails: useSails, studio: asStudio, sea: !asStudio });
   const info = await h.page.evaluate(([v]) => window.shoot(v), [view]);
   const el = await h.page.$('#shot');
-  const suffix = sails === 'full' && lod === 'hero' ? '' : `-${lod}-${sails}`;
+  const suffix = useSails === 'full' && lod === 'hero' ? '' : `-${lod}-${useSails}`;
   const file = path.join(ROOT, 'renders', `${view}${suffix}.png`);
   await el.screenshot({ path: file });
   console.log(`${view.padEnd(10)} -> renders/${path.basename(file)}   bbox ${info.size.x.toFixed(1)} x ${info.size.y.toFixed(1)} x ${info.size.z.toFixed(1)} m`);
