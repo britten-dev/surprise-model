@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Surprise render</title>
+<script src="/viewer/importmap.js"></script>
+<body style="margin:0;background:#000;overflow:hidden">
+<script type="module">
+import * as THREE from 'three';
+import { buildShip } from '/src/ship/index.js';
+import { VIEWS, applyView } from '/viewer/views.js';
+import { makeEnvironment, makeSea } from '/viewer/scene.js';
+
+const W = 1600, H = 1100;
+const canvas = document.createElement('canvas');
+canvas.width = W; canvas.height = H;
+canvas.id = 'shot';
+canvas.style.cssText = `width:${W / 2}px;height:${H / 2}px`;
+document.body.appendChild(canvas);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const camera = new THREE.PerspectiveCamera(35, W / H, 0.05, 2000);
+
+let current = null, currentKey = null, env = null, envStudio = null;
+
+function ensureEnv(studio) {
+  if (studio) return (envStudio ??= makeEnvironment(renderer, { studio: true }));
+  return (env ??= makeEnvironment(renderer, { studio: false }));
+}
+
+window.setup = ({ lod = 'hero', sails = 'full', studio = false, sea = true } = {}) => {
+  const key = JSON.stringify({ lod, sails, studio, sea });
+  if (key === currentKey) return;
+  const { scene } = ensureEnv(studio);
+  if (current) scene.remove(current);
+  current = buildShip({ lod, sails });
+  current.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(current);
+  const seaMesh = scene.getObjectByName('sea');
+  if (sea && !seaMesh) { const m = makeSea(); m.name = 'sea'; scene.add(m); }
+  if (!sea && seaMesh) scene.remove(seaMesh);
+  currentKey = key;
+  window.SCENE = scene;
+};
+
+window.shoot = (viewName, overrides = {}) => {
+  const view = { ...VIEWS[viewName], ...overrides };
+  if (!view.azimuth && view.azimuth !== 0) throw new Error(`unknown view "${viewName}"`);
+  const box = new THREE.Box3().setFromObject(current);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  applyView(camera, view, size, { x: 0, y: 0, z: center.z });
+  renderer.render(window.SCENE, camera);
+  return { size: { x: size.x, y: size.y, z: size.z } };
+};
+
+window.SHIP_READY = true;
+</script>

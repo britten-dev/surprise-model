@@ -1,0 +1,190 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HMS Surprise — model viewer</title>
+<script src="/viewer/importmap.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0e11; color: #d6d9dd;
+         font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; overflow: hidden; }
+  #c { position: fixed; inset: 0; display: block; }
+  .panel { position: fixed; background: #151a20e6; border: 1px solid #2b3440;
+           border-radius: 8px; padding: 10px 12px; backdrop-filter: blur(8px); }
+  #ui { top: 12px; left: 12px; width: 210px; }
+  #ui h1 { font-size: 13px; margin: 0 0 2px; letter-spacing: .02em; }
+  #ui .sub { color: #7b8794; font-size: 11px; margin-bottom: 10px; }
+  #ui label { display: block; color: #8b97a5; font-size: 10px; text-transform: uppercase;
+              letter-spacing: .07em; margin: 10px 0 4px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 3px; }
+  .seg button { flex: 1 1 auto; background: #1e262f; color: #b9c2cc; border: 1px solid #2b3440;
+                border-radius: 5px; padding: 4px 7px; font: inherit; font-size: 11px; cursor: pointer; }
+  .seg button:hover { background: #26313c; }
+  .seg button[aria-pressed="true"] { background: #3d6ea8; border-color: #4d84c4; color: #fff; }
+  #stats { bottom: 12px; left: 12px; font-family: ui-monospace, SFMono-Regular, monospace;
+           font-size: 11px; color: #8b97a5; white-space: pre; }
+  #stats b { color: #d6d9dd; font-weight: 600; }
+  #views { top: 12px; right: 12px; width: 132px; }
+  #ref { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .15s;
+         background: center/contain no-repeat url(/reference/surprise-reference.jpg); }
+  #ref.on { opacity: .45; }
+  #err { position: fixed; left: 50%; top: 40%; transform: translateX(-50%); max-width: 640px;
+         color: #ff9a8a; font-family: ui-monospace, monospace; font-size: 12px;
+         white-space: pre-wrap; display: none; }
+</style>
+<body>
+<canvas id="c"></canvas>
+<div id="ref"></div>
+<div id="err"></div>
+
+<div class="panel" id="ui">
+  <h1>HMS Surprise</h1>
+  <div class="sub">ex-<i>Unité</i>, 1794</div>
+  <label>Detail</label><div class="seg" id="lod"></div>
+  <label>Canvas</label><div class="seg" id="sails"></div>
+  <label>Display</label><div class="seg" id="disp"></div>
+</div>
+
+<div class="panel" id="views"><label style="margin-top:0">Camera</label><div class="seg" id="viewbtns"></div></div>
+<div class="panel" id="stats">building…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildShip, LODS, SAIL_STATES } from '/src/ship/index.js';
+import { VIEWS, applyView } from '/viewer/views.js';
+import { makeEnvironment, makeSea } from '/viewer/scene.js';
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const { scene } = makeEnvironment(renderer, { studio: false });
+const sea = makeSea();
+scene.add(sea);
+
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 3000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.maxDistance = 400;
+
+const state = { lod: 'hero', sails: 'full', wire: false, grid: false, ref: false };
+const cache = new Map();
+let ship = null;
+
+function seg(id, items, get, set) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  for (const it of items) {
+    const b = document.createElement('button');
+    b.textContent = it.label;
+    b.onclick = () => { set(it.value); paintSegs(); };
+    b.dataset.value = it.value;
+    el.appendChild(b);
+  }
+  el._get = get;
+}
+function paintSegs() {
+  for (const id of ['lod', 'sails', 'disp']) {
+    const el = document.getElementById(id);
+    for (const b of el.children) b.setAttribute('aria-pressed', String(el._get(b.dataset.value)));
+  }
+}
+
+seg('lod', LODS.map((v) => ({ label: v, value: v })), (v) => state.lod === v, (v) => { state.lod = v; rebuild(); });
+seg('sails', SAIL_STATES.map((v) => ({ label: v, value: v })), (v) => state.sails === v, (v) => { state.sails = v; rebuild(); });
+seg('disp', [
+  { label: 'wire', value: 'wire' }, { label: 'grid', value: 'grid' }, { label: 'photo', value: 'ref' },
+], (v) => state[v], (v) => {
+  state[v] = !state[v];
+  document.getElementById('ref').classList.toggle('on', state.ref);
+  grid.visible = state.grid;
+  applyWire();
+});
+
+const viewBtns = document.getElementById('viewbtns');
+for (const name of Object.keys(VIEWS)) {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.onclick = () => goToView(name);
+  viewBtns.appendChild(b);
+}
+
+const grid = new THREE.GridHelper(120, 120, 0x35506a, 0x1e2c3a);
+grid.visible = false;
+grid.position.y = 0.001;
+scene.add(grid);
+
+function applyWire() {
+  if (!ship) return;
+  ship.traverse((o) => { if (o.isMesh) o.material.wireframe = state.wire; });
+}
+
+function rebuild() {
+  try {
+    const key = `${state.lod}/${state.sails}`;
+    if (ship) scene.remove(ship);
+    if (!cache.has(key)) {
+      const t0 = performance.now();
+      const g = buildShip({ lod: state.lod, sails: state.sails });
+      g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      cache.set(key, { g, ms: performance.now() - t0 });
+    }
+    ship = cache.get(key).g;
+    scene.add(ship);
+    applyWire();
+    showStats(key);
+  } catch (e) {
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('err').textContent = e.stack || String(e);
+    throw e;
+  }
+}
+
+function showStats(key) {
+  let tris = 0, meshes = 0, lines = 0;
+  ship.traverse((o) => {
+    if (o.isMesh) {
+      meshes++;
+      const n = o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count;
+      tris += (n / 3) * (o.isInstancedMesh ? o.count : 1);
+    } else if (o.isLineSegments) lines += o.geometry.attributes.position.count / 2;
+  });
+  const box = new THREE.Box3().setFromObject(ship);
+  const s = box.getSize(new THREE.Vector3());
+  document.getElementById('stats').innerHTML =
+    `<b>${key}</b>\n` +
+    `${tris.toLocaleString()} tris · ${meshes} meshes · ${lines.toLocaleString()} ropes\n` +
+    `hull+rig  ${s.z.toFixed(1)} × ${s.x.toFixed(1)} × ${s.y.toFixed(1)} m\n` +
+    `built in ${cache.get(key).ms.toFixed(0)} ms`;
+}
+
+function goToView(name) {
+  const box = new THREE.Box3().setFromObject(ship);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const { target } = applyView(camera, VIEWS[name], size, { x: 0, y: 0, z: center.z });
+  controls.target.set(...target);
+  controls.update();
+}
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+rebuild();
+paintSegs();
+resize();
+goToView('reference');
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
