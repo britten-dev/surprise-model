@@ -26,18 +26,20 @@ await copyDir(path.join(ROOT, 'src'), path.join(DIST, 'src'));
 await copyDir(path.join(ROOT, 'viewer'), path.join(DIST, 'viewer'));
 await copyDir(path.join(ROOT, 'reference'), path.join(DIST, 'reference'));
 
-// Only the two three files the viewer actually imports, at the paths the import map
-// already names, so nothing in the source has to know it is being deployed.
+// three, at the paths the import map already names, so nothing in the source has to
+// know it is being deployed. The whole build directory goes, not just three.module.js:
+// that file re-exports from three.core.js beside it, and shipping one without the other
+// gives a page that loads every module successfully and then does nothing.
 const three = path.join(DIST, 'node_modules/three');
-await fs.mkdir(path.join(three, 'build'), { recursive: true });
-await fs.mkdir(path.join(three, 'examples/jsm/controls'), { recursive: true });
-await fs.copyFile(
-  path.join(ROOT, 'node_modules/three/build/three.module.js'),
-  path.join(three, 'build/three.module.js')
+await copyDir(
+  path.join(ROOT, 'node_modules/three/build'),
+  path.join(three, 'build'),
+  (_, e) => e.isDirectory() || (e.name.endsWith('.js') && !e.name.includes('.cjs'))
 );
-await fs.copyFile(
-  path.join(ROOT, 'node_modules/three/examples/jsm/controls/OrbitControls.js'),
-  path.join(three, 'examples/jsm/controls/OrbitControls.js')
+await copyDir(
+  path.join(ROOT, 'node_modules/three/examples/jsm/controls'),
+  path.join(three, 'examples/jsm/controls'),
+  (_, e) => e.isDirectory() || e.name === 'OrbitControls.js'
 );
 
 // The viewer is the site.
