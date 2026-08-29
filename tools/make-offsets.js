@@ -70,11 +70,40 @@ const TUMBLEHOME_DEG = [2.0, 6.5, 11.5, 14.8, 15.6, 15.6, 15.6, 15.2, 13.4, 9.8,
 const MID_STATION = 10;
 const midX = TABLE[MID_STATION][0] * FOOT;
 
-// Bulwark above the gun deck at side. The measured "top of the side" runs to 25.7 ft
-// above base, but that curve includes the hammock cranes and the netting above the
-// rail. The rail itself is taken to the top of the channel-wale band plus its capping,
-// 24.4 ft above base, which is 5 ft 9 in above the deck at side amidships.
-const RAIL_ABOVE_BASE = 24.4 * FOOT;
+// The rail — the top of the planking — measured off the draught.
+//
+// The research traced the "top of the side" at three points: 26.9 ft above the moulded
+// base line at the stem head, 25.7 ft at its lowest in the waist, and 29.5 ft at the
+// taffrail. That curve is the top of the hammock rail; the planking's own top edge is
+// about 1 ft 4 in below it, which is the height of the rail and netting above it.
+//
+// The rail therefore SWEEPS, and strongly. Building it as one height above the base line
+// the whole length — which is what this did — gives a ship with a dead-level top edge
+// and no sheer at all above the deck, and it puts the forecastle and quarterdeck above
+// the rail so that sixteen guns stand in the open air with nothing round them.
+const HAMMOCK_RAIL = 1.33;                       // ft, top of side to top of planking
+const RAIL_TOP_OF_SIDE_FT = [
+  // fraction of the LWL from forward, height above the moulded base line in feet
+  [0.00, 26.9],   // stem head, MEASURED
+  [0.22, 25.9],   // RECONSTRUCTED, fairing into the waist
+  [0.45, 25.7],   // the low point, MEASURED
+  [0.62, 26.1],   // RECONSTRUCTED
+  [1.00, 29.5],   // taffrail, MEASURED
+];
+// Kept as the measured curve for reference and for the silhouette check. The rail the
+// model is actually built to is DERIVED in src/ship/hull.js, because it has to stand a
+// bulwark's height above whichever deck is beneath it, and this curve — which the
+// research explicitly warns is "a composite of the forecastle rail, the waist rail and
+// the quarterdeck bulwark", not a fair line — does not do that at the deck breaks.
+function railAboveBase(u) {
+  const t = RAIL_TOP_OF_SIDE_FT;
+  let i = 0;
+  while (i < t.length - 2 && u > t[i + 1][0]) i++;
+  const f = (u - t[i][0]) / (t[i + 1][0] - t[i][0]);
+  // Smoothed, so the rail is a fair curve rather than a chain of straight runs.
+  const e = f * f * (3 - 2 * f);
+  return (t[i][1] + (t[i + 1][1] - t[i][1]) * e - HAMMOCK_RAIL) * FOOT;
+}
 
 const stationZ = [], waterlineY = [], halfBreadth = [];
 const deckAtSideY = [], deckAtSideX = [], rabbetY = [], rabbetX = [];
@@ -99,8 +128,9 @@ TABLE.forEach((row, i) => {
   tumblehome.push(round(Math.tan((th * Math.PI) / 180)));
   const topWlY = WATERLINES_FT.at(-1) * FOOT;
   const topWlX = wlFt.at(-1) === null ? deckYFt * FOOT : wlFt.at(-1) * FOOT;
-  const rise = RAIL_ABOVE_BASE - topWlY;
-  railY.push(round(RAIL_ABOVE_BASE - LWL_ABOVE_BASE));
+  const railBase = railAboveBase(i / (TABLE.length - 1));
+  const rise = railBase - topWlY;
+  railY.push(round(railBase - LWL_ABOVE_BASE));
   railX.push(round(Math.max(KEEL_HALF_SIDING, topWlX - rise * Math.tan((th * Math.PI) / 180))));
 });
 
@@ -134,7 +164,7 @@ const out = {
     max_beam_fraction_of_lwl: 0.51,
   },
   stationZ, waterlineY, halfBreadth,
-  deckAtSideY, deckAtSideX, rabbetY, rabbetX, railY, railX, tumblehome,
+  deckAtSideY, deckAtSideX, rabbetY, rabbetX, topOfSideY: railY, railX, tumblehome,
 };
 
 await fs.writeFile(path.join(ROOT, 'docs/offsets.json'), JSON.stringify(out, null, 1));

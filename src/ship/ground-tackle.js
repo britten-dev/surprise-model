@@ -274,16 +274,19 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
   const xRoot = SPEC.cathead_root_half_breadth.value;
   const catheadOut = SPEC.cathead_outer_half_breadth.value;
   const run = Math.hypot(catheadOut - xRoot, zRoot - zCathead);
-  const catheadY = model.featureYAt(zRoot).rail + SPEC.cathead_moulded.value / 2
+  // The centreline of the cathead where it crosses the sheaves at its outer end. That is
+  // the point the cat fall reeves through, and therefore the point the anchor hangs from.
+  const sheaveY = model.featureYAt(zRoot).rail + SPEC.cathead_moulded.value / 2
     + run * Math.tan(deg(SPEC.cathead_stive_deg.value));
-  // The ring is stopped up in the cat block, which hangs under the cathead's underside.
-  const ringY = catheadY - SPEC.cathead_moulded.value / 2 - S('anchor_ring_below_cathead');
+  // The ring is stopped up in the cat block, and the block hangs from those sheaves — so
+  // the drop is measured from the sheave centre, not from the underside of the timber.
+  const ringY = sheaveY - S('anchor_ring_below_cathead');
 
   const bowerGeom = anchorGeometry(cfg, 1);
 
   for (const side of [1, -1]) {
     const name = side > 0 ? 'best_bower' : 'small_bower';
-    const sheave = new THREE.Vector3(catheadOut * side, catheadY, zCathead);
+    const sheave = new THREE.Vector3(catheadOut * side, sheaveY, zCathead);
     const ring = new THREE.Vector3(catheadOut * side, ringY, zCathead);
 
     // Where the crown beds: the after end of the fore channel, which tapers there to take
@@ -388,9 +391,20 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     { side: -1, name: 'kedge_anchor', scale: S('kedge_anchor_scale') },
   ].slice(0, cfg.anchorSpares);
 
+  // The forecastle ends at the break, and abaft the break there is nothing under an anchor
+  // but the open waist. A bower is 16 ft 6 in long on a deck 19 ft 8 in long, so where the
+  // ring goes is not free: the crown has to land forward of the break with its chocks under
+  // it. The station comes from the spec, and is then clamped so that the crown of the
+  // longest spare cannot walk aft over the break if the break, the shank or the offsets
+  // move. ctx.zFcBreak is where the deck really ends, so nothing is guessed twice.
+  const zCrownAftmost = ctx.zFcBreak - S('stowed_anchor_forward_of_break');
+
   for (const spare of spareList) {
     const geom = spare.scale === 1 ? bowerGeom : anchorGeometry(cfg, spare.scale);
-    const zRing = model.fromStem(S('stowed_anchor_ring_from_stem'));
+    const zRing = Math.min(
+      model.fromStem(S('stowed_anchor_ring_from_stem')),
+      zCrownAftmost - geom.shankLen
+    );
     const zCrown = zRing + geom.shankLen;
     const zMid = (zRing + zCrown) / 2;
     const fcRise = SPEC.forecastle_above_gundeck.value;

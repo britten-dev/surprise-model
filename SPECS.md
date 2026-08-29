@@ -82,6 +82,9 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `deck_camber` | 0.127 | 0 ft 5 in | RECONSTRUCTED | §3 Steel, 5 in of round-up across the breadth |
 | `forecastle_break_u` | 0.2619 | — | RECONSTRUCTED | §5 aft side of the forecastle 33 ft abaft the stem, from Steel's forecastle-length series |
 | `quarterdeck_break_u` | 0.619 | — | RECONSTRUCTED | §5 fore side of the quarterdeck 7 ft abaft the mainmast |
+| `forecastle_sheer_rise` | 0 | — | MEASURED | §5 the derived rail matches the traced top-of-side when both upper decks are flat |
+| `quarterdeck_sheer_rise` | 0 | — | MEASURED | §5 as above; a rise here would put the taffrail above its measured 29.5 ft |
+| `bulwark_break_fairing` | 1.8288 | — | RECONSTRUCTED | §5 a fair run of planking through the break, as the reference photograph shows |
 | `bulwark_height_waist` | 1.7526 | — | MEASURED | §8 rail to the top of the channel-wale band, 24.4 ft above base |
 | `bulwark_height_quarterdeck` | 1.3208 | — | RECONSTRUCTED | §5 period practice; the rail itself now comes from the offset table |
 | `bulwark_height_forecastle` | 1.3208 | — | RECONSTRUCTED | §5 period practice; the rail itself now comes from the offset table |
@@ -89,6 +92,14 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `side_thickness` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §4 the ship's side at the ports: plank, timber and inboard plank |
 | `rail_cap_thickness` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §4 the capping over the top timbers |
 | `gangway_width` | 1.0668 | 3 ft 6 in | RECONSTRUCTED | §8 gangway wide enough for one man and a hand rope |
+
+### Backbone
+
+| key | metric | period figure | grade | source |
+|---|---|---|---|---|
+| `keel_straight_length` | 31.6992 | 104 ft 0 in | MEASURED | §6 keel straight bearing about 104 ft; the recorded 108 ft 6 in is the tonnage keel |
+| `keel_siding` | 0.3302 | 1 ft 1 in | MEASURED | §6 keel half-siding 0.54 ft off the body plan |
+| `keel_moulding` | 0.4064 | 1 ft 4 in | MEASURED | §6 keel and false keel 1 ft 4 in below the moulded base line |
 
 ### Gunports
 
@@ -108,14 +119,12 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `qd_port_count_per_side` | 6 | — | PRIMARY | §2 threedecks, 8 x 4-pdr and 4 x 12-pdr carronades on the quarterdeck |
 | `fc_port_count_per_side` | 2 | — | PRIMARY | §2 threedecks, 2 x 4-pdr and 2 x 12-pdr carronades on the forecastle |
 
-### Backbone and wales
+### Wales
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
 | `wale_top_below_deck` | 0.5334 | 1 ft 9 in | MEASURED | §8 main wale upper edge 16.9 ft above base, deck at side 18.65 ft |
 | `wale_depth` | 0.508 | 1 ft 8 in | MEASURED | §8 main wale 15.2 to 16.9 ft above the moulded base line |
-| `keel_siding` | 0.3302 | 1 ft 1 in | MEASURED | §6 keel half-siding 0.54 ft off the body plan |
-| `keel_moulding` | 0.4064 | 1 ft 4 in | MEASURED | §6 keel and false keel 1 ft 4 in below the moulded base line |
 
 ### Masts and their stations
 
@@ -165,7 +174,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `main_topmast_shroud_pairs` | 4 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
 | `mizzen_topmast_shroud_pairs` | 3 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
 
-### Bowsprit and jibboom
+### Bowsprit, jibboom and dolphin striker
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
@@ -173,6 +182,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `bowsprit_heel_above_gundeck` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §4 half the bowsprit's diameter, the spar lying in its step on the deck |
 | `bowsprit_partner_thickness` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §6 Steel :39538 tabulates the bowsprit partners but the frigate column is not legible; the thickness of the capstan partners is used |
 | `bowsprit_chock_length` | 0.762 | 2 ft 6 in | SECONDARY | §6 Steel :15357, a chock between the knightheads for the better security of the bowsprit |
+| `gammoning_hole_count` | 2 | — | SECONDARY | §6 Steel :41225, two gammoning holes |
+| `gammoning_cleat_forward_of_stem` | 0.9144 | — | SECONDARY | §6 Steel :2914, the gammoning is cut through the knee of the head between the cheeks, abaft the figure |
+| `gammoning_cleat_spacing` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §6 from Steel :41226, a gammoning hole 1 ft 1 in long, with a little wood between the two |
+| `gammoning_cleat_projection` | 0.0762 | — | RECONSTRUCTED | §6 the cleat that keeps the gammoning lashing from surging forward |
 | `bowsprit_length` | 14.859 | 48 ft 9 in | SECONDARY | §3 Steel 1794 v1 p.50, "28 GUNS. 594 Tons." column |
 | `bowsprit_diameter` | 0.6001 | 1 ft 11.6 in | SECONDARY | §3 Steel 1794 v1 p.50, "28 GUNS. 594 Tons." column |
 | `bowsprit_steeve_deg` | 21.9 | — | SECONDARY | §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 1 ft 2 1/2 in of stive per yard of length |
@@ -181,6 +194,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `jibboom_diameter` | 0.2604 | 0 ft 10.3 in | SECONDARY | §3 Steel 1794 v1 p.50, "28 GUNS. 594 Tons." column |
 | `jibboom_housing_fraction` | 0.333 | — | RECONSTRUCTED | §3.3 jib boom housed on the bowsprit for about a third of its length |
 | `bowsprit_shroud_pairs` | 1 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
+| `dolphin_striker_length` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph |
+| `dolphin_striker_diameter` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §12 in proportion to its length |
+| `dolphin_striker_rake_deg` | 12 | — | RECONSTRUCTED | §12 raked slightly forward so the martingale leads fair to the jib boom end |
+| `gammoning_turns` | 8 | — | SECONDARY | §11.2 Steel lists the gammoning first on the standing-rigging plate; seven or eight turns is the period figure |
 
 ### Yards and booms
 
@@ -360,6 +377,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `stern_light_munion` | 0.1524 | — | RECONSTRUCTED | §12.2 munions 6 in wide between the lights |
 | `stern_quarter_piece_width` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §12.2 the quarter piece bounding the row of lights each side |
 | `stern_light_frame_depth` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §5.2 the sash frame stands proud of the transom planking |
+| `stern_glazing_rebate` | 0.0381 | — | RECONSTRUCTED | §5.2 the rebate a crown-glass pane is bedded in, from contemporary sash practice |
 | `stern_glazing_bar` | 0.0254 | — | SECONDARY | §5.2 wooden glazing bars about 1 in, following contemporary domestic sash practice |
 | `stern_panes_wide` | 2 | — | SECONDARY | §5.2 rectangular panes 2 wide per light, not leaded diamonds |
 | `stern_panes_high` | 3 | — | RECONSTRUCTED | §12.2 sash bars dividing each light into 6 panes, 2 wide by 3 high |
@@ -368,13 +386,28 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `quarter_gallery_projection` | 0.381 | — | RECONSTRUCTED | §12.3 a closed badge stands about 15 in off the ship's side |
 | `quarter_gallery_rim_depth` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §12.3 the lower stool and rim below the lights |
 | `quarter_gallery_hood_depth` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §12.3 the bell-top hood over the lights; Steel, the upper stool hollowed |
-| `quarter_gallery_bracket_drop` | 0.508 | — | RECONSTRUCTED | §5.2 the carved bracket under the badge, gadrooned on its underside |
-| `stern_cartouche_width` | 1.3716 | 4 ft 6 in | RECONSTRUCTED | §12.1 the name cartouche on the counter, drawn on ZAZ3067 and on the parallel Unite plan ZAZ3181 |
+| `quarter_gallery_bracket_drop` | 0.3048 | — | RECONSTRUCTED | §5.2 the carved bracket under the badge, gadrooned on its underside; about a foot deep on a Sixth Rate badge |
+| `quarter_gallery_bracket_length` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §5.2 the bracket seen fore and aft, rather less than it is deep |
+| `quarter_gallery_frame_proud` | 0.0381 | — | RECONSTRUCTED | §12.3 the sash frame of a badge light stands proud of the badge planking |
+| `quarter_gallery_carving_relief` | 0.0508 | — | RECONSTRUCTED | §5.2 the gilt carving on a quarter badge, cut a little shallower than the work on the counter because it is seen edge-on from abaft the beam |
+| `stern_carving_bevel` | 0.42 | — | RECONSTRUCTED | §12.1 the ground cut away round a piece of carved work; about two fifths of its half-width taken by the chamfer, leaving a field in the middle |
+| `stern_carving_panel_corner` | 3 | — | RECONSTRUCTED | §12.1 a carved panel is worked square with the corners rounded off, not drawn as a lens |
+| `stern_cartouche_width` | 1.8288 | 6 ft 0 in | RECONSTRUCTED | §12.1 the name cartouche on the counter, drawn on ZAZ3067 and on the parallel Unite plan ZAZ3181; wide enough to carry the eight letters of the name at the letter width below, with a margin each end |
 | `stern_cartouche_height` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §12.1 proportion of a period name cartouche to its width |
 | `stern_cartouche_relief` | 0.0762 | — | RECONSTRUCTED | §12.1 depth of the carved relief |
+| `stern_cartouche_bevel` | 0.18 | — | RECONSTRUCTED | §12.1 a name board is chamfered round its edge and left flat inside, so the chamfer takes much less of it than a boss does |
 | `taffrail_ornament_width` | 1.0668 | 3 ft 6 in | RECONSTRUCTED | §5.2 the central carved and gilded cartouche of the taffrail, "a centre of attention within all the decoration" |
 | `taffrail_ornament_height` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §5.2 flanked by scrollwork and trophies of arms |
+| `taffrail_ornament_relief` | 0.1016 | — | RECONSTRUCTED | §5.2 the centre of attention of the stern, and the boldest cut of any of it |
+| `stern_scroll_relief` | 0.0635 | — | RECONSTRUCTED | §5.2 the scrollwork either side of the taffrail cartouche, cut shallower than the cartouche and dying away toward the quarters |
 | `stern_term_piece_width` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §12.4 Steel, term pieces: carved work under each end of the taffrail |
+| `stern_term_piece_relief` | 0.0762 | — | RECONSTRUCTED | §12.4 the term piece stands out from the quarter piece it is cut on |
+| `stern_name_letter_height` | 0.2032 | 0 ft 8 in | RECONSTRUCTED | §12.1 name letters 8 in high, half the depth of the cartouche they are cut on |
+| `stern_name_letter_width` | 0.1143 | 0 ft 4.5 in | RECONSTRUCTED | §12.1 a condensed letter about four ninths of its height, as period name boards are lettered |
+| `stern_name_letter_gap` | 0.0635 | — | RECONSTRUCTED | §12.1 the space between one letter and the next, rather more than half a letter width |
+| `stern_name_stroke` | 0.0254 | — | RECONSTRUCTED | §12.1 the width of the cut stroke of a letter |
+| `stern_name_relief` | 0.0381 | — | RECONSTRUCTED | §12.1 the letters stand proud of the field of the cartouche |
+| `stern_name_length` | 1.3843 | 4 ft 6.5 in | RECONSTRUCTED | §12.1 SURPRISE: eight letters of 4½ in with 2½ in between them, and the cut stroke over the ends |
 | `rudder_breadth_at_heel` | 1.0668 | — | RECONSTRUCTED | §6 blade breadth at the heel, about a quarter of the draught |
 | `rudder_breadth_at_head` | 0.4572 | — | RECONSTRUCTED | §6 the main piece at the head, sided a little more than the post |
 | `rudder_thickness` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §6 the main piece moulded, from the measured sternpost siding of 1 ft 1 in |
@@ -413,7 +446,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `head_rail_count` | 3 | — | SECONDARY | §8 the reference photograph shows three rails curving up to the figurehead; Steel :4172 names four (lower, middle, main, upper) plus a false rail, so this is the photograph's reading of a four-rail arrangement |
 | `head_rail_sided` | 0.127 | — | SECONDARY | §6 Steel :41199, the false rail sided 5 in for a small ship |
 | `head_rail_moulded` | 0.1778 | — | RECONSTRUCTED | §6 a rail rather deeper than it is broad, as the draught draws them |
-| `head_rail_profile_exponent` | 1.25 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: fitted to four points on the lowest rail |
+| `head_rail_profile_exponent` | 1.44 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: re-fitted to the same four points on the lowest rail — see the note above |
 | `head_rail_lower_aft_from_stem` | 0.3048 | 1 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the lowest rail runs into the ship's side within a foot of the stem, at about the gun-deck line |
 | `head_rail_lower_fore_above_rail` | 0.1524 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
 | `head_rail_lower_half_breadth` | 1.3716 | 4 ft 6 in | RECONSTRUCTED | : no plan view of the head survives, so the three plan widths are set against the reference photograph and bounded by the catheads, which no head rail passes outside of |
@@ -452,13 +485,11 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `head_roundhouse_height` | 1.524 | 5 ft 0 in | RECONSTRUCTED | §6 as above |
 | `head_door_width` | 0.6604 | 2 ft 2 in | RECONSTRUCTED | §6 Steel :17849, the stanchion next inboard of the bow chase port makes the head door |
 | `head_door_height` | 1.3716 | 4 ft 6 in | RECONSTRUCTED | §6 as above |
+| `bow_chase_port_width` | 0.7112 | 2 ft 4 in | SECONDARY | §6 Steel, quarterdeck port width used for the bow chase port in the bulkhead (research 06 §9) |
+| `bow_chase_port_height` | 0.7112 | 2 ft 4 in | SECONDARY | §6 as above |
 | `knighthead_half_breadth` | 0.3556 | 1 ft 2 in | SECONDARY | §6 research 06-deck-layout §5.3, knightheads: immediately each side of the stem head, from Steel :15347's stem half-thickness — RECONSTRUCTED |
 | `knighthead_sided` | 0.254 | — | RECONSTRUCTED | §6 a bollard timber heavier than a top timber |
 | `knighthead_above_bowsprit` | 0.4572 | — | SECONDARY | §6 Steel :15357-15359, the knightheads run high enough above the bowsprit to admit a chock between them |
-| `gammoning_hole_count` | 2 | — | SECONDARY | §6 Steel :41225, two gammoning holes |
-| `gammoning_cleat_forward_of_stem` | 0.9144 | — | SECONDARY | §6 Steel :2914, the gammoning is cut through the knee of the head between the cheeks, abaft the figure |
-| `gammoning_cleat_spacing` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §6 from Steel :41226, a gammoning hole 1 ft 1 in long, with a little wood between the two |
-| `gammoning_cleat_projection` | 0.0762 | — | RECONSTRUCTED | §6 the cleat that keeps the gammoning lashing from surging forward |
 | `cathead_root_from_stem` | 3.6576 | 12 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads: the inboard arm bolts to the cat beam |
 | `cathead_root_half_breadth` | 3.048 | 10 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads |
 | `cathead_outer_from_stem` | 2.4384 | 8 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads: the sheave centre at the outer end |
@@ -474,16 +505,31 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `figurehead_forward_of_stem` | 3.3528 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; sited on the head of the knee where ZAZ3067 draws a small figure, 66 px forward of the stem |
 | `figurehead_above_rail` | 0.1524 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the plinth on the hair bracket |
 | `figurehead_height` | 1.2192 | 4 ft 0 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — "the scale was drastically reduced", so a small figure |
-| `figurehead_rake_deg` | 30 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the figure leans back against the hair bracket, following the run of the head |
+| `figurehead_rake_deg` | 30 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the figure leans forward over the water, following the run of the head |
 | `figurehead_hem_diameter` | 0.6096 | 2 ft 0 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the spread of the drapery at the plinth |
 | `figurehead_waist_diameter` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_waist_height` | 0.6858 | 2 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
-| `figurehead_shoulder_height` | 0.9906 | 3 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_shoulder_height` | 0.9144 | 3 ft 0 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; set so that the neck and the head together make up the remaining quarter of her height |
 | `figurehead_shoulder_breadth` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_head_diameter` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_arm_diameter` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_arm_length` | 0.5334 | 1 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
-| `gammoning_turns` | 8 | — | SECONDARY | §11.2 Steel lists the gammoning first on the standing-rigging plate; seven or eight turns is the period figure |
+| `figurehead_neck_diameter` | 0.1143 | 0 ft 4.5 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the neck at three fifths of the head, so that the head reads as a head and not as a knob on the shoulders |
+| `figurehead_neck_height` | 0.0762 | 0 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the gap between the shoulder line and the chin |
+| `figurehead_chest_breadth` | 0.381 | 1 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the body between the waist and the shoulder, wider than the waist and narrower than the shoulder, which is what gives the torso its taper |
+| `figurehead_hip_breadth` | 0.4318 | 1 ft 5 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the drapery over the hips, the widest of the body above the hem |
+| `figurehead_hip_height` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the hips, under the drapery |
+| `figurehead_plinth_diameter` | 0.508 | 1 ft 8 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the foot of the carving where it is let into the hair bracket, narrower than the hem because the drapery rolls under above it |
+| `figurehead_hem_height` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; how far above the plinth the drapery stands widest |
+| `figurehead_depth_fraction` | 0.62 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the fore-and-aft depth of the carving as a fraction of its athwartships breadth — a figurehead is carved out of a stack sided close to the knee of the head, so it is a flat-backed relief rather than a statue in the round |
+| `figurehead_arm_forward_deg` | 24 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; both arms carried forward of the body, which is the pose every surviving small figurehead of the date is carved in and the one thing that reads at a distance |
+| `figurehead_arm_spread_deg` | 16 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; and spread a little off the sides, so the arms show against the drapery instead of disappearing into it |
+| `figurehead_mantle_top_below_head` | 0.0508 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the collar of the mantle, just below the neck |
+| `figurehead_mantle_below_waist` | 0.127 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the mantle falling a little past the waist, which is where the blue stops and the pale robe begins in the reference photograph |
+| `figurehead_mantle_proud` | 0.0254 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the cloth standing off the body |
+| `hair_bracket_length` | 1.2192 | 4 ft 0 in | SECONDARY | §6 Steel :3043, the moulding terminating the head rails and running into the back of the figure |
+| `hair_bracket_sided` | 0.127 | — | RECONSTRUCTED | §6 a moulding sided as the rails it gathers |
+| `trailboard_depth` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §8 research 08 §4.4, "very limited trailboard decoration" on a small ship of this date |
 
 ### Deck furniture
 
@@ -810,11 +856,18 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `anchor_stock_hoop_count` | 4 | — | SECONDARY | §13.2 Steel :43226 — four iron hoops to each stock |
 | `anchor_stock_hoop_breadth` | 0.076 | 0 ft 3 in | SECONDARY | §13.2 Steel :43227, hoops 3 in broad |
 | `anchor_stock_hoop_thickness` | 0.016 | 0 ft 0.6 in | SECONDARY | §13.2 Steel :43228, hoops 5/8 in thick |
-| `anchor_ring_below_cathead` | 0.6096 | — | RECONSTRUCTED | §13.3 the depth of a three-sheave cat block and its strop, hung under the cathead |
+| `anchor_ring_below_cathead` | 0.762 | — | RECONSTRUCTED | §13.3 a three-sheave cat block, its strop and the hook into the ring, hanging from the sheaves in the cathead |
 | `anchor_crown_from_stem` | 7.3152 | 24 ft 0 in | RECONSTRUCTED | §13.3 research 06, crown and flukes bedded on the fore channel 24 ft abaft the stem |
 | `anchor_crown_above_channel` | 0.1016 | — | RECONSTRUCTED | §13.3 the arm bearing on the channel, not sunk into it |
 | `anchor_crown_outboard_of_side` | 0.4572 | — | RECONSTRUCTED | §13.3 the crown bedded a foot and a half outboard of the ship's side, inside the channel's outer edge |
-| `anchor_stock_cant_deg` | 66 | — | RECONSTRUCTED | §PHOTO the stock canted outboard over the rail, read off the reference photograph |
+| `anchor_stock_cant_deg` | 84 | — | RECONSTRUCTED | §PHOTO the stock standing up beside the cathead and canted out over the forecastle rail, read off the reference photograph and set so that the whole stock clears the head rails |
+| `sheet_anchor_scale` | 1 | — | SECONDARY | §13.1 Steel :43220 — the sheet is one of the four large anchors, so it is a bower's size |
+| `kedge_anchor_scale` | 0.585 | — | RECONSTRUCTED | §13.1 the kedge at one fifth of a bower's weight, scaled by the cube root |
+| `stowed_anchor_ring_from_stem` | 4.1148 | 13 ft 6 in | RECONSTRUCTED | §13.1 stowed on the forecastle, ring forward, set so that the crown of the larger spare lies clear forward of the forecastle break |
+| `stowed_anchor_forward_of_break` | 0.4572 | — | RECONSTRUCTED | §13.1 how far forward of the break of the forecastle the crown of a stowed anchor is chocked, so that the palms bear on the deck and not on the coaming |
+| `stowed_anchor_inboard_of_side` | 1.2192 | — | RECONSTRUCTED | §13.1 the shank laid four feet in from the ship's side, leaving the gangway clear |
+| `stowed_anchor_above_deck` | 0.127 | 0 ft 5 in | RECONSTRUCTED | §13.1 the shank bearing on the palms and on its chocks |
+| `stowed_stock_beside_shank` | 0.5334 | — | RECONSTRUCTED | §13.1 the unshipped stock lashed on deck alongside its own anchor |
 | `hawse_hole_count_per_side` | 2 | — | RECONSTRUCTED | §12 two hawse holes a side, the working hawse and the spare, as on every frigate of the rate |
 | `hawse_hole_first_from_stem` | 1.2192 | 4 ft 0 in | RECONSTRUCTED | §12 as far forward as the hawse pieces allow |
 | `hawse_hole_spacing` | 0.5334 | 1 ft 9 in | RECONSTRUCTED | §12 the two holes of a side set a bore and a half apart |
@@ -826,6 +879,9 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `cat_block_length` | 0.6096 | 2 ft 0 in | RECONSTRUCTED | §13.3 a three-sheave cat block to match the three sheaves in the cathead (Steel :40068) |
 | `cat_block_width` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §13.3 three sheaves of 10 in and their partitions |
 | `cat_block_thickness` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §13.3 sheaves 2 in thick in a three-sheave shell (Steel :40070) |
+| `shank_painter_diameter` | 0.032 | 0 ft 1.3 in | SECONDARY | §13.3 Steel :40292 and :44589, stopper bolts 1¼ in — the shank painter chain is of that bar |
+| `shank_painter_bolt_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §13.3 "a chain bolted through the topside, abaft the cathead" (Steel :4552) |
+| `shank_painter_on_shank` | 0.78 | — | RECONSTRUCTED | §13.3 the painter takes the shank near the crown |
 | `anchor_lining_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §13.3 the lining laid where the fluke bears, forward of the crown |
 | `anchor_lining_length` | 2.1336 | 6 ft 12 in | RECONSTRUCTED | §13.3 Steel :42535 gives 10 ft 6 in for a 110-gun ship, scaled to the rate |
 | `anchor_lining_height` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | §13.3 a sacrificial plank deep enough to take the fluke |
@@ -879,27 +935,6 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `flag_halliard_diameter` | 0.016 | 0 ft 0.6 in | RECONSTRUCTED | §6.4 signal halliard, small stuff rove through a block at the peak |
 | `flag_halliard_sag` | 0.015 | — | RECONSTRUCTED | §6.4 a halliard swigged up taut carries very little sag |
 
-### Other
-
-| key | metric | period figure | grade | source |
-|---|---|---|---|---|
-| `bow_chase_port_width` | 0.7112 | 2 ft 4 in | SECONDARY | §6 Steel, quarterdeck port width used for the bow chase port in the bulkhead (research 06 §9) |
-| `bow_chase_port_height` | 0.7112 | 2 ft 4 in | SECONDARY | §6 as above |
-| `hair_bracket_length` | 1.2192 | 4 ft 0 in | SECONDARY | §6 Steel :3043, the moulding terminating the head rails and running into the back of the figure |
-| `hair_bracket_sided` | 0.127 | — | RECONSTRUCTED | §6 a moulding sided as the rails it gathers |
-| `trailboard_depth` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §8 research 08 §4.4, "very limited trailboard decoration" on a small ship of this date |
-| `sheet_anchor_scale` | 1 | — | SECONDARY | §13.1 Steel :43220 — the sheet is one of the four large anchors, so it is a bower's size |
-| `kedge_anchor_scale` | 0.585 | — | RECONSTRUCTED | §13.1 the kedge at one fifth of a bower's weight, scaled by the cube root |
-| `stowed_anchor_ring_from_stem` | 4.8768 | 16 ft 0 in | RECONSTRUCTED | §13.1 stowed on the forecastle abaft the fore mast, ring forward |
-| `stowed_anchor_inboard_of_side` | 1.2192 | — | RECONSTRUCTED | §13.1 the shank laid four feet in from the ship's side, leaving the gangway clear |
-| `stowed_anchor_above_deck` | 0.127 | 0 ft 5 in | RECONSTRUCTED | §13.1 the shank bearing on the palms and on its chocks |
-| `stowed_stock_beside_shank` | 0.5334 | — | RECONSTRUCTED | §13.1 the unshipped stock lashed on deck alongside its own anchor |
-| `shank_painter_diameter` | 0.032 | 0 ft 1.3 in | SECONDARY | §13.3 Steel :40292 and :44589, stopper bolts 1¼ in — the shank painter chain is of that bar |
-| `shank_painter_bolt_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §13.3 "a chain bolted through the topside, abaft the cathead" (Steel :4552) |
-| `shank_painter_on_shank` | 0.78 | — | RECONSTRUCTED | §13.3 the painter takes the shank near the crown |
-| `dolphin_striker_length` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph |
-| `dolphin_striker_diameter` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §12 in proportion to its length |
-| `dolphin_striker_rake_deg` | 12 | — | RECONSTRUCTED | §12 raked slightly forward so the martingale leads fair to the jib boom end |
 
 ---
 
@@ -932,29 +967,29 @@ Station `z` is metres from the station of maximum breadth, negative forward. Wat
 is metres above the design load waterline, so most are negative. `—` means the station does
 not reach that waterline.
 
-| station | z | rabbet y | y -3.61 | y -3.15 | y -2.69 | y -2.08 | y -1.32 | y -0.56 | y 0.00 | y 1.06 | y 1.88 | y 2.79 | deck y | deck half-b | rail y | rail half-b |
+| station | z | rabbet y | y -3.61 | y -3.15 | y -2.69 | y -2.08 | y -1.32 | y -0.56 | y 0.00 | y 1.06 | y 1.88 | y 2.79 | deck y | deck half-b | top of side y | top of side half-b |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 0 | -18.44 | -0.19 | — | — | — | — | — | — | 0.168 | 0.168 | 0.168 | 0.168 | 2.23 | 0.168 | 3.53 | 0.168 |
-| 1 | -16.60 | -1.44 | — | — | — | — | 0.168 | 0.902 | 1.728 | 2.124 | 2.070 | 2.006 | 2.14 | 2.051 | 3.53 | 1.951 |
-| 2 | -14.75 | -2.37 | — | — | — | 0.177 | 1.238 | 2.310 | 2.737 | 2.938 | 2.844 | 2.740 | 2.06 | 2.825 | 3.53 | 2.657 |
-| 3 | -12.91 | -3.00 | — | — | 0.286 | 1.250 | 2.283 | 3.106 | 3.365 | 3.490 | 3.362 | 3.216 | 1.99 | 3.344 | 3.53 | 3.100 |
-| 4 | -11.06 | -3.39 | — | 0.320 | 1.149 | 2.097 | 3.024 | 3.615 | 3.801 | 3.895 | 3.728 | 3.542 | 1.93 | 3.719 | 3.53 | 3.393 |
-| 5 | -9.22 | -3.62 | 0.168 | 1.024 | 1.908 | 2.700 | 3.536 | 3.975 | 4.118 | 4.191 | 3.996 | 3.776 | 1.87 | 3.996 | 3.53 | 3.606 |
-| 6 | -7.38 | -3.76 | 0.530 | 1.658 | 2.460 | 3.164 | 3.877 | 4.234 | 4.349 | 4.410 | 4.191 | 3.950 | 1.83 | 4.203 | 3.53 | 3.757 |
-| 7 | -5.53 | -3.84 | 1.055 | 2.161 | 2.883 | 3.511 | 4.121 | 4.417 | 4.511 | 4.560 | 4.334 | 4.081 | 1.80 | 4.356 | 3.53 | 3.882 |
-| 8 | -3.69 | -3.89 | 1.460 | 2.530 | 3.185 | 3.749 | 4.282 | 4.535 | 4.615 | 4.657 | 4.429 | 4.173 | 1.78 | 4.453 | 3.53 | 3.969 |
-| 9 | -1.84 | -3.91 | 1.710 | 2.749 | 3.359 | 3.883 | 4.368 | 4.596 | 4.673 | 4.709 | 4.478 | 4.224 | 1.77 | 4.508 | 3.53 | 4.020 |
-| 10 | 0.00 | -3.91 | 1.792 | 2.819 | 3.417 | 3.926 | 4.398 | 4.618 | 4.688 | 4.724 | 4.496 | 4.240 | 1.78 | 4.523 | 3.53 | 4.035 |
-| 11 | 1.84 | -3.91 | 1.786 | 2.810 | 3.408 | 3.914 | 4.383 | 4.603 | 4.676 | 4.709 | 4.481 | 4.224 | 1.79 | 4.505 | 3.53 | 4.020 |
-| 12 | 3.69 | -3.90 | 1.649 | 2.682 | 3.295 | 3.816 | 4.307 | 4.535 | 4.612 | 4.648 | 4.417 | 4.164 | 1.82 | 4.435 | 3.53 | 3.959 |
-| 13 | 5.53 | -3.88 | 1.341 | 2.399 | 3.051 | 3.618 | 4.151 | 4.407 | 4.490 | 4.532 | 4.304 | 4.051 | 1.85 | 4.313 | 3.53 | 3.849 |
-| 14 | 7.38 | -3.82 | 0.869 | 1.942 | 2.664 | 3.292 | 3.911 | 4.212 | 4.310 | 4.359 | 4.136 | 3.886 | 1.90 | 4.130 | 3.53 | 3.688 |
-| 15 | 9.22 | -3.70 | 0.253 | 1.302 | 2.115 | 2.822 | 3.557 | 3.935 | 4.057 | 4.121 | 3.908 | 3.670 | 1.97 | 3.886 | 3.53 | 3.483 |
-| 16 | 11.06 | -3.47 | — | 0.494 | 1.314 | 2.173 | 3.039 | 3.554 | 3.719 | 3.810 | 3.764 | 3.627 | 2.04 | 3.740 | 3.53 | 3.453 |
-| 17 | 12.91 | -3.09 | — | — | 0.381 | 1.286 | 2.274 | 3.036 | 3.268 | 3.414 | 3.459 | 3.368 | 2.13 | 3.435 | 3.53 | 3.218 |
-| 18 | 14.75 | -2.51 | — | — | — | 0.256 | 1.225 | 2.249 | 2.640 | 2.926 | 3.094 | 3.063 | 2.23 | 3.082 | 3.53 | 2.937 |
-| 19 | 16.60 | -1.72 | — | — | — | — | 0.168 | 1.027 | 1.719 | 2.225 | 2.911 | 2.850 | 2.34 | 2.880 | 3.53 | 2.755 |
-| 20 | 18.44 | -0.74 | — | — | — | — | — | 0.168 | 0.299 | 1.158 | 2.835 | 2.713 | 2.46 | 2.758 | 3.53 | 2.649 |
+| 0 | -18.44 | -0.19 | — | — | — | — | — | — | 0.168 | 0.168 | 0.168 | 0.168 | 2.23 | 0.168 | 3.88 | 0.168 |
+| 1 | -16.60 | -1.44 | — | — | — | — | 0.168 | 0.902 | 1.728 | 2.124 | 2.070 | 2.006 | 2.14 | 2.051 | 3.84 | 1.928 |
+| 2 | -14.75 | -2.37 | — | — | — | 0.177 | 1.238 | 2.310 | 2.737 | 2.938 | 2.844 | 2.740 | 2.06 | 2.825 | 3.75 | 2.631 |
+| 3 | -12.91 | -3.00 | — | — | 0.286 | 1.250 | 2.283 | 3.106 | 3.365 | 3.490 | 3.362 | 3.216 | 1.99 | 3.344 | 3.65 | 3.080 |
+| 4 | -11.06 | -3.39 | — | 0.320 | 1.149 | 2.097 | 3.024 | 3.615 | 3.801 | 3.895 | 3.728 | 3.542 | 1.93 | 3.719 | 3.59 | 3.381 |
+| 5 | -9.22 | -3.62 | 0.168 | 1.024 | 1.908 | 2.700 | 3.536 | 3.975 | 4.118 | 4.191 | 3.996 | 3.776 | 1.87 | 3.996 | 3.58 | 3.594 |
+| 6 | -7.38 | -3.76 | 0.530 | 1.658 | 2.460 | 3.164 | 3.877 | 4.234 | 4.349 | 4.410 | 4.191 | 3.950 | 1.83 | 4.203 | 3.56 | 3.748 |
+| 7 | -5.53 | -3.84 | 1.055 | 2.161 | 2.883 | 3.511 | 4.121 | 4.417 | 4.511 | 4.560 | 4.334 | 4.081 | 1.80 | 4.356 | 3.54 | 3.878 |
+| 8 | -3.69 | -3.89 | 1.460 | 2.530 | 3.185 | 3.749 | 4.282 | 4.535 | 4.615 | 4.657 | 4.429 | 4.173 | 1.78 | 4.453 | 3.52 | 3.969 |
+| 9 | -1.84 | -3.91 | 1.710 | 2.749 | 3.359 | 3.883 | 4.368 | 4.596 | 4.673 | 4.709 | 4.478 | 4.224 | 1.77 | 4.508 | 3.52 | 4.023 |
+| 10 | 0.00 | -3.91 | 1.792 | 2.819 | 3.417 | 3.926 | 4.398 | 4.618 | 4.688 | 4.724 | 4.496 | 4.240 | 1.78 | 4.523 | 3.54 | 4.031 |
+| 11 | 1.84 | -3.91 | 1.786 | 2.810 | 3.408 | 3.914 | 4.383 | 4.603 | 4.676 | 4.709 | 4.481 | 4.224 | 1.79 | 4.505 | 3.59 | 4.001 |
+| 12 | 3.69 | -3.90 | 1.649 | 2.682 | 3.295 | 3.816 | 4.307 | 4.535 | 4.612 | 4.648 | 4.417 | 4.164 | 1.82 | 4.435 | 3.63 | 3.929 |
+| 13 | 5.53 | -3.88 | 1.341 | 2.399 | 3.051 | 3.618 | 4.151 | 4.407 | 4.490 | 4.532 | 4.304 | 4.051 | 1.85 | 4.313 | 3.66 | 3.813 |
+| 14 | 7.38 | -3.82 | 0.869 | 1.942 | 2.664 | 3.292 | 3.911 | 4.212 | 4.310 | 4.359 | 4.136 | 3.886 | 1.90 | 4.130 | 3.76 | 3.625 |
+| 15 | 9.22 | -3.70 | 0.253 | 1.302 | 2.115 | 2.822 | 3.557 | 3.935 | 4.057 | 4.121 | 3.908 | 3.670 | 1.97 | 3.886 | 3.92 | 3.383 |
+| 16 | 11.06 | -3.47 | — | 0.494 | 1.314 | 2.173 | 3.039 | 3.554 | 3.719 | 3.810 | 3.764 | 3.627 | 2.04 | 3.740 | 4.12 | 3.312 |
+| 17 | 12.91 | -3.09 | — | — | 0.381 | 1.286 | 2.274 | 3.036 | 3.268 | 3.414 | 3.459 | 3.368 | 2.13 | 3.435 | 4.32 | 3.055 |
+| 18 | 14.75 | -2.51 | — | — | — | 0.256 | 1.225 | 2.249 | 2.640 | 2.926 | 3.094 | 3.063 | 2.23 | 3.082 | 4.50 | 2.769 |
+| 19 | 16.60 | -1.72 | — | — | — | — | 0.168 | 1.027 | 1.719 | 2.225 | 2.911 | 2.850 | 2.34 | 2.880 | 4.63 | 2.612 |
+| 20 | 18.44 | -0.74 | — | — | — | — | — | 0.168 | 0.299 | 1.158 | 2.835 | 2.713 | 2.46 | 2.758 | 4.68 | 2.548 |
 
 
 ---
@@ -970,15 +1005,23 @@ and the ochre strake follow the sheer.
 |---|---|---|---|---|
 | `topside_black` | #1C1613 | 0.5 | 0 | SECONDARY §8 lamp black in tar; warm brown-black, not pure black |
 | `wale` | #241A12 | 0.4 | 0 | SECONDARY §8 wales left bright in tar, glossier than the topside |
-| `ochre_trim` | #BB9476 | 0.5 | 0 | SECONDARY §8 NCS S 3020-Y40R, the Victory ochre; photo samples #dba55d-#eabc66 in warm light |
+| `ochre_trim` | #BC9046 | 0.55 | 0 | SECONDARY §8 yellow ochre in oil, the Victory ochre (NCS S 3020-Y40R), taken at pigment strength; renders inside the photograph's sampled #dba55d-#f8cf7d under both the sea and the studio rig |
 | `inboard_red` | #913832 | 0.65 | 0 | SECONDARY §8 red ochre for inboard works and port linings, not Venetian red |
 | `boot_top` | #2A2018 | 0.7 | 0 | SECONDARY §8 exposed plank above the sheathing, algae-stained |
-| `copper` | #8E5334 | 0.66 | 0 | RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched |
+| `copper` | #A2603A | 0.44 | 0 | RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched. Roughness is the polish of a sheet that has been in the water a few months, not of one that has been painted |
 | `copper_bright` | #F7BC9E | 0.35 | 0 | SECONDARY §8 new copper, used for the nail heads |
 | `copper_dark` | #3E2418 | 0.75 | 0 | SECONDARY §8 cupric oxide in the sheet laps |
 | `copper_line_above_wl_v` | 0.132 | — | — | RECONSTRUCTED §8 sheathing carried 2 ft 9 in above the load waterline, converted into the hull V coordinate through the feature heights at the midship station |
+| `copper_sheets_along` | 22 | — | — | SECONDARY §8 sheets 4 ft on the long edge, laid fore and aft over 121 ft of waterline; counted across the hull base map |
+| `copper_sheets_up` | 26 | — | — | SECONDARY §8 sheets 14 in on the short edge; the courses that fit between the keel and the sheathing line, counted over the whole V range of the base map |
+| `copper_lap_relief` | 0.34 | — | — | RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation |
+| `copper_nail_relief` | 0.55 | — | — | RECONSTRUCTED §8 a raised nail head; tuned so the nails catch the sun at beam distance |
+| `hull_normal_scale` | 1.15 | — | — | RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance |
+| `copper_pattern_depth` | 0.62 | — | — | RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance |
+| `copper_sheet_variation` | 0.16 | — | — | RECONSTRUCTED §8 no two sheets weather alike, and it is the spread between them that stops the bottom reading as one printed panel |
 | `ochre_strake_below_sill_v` | 0.008 | — | — | MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads |
-| `ochre_strake_above_head_v` | 0.008 | — | — | MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base |
+| `ochre_strake_above_head_v` | 0.004 | — | — | MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base. The strake is carried just clear of the port heads and no further: the band between the heads and the rail is narrow, and any more ochre than this closes it up and the ship stops reading as black |
+| `ochre_moulding_v` | 0.006 | — | — | MEASURED §8 a moulding about 4 in deep on a topside whose V range spans some 22 ft; the reference photograph shows one such line on the sheer and none above the port heads |
 | `deck` | #C9BCA4 | 0.72 | 0 | SECONDARY §8 holystoned deck planking |
 | `deck_seam` | #3A332A | 0.8 | 0 | SECONDARY §8 pitched caulking |
 | `timber` | #8A6A44 | 0.7 | 0 | SECONDARY §8 oak, bright |
@@ -991,12 +1034,45 @@ and the ochre strake follow the sheer.
 | `glazing` | #DDE6E0 | 0.08 | 0 | SECONDARY §8 crown glass, faint green cast |
 | `sail` | #D6CDB6 | 0.85 | 0 | SECONDARY §8 weathered flax; the photo samples #ddd6c4 lit and #a89880 shaded |
 | `sail_seam` | #C6BDA7 | 0.88 | 0 | SECONDARY §8 seams between cloths |
-| `sail_transmission` | 0.06 | — | — | RECONSTRUCTED §8 flax canvas is translucent backlit; tuned against the reference photograph, in which the sails are opaque |
+| `sail_glow` | 0.055 | — | — | RECONSTRUCTED §8 flax canvas is translucent backlit; the emission that replaces it is tuned against the reference photograph, in which the sails glow faintly and are opaque |
+| `sail_glow_tint` | #FFEFD2 | — | 0 | RECONSTRUCTED §8 light through flax picks up the warmth of the cloth, so the glow is warmer than the cloth itself |
 | `rigging_tarred` | #2A211A | 0.85 | 0 | SECONDARY §8 standing rigging, tarred hemp |
 | `rigging_hemp` | #A89574 | 0.9 | 0 | SECONDARY §8 running rigging, untarred hemp |
 | `ensign_blue` | #22375E | 0.9 | 0 | SECONDARY §8 blue ensign bunting, desaturated from the Flag Institute blue |
 | `ensign_red` | #A32D34 | 0.9 | 0 | SECONDARY §8 bunting red |
 | `ensign_white` | #E8E2D4 | 0.9 | 0 | SECONDARY §8 bunting white |
+| `sun_colour` | #FFF1DA | — | 0 | RECONSTRUCTED §8 direct sunlight a few hours off noon, about 5000 K |
+| `sun_intensity` | 2.6 | — | — | RECONSTRUCTED §8 bright enough for a sunny day, not so bright that the deck, the boats and the canvas clip to white and lose their colour |
+| `sun_distance` | 70 | — | — | RECONSTRUCTED §8 far enough outside a ship 59 m over all that the shadow camera can see all of her |
+| `sea_sun_azimuth_deg` | 296 | — | — | RECONSTRUCTED §8 a little forward of the port beam, so that the side the verification views look at is the lit side and the rig throws its shadow away from the camera |
+| `sea_sun_elevation_deg` | 34 | — | — | RECONSTRUCTED §8 low enough to light the topsides rather than only the deck, high enough that the sail plan does not shade the whole ship |
+| `studio_sun_azimuth_deg` | 308 | — | — | RECONSTRUCTED §8 matched to the key light in the reference photograph, which comes over the photographer's left shoulder |
+| `studio_sun_elevation_deg` | 44 | — | — | RECONSTRUCTED §8 matched to the reference photograph, where the shadows under the channels are short |
+| `sea_sky_colour` | #E6DCC6 | — | 0 | RECONSTRUCTED §8 the warm haze low in a sunny sky, which is the part of it a ship's side actually sees; tuned so sunlit canvas lands on the photograph's #ddd6c4 |
+| `sea_water_colour` | #4A5A56 | — | 0 | RECONSTRUCTED §8 bounce off the sea: dark, and green-grey rather than blue, so that it does not tint the black topsides |
+| `sea_fill_intensity` | 0.62 | — | — | RECONSTRUCTED §8 enough that the black topsides are not a silhouette, little enough that the sun still decides the colour of everything it touches |
+| `studio_sky_colour` | #F0DCB4 | — | 0 | RECONSTRUCTED §8 the warm backdrop of the reference photograph |
+| `studio_floor_colour` | #8A7250 | — | 0 | RECONSTRUCTED §8 bounce off the photographer's warm sweep |
+| `studio_fill_intensity` | 0.85 | — | — | RECONSTRUCTED §8 the reference photograph is lit softly; its shadows are open |
+| `rim_colour` | #BFD2E2 | — | 0 | RECONSTRUCTED §8 open sky on the shaded side |
+| `rim_intensity` | 0.22 | — | — | RECONSTRUCTED §8 an edge, not a second key; at 0.35 with a colder colour it was half of why the shaded canvas sampled #7e9bb0 |
+| `rim_azimuth_deg` | 110 | — | — | RECONSTRUCTED §8 on the starboard quarter, opposite the sun |
+| `rim_elevation_deg` | 32 | — | — | RECONSTRUCTED §8 a horizontal sea mirrors a light straight back at the camera when the light stands at the angle the camera looks down at the water. At 14 degrees that put a wall of glare across the quarter of every sea render, so the rim is carried above the band the water can return |
+| `sea_env_colour` | #B9B4A2 | — | 0 | RECONSTRUCTED §8 the whole sky and sea averaged as seen from a hull: warm haze, not the blue of the zenith. It is what the copper reflects |
+| `studio_env_colour` | #DCC199 | — | 0 | RECONSTRUCTED §8 the reference photograph's backdrop, averaged |
+| `env_sun_colour` | #FFF6E4 | — | 0 | RECONSTRUCTED §8 the sun's own disc in the environment, which is what gives copper and gilt a highlight to catch |
+| `env_sun_extent` | 34 | — | — | RECONSTRUCTED §8 the card is 34 m across at 55 m, about 35 degrees. Wider than the real sun by a long way, because a half-degree disc survives neither the PMREM blur nor a roughness of 0.44 — but small enough that the sea does not mirror it as a wall of white |
+| `env_sun_elevation_deg` | 58 | — | — | RECONSTRUCTED §8 the card is carried well above the sun's own elevation on purpose. It is there to give the copper and the gilt a highlight, and at the sun's real height the sea mirrors it straight back into the camera as a glare path |
+| `hull_env_intensity` | 1.8 | — | — | RECONSTRUCTED §8 the copper band is metal, so the environment is the only thing that lights it at all; tuned so the sheathing lands near the photograph's #982f0f-#93401e rather than a third of that |
+| `sea_surface_colour` | #153549 | — | 0 | RECONSTRUCTED §8 deep water on a sunny day, dark enough that a black hull still reads against it |
+| `sea_surface_roughness` | 0.4 | — | — | RECONSTRUCTED §8 a light chop rather than a mirror; at 0.16 the sun's path across the water came back as a hard white wall |
+| `sea_surface_env_intensity` | 0.42 | — | — | RECONSTRUCTED §8 the water is held back from the environment so that warming the sky for the ship's sake does not bleach the sea |
+| `shadow_taps` | 3 | — | — | RECONSTRUCTED §8 three is the fewest that reads as a penumbra rather than as a double image, and each one costs a full shadow pass |
+| `shadow_spread_deg` | 2.6 | — | — | RECONSTRUCTED §8 five times the sun's true half-degree, which is what it takes for the penumbra to be visible at this scale; tuned on the ship's shadow on the sea in the beam view |
+| `shadow_map_size` | 3072 | — | — | RECONSTRUCTED §8 over a shadow camera 96 m across this is 31 mm to the texel, fine enough that a shroud casts a line and not a staircase |
+| `shadow_extent` | 48 | — | — | RECONSTRUCTED §8 half-width of the shadow camera: a ship 59 m over all and 45 m to the trucks, plus the reach of her shadow on the water |
+| `shadow_bias` | -0.0004 | — | — | RECONSTRUCTED §8 with a normal bias as well, the depth bias only has to close the last of the acne, and a large one detaches a shadow from its caster |
+| `shadow_normal_bias` | 0.035 | — | — | RECONSTRUCTED §8 rather more than a texel of the shadow camera, which is what stops the jagged self-shadowing along the sails and the topsides |
 
 
 ---

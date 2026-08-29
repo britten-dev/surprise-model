@@ -101,37 +101,89 @@ export function planking({
 }
 
 /**
- * Copper sheathing. Sheets are laid like slates, each overlapping the one below and
- * the one ahead, and each held by a grid of nails. It is the nails that catch the
- * light and make copper read as copper rather than as brown paint.
+ * Copper sheathing. Sheets are laid like slates, each overlapping the one below and the
+ * one ahead, and each held by a grid of nails.
+ *
+ * Three things have to be true or the bottom of the ship reads as brick-red paint:
+ *
+ * * **The lap has to show.** A sheet is doubled where it laps its neighbours, so it
+ *   stands a thickness proud, catches the light along one edge and drops a shadow into
+ *   the seam. A one-pixel outline round each sheet is not that: it averages away in the
+ *   first mipmap and the sheathing goes flat at any distance at all.
+ * * **No two sheets weather alike.** One exact colour repeated five hundred times reads
+ *   as printed. The spread between sheets is most of what makes the bottom look beaten.
+ * * **The nails have to survive minification**, because they are the only specular
+ *   detail on the whole underwater body and they are what tells the eye it is metal.
+ *
+ * With `height` the same pattern is drawn as a grey height field instead of in copper,
+ * so `normalFrom` can read the lap and the nail out of it rather than reading the
+ * difference between copper and its oxide.
  */
 export function copperSheathing({
   base = '#8d5a3c', edge = '#6d4028', nail = '#a97a55',
   sheetsX = 16, sheetsY = 20, size = 1024, seed = 23,
+  variation = 0.16, lap = 0.34, nailRelief = 0.55, height = false,
 } = {}) {
-  return memo(`copper:${base}:${sheetsX}x${sheetsY}:${seed}`, () => {
+  const key = `copper:${base}:${edge}:${nail}:${sheetsX}x${sheetsY}:${size}:${seed}`
+    + `:${variation}:${lap}:${nailRelief}:${height}`;
+  return memo(key, () => {
     const { c, g } = canvas(size);
     const r = rng(seed);
-    g.fillStyle = base;
+    const grey = (v) => {
+      const n = Math.round(Math.max(0, Math.min(1, v)) * 255);
+      return `rgb(${n},${n},${n})`;
+    };
+    g.fillStyle = height ? grey(0.5) : base;
     g.fillRect(0, 0, size, size);
+
     const w = size / sheetsX, h = size / sheetsY;
+    // The lap is a real width, not a hairline: about a tenth of the short side of a
+    // sheet, which is what a 14 in sheet lapping an inch and a half comes to.
+    const lip = Math.max(1.5, h * 0.11);
+    // Big enough to survive a mipmap. Below about two pixels a nail averages away to
+    // nothing and the copper goes flat again, which is exactly what it used to do.
+    const dot = Math.max(2, size / 420);
+
     for (let y = 0; y < sheetsY; y++) {
       for (let x = 0; x < sheetsX; x++) {
         // Every other course is offset half a sheet, as they were actually laid.
         const px = (x + (y % 2) * 0.5) * w;
         const py = y * h;
-        g.fillStyle = `rgba(255,255,255,${(r() * 0.09).toFixed(3)})`;
-        g.fillRect(px, py, w, h);
-        g.strokeStyle = edge;
-        g.lineWidth = 1.6;
-        g.strokeRect(px, py, w, h);
-        g.fillStyle = nail;
-        const nx = 5, ny = 4;
+
+        // The face of the sheet, each with its own weathering.
+        if (!height) {
+          g.save();
+          g.filter = `brightness(${(1 + (r() - 0.5) * 2 * variation).toFixed(3)})`;
+          g.fillStyle = base;
+          g.fillRect(px, py, w, h);
+          g.restore();
+          g.filter = 'none';
+        } else {
+          r(); // keep the two passes in step so the height field matches the colour
+        }
+
+        // The lap. A shadowed band along the top and the leading edge, where the sheet
+        // above and ahead lies over this one, and a bright band along the bottom and the
+        // trailing edge, where this sheet's own doubled edge stands proud.
+        g.globalAlpha = height ? 1 : 0.9;
+        g.fillStyle = height ? grey(0.5 - lap * 0.5) : edge;
+        g.fillRect(px, py, w, lip);
+        g.fillRect(px, py, lip, h);
+        g.globalAlpha = height ? 1 : 0.35;
+        g.fillStyle = height ? grey(0.5 + lap * 0.5) : nail;
+        g.fillRect(px, py + h - lip * 0.6, w, lip * 0.6);
+        g.fillRect(px + w - lip * 0.6, py, lip * 0.6, h);
+        g.globalAlpha = 1;
+
+        // The nails, round the edge of each sheet.
+        g.fillStyle = height ? grey(0.5 + nailRelief * 0.5) : nail;
+        const nx = 6, ny = 3;
         for (let i = 0; i <= nx; i++) {
           for (let j = 0; j <= ny; j++) {
-            // Nails only round the edge of each sheet, which is where they went.
             if (i > 0 && i < nx && j > 0 && j < ny) continue;
-            g.fillRect(px + (i / nx) * w - 0.9, py + (j / ny) * h - 0.9, 1.8, 1.8);
+            g.beginPath();
+            g.arc(px + (i / nx) * w, py + (j / ny) * h, dot / 2, 0, 7);
+            g.fill();
           }
         }
       }

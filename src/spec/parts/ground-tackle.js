@@ -57,7 +57,11 @@ export const GROUND_TACKLE_SPEC = {
   // cathead_stive_deg and cathead_moulded — exactly as `src/ship/head.js` does, so that
   // the anchor can never hang from a cathead that has moved. Only the drop from the
   // cathead's underside to the ring, which is gear and not structure, lives here.
-  anchor_ring_below_cathead: m(ft(2, 0), 'RECONSTRUCTED §13.3 the depth of a three-sheave cat block and its strop, hung under the cathead', { noAudit: true }),
+  // Measured DOWN FROM THE SHEAVE CENTRE at the outer end of the cathead, which is the
+  // point the cat fall actually reeves through and therefore the point the anchor hangs
+  // from. It was measured from the cathead's underside before, which is a place nothing is
+  // fast to.
+  anchor_ring_below_cathead: m(ft(2, 6), 'RECONSTRUCTED §13.3 a three-sheave cat block, its strop and the hook into the ring, hanging from the sheaves in the cathead', { noAudit: true }),
 
   // The crown is fished up onto the fore channel, which tapers at its after end to take it
   // (Steel :41944). The channel's height is the channels module's `channel_top_below_rail`,
@@ -66,11 +70,21 @@ export const GROUND_TACKLE_SPEC = {
   anchor_crown_above_channel: m(ft(0, 4), 'RECONSTRUCTED §13.3 the arm bearing on the channel, not sunk into it', { noAudit: true }),
   anchor_crown_outboard_of_side: m(ft(1, 6), 'RECONSTRUCTED §13.3 the crown bedded a foot and a half outboard of the ship\'s side, inside the channel\'s outer edge', { noAudit: true }),
 
-  // How far the stock is canted up from the athwartships horizontal. A catted anchor is
-  // turned on its shank until one fluke lies outboard and clear of the side and the other
-  // shows above the rail; the reference photograph shows the stocks standing well up and
-  // canted outboard over the rail.
-  anchor_stock_cant_deg: n(66, 'RECONSTRUCTED §PHOTO the stock canted outboard over the rail, read off the reference photograph', { noAudit: true }),
+  // How far the stock is canted up from the athwartships horizontal, measured on the
+  // outboard half: 0 would lay it flat athwartships, 90 would stand it straight up.
+  //
+  // THE STOCK IS THE LARGEST SINGLE PIECE AT THE BOW and where it points decides whether
+  // the bow reads. It is 16 ft 6 in long, so it reaches 8 ft 3 in each way from a shank
+  // that hangs 2 ft 6 in under the cathead — no angle at all will keep both of its ends
+  // below the cathead, and that is arithmetic, not a modelling choice. What the angle DOES
+  // decide is whether that reach goes out over the water or up the ship's side, and at 66
+  // degrees, which is what stood here, it went out: the head of the stock stood a metre
+  // outboard of the outer face of the cathead and a metre above it, and the heel swung in
+  // across the head rails. At 84 the stock stands very nearly upright and leans just enough
+  // to bring its head over the outer face of the cathead and its heel down against the
+  // topside — the head clear over the forecastle rail as the reference photograph shows,
+  // the heel a metre and a third clear of the outermost head rail.
+  anchor_stock_cant_deg: n(84, 'RECONSTRUCTED §PHOTO the stock standing up beside the cathead and canted out over the forecastle rail, read off the reference photograph and set so that the whole stock clears the head rails', { noAudit: true }),
 
   // ---------------------------------------------------- the spares on the forecastle
   // Steel's outfit is four large anchors and two small. The two bowers take the catheads
@@ -81,7 +95,16 @@ export const GROUND_TACKLE_SPEC = {
   // the arms, which is why Steel counts stocks as an item of the outfit in their own right.
   sheet_anchor_scale: n(1.0, 'SECONDARY §13.1 Steel :43220 — the sheet is one of the four large anchors, so it is a bower\'s size', { noAudit: true }),
   kedge_anchor_scale: n(0.585, 'RECONSTRUCTED §13.1 the kedge at one fifth of a bower\'s weight, scaled by the cube root', { noAudit: true }),
-  stowed_anchor_ring_from_stem: m(ft(16, 0), 'RECONSTRUCTED §13.1 stowed on the forecastle abaft the fore mast, ring forward', { noAudit: true }),
+  // A stowed anchor has to fit on the deck it is stowed on. The forecastle runs from the
+  // beakhead bulkhead at 12 ft abaft the stem to the break at 31 ft 8 in — 19 ft 8 in of
+  // deck — and a bower is 16 ft 6 in from ring to crown. At 16 ft the ring left the crown
+  // and both palms hanging in the air abaft the break, over the waist. At 13 ft 6 in the
+  // whole anchor is on the deck, with a foot and a half of it abaft the bulkhead and a foot
+  // and a half of deck to spare aft of the crown. The module clamps against
+  // stowed_anchor_forward_of_break as well, so the anchor stays on the deck if the break or
+  // the shank ever moves.
+  stowed_anchor_ring_from_stem: m(ft(13, 6), 'RECONSTRUCTED §13.1 stowed on the forecastle, ring forward, set so that the crown of the larger spare lies clear forward of the forecastle break', { noAudit: true }),
+  stowed_anchor_forward_of_break: m(ft(1, 6), 'RECONSTRUCTED §13.1 how far forward of the break of the forecastle the crown of a stowed anchor is chocked, so that the palms bear on the deck and not on the coaming', { noAudit: true }),
   stowed_anchor_inboard_of_side: m(ft(4, 0), 'RECONSTRUCTED §13.1 the shank laid four feet in from the ship\'s side, leaving the gangway clear', { noAudit: true }),
   stowed_anchor_above_deck: m(ft(0, 5), 'RECONSTRUCTED §13.1 the shank bearing on the palms and on its chocks', { noAudit: true }),
   stowed_stock_beside_shank: m(ft(1, 9), 'RECONSTRUCTED §13.1 the unshipped stock lashed on deck alongside its own anchor', { noAudit: true }),

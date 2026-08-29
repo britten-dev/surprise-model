@@ -198,84 +198,133 @@ const railParam = (curve, u) => clamp((u - curve.uAft) / (curve.uHair - curve.uA
  * kind a Revolutionary French corvette named *Unite* would have carried and the Navy
  * Board would have been too thrifty to replace.
  *
- * It is built to read in silhouette rather than to be a portrait: hem, waist, shoulder,
- * head and two arms, one of them raised. Everything is turned about a vertical axis so
- * the whole figure costs a few hundred triangles.
+ * It is built to read in SILHOUETTE rather than to be a portrait. A figurehead is looked
+ * at from a hundred metres and for one second, and what decides whether it reads as a
+ * person is a short list: a head standing clear of the shoulders on a neck, a waist that
+ * is narrower than the hips and the shoulders, and two arms that break the outline of the
+ * body. It needs no face. What it must not be is a cone, which is what a drapery that runs
+ * straight from the hem to the shoulders with the head sunk into it comes out as.
+ *
+ * So the body is one turned stack — plinth, hem, hips, waist, chest, shoulders, neck,
+ * head — driven by a profile of radii against height, flattened fore and aft because a
+ * figurehead is carved out of a slab sided close to the knee of the head rather than
+ * modelled in the round. The blue mantle of the reference photograph goes over the
+ * shoulders as a separate skin, and the arms are two tapered bars carried forward.
+ *
+ * The whole figure costs a few hundred triangles and is one draw call for the body.
  */
 function figurehead(cfg, mats) {
   const g = new THREE.Group();
   g.name = 'figurehead';
-  const radial = Math.max(4, Math.round(cfg.latheSegments / 2));
-
-  const h = S('figurehead_height');
-  const hem = S('figurehead_hem_diameter') / 2;
-  const waist = S('figurehead_waist_diameter') / 2;
-  const yWaist = S('figurehead_waist_height');
-  const yShoulder = S('figurehead_shoulder_height');
-  const shoulder = S('figurehead_shoulder_breadth') / 2;
-  const headR = S('figurehead_head_diameter') / 2;
-  const armR = S('figurehead_arm_diameter') / 2;
-  const armL = S('figurehead_arm_length');
+  const radial = Math.max(5, Math.round(cfg.latheSegments / 2));
   const simple = cfg.figurehead === 'simple';
 
-  // The drapery from the plinth to the waist. Blue, as the reference photograph shows.
-  const skirt = new THREE.Mesh(
-    new THREE.CylinderGeometry(waist, hem, yWaist, radial),
-    mats.bunting('ensign_blue')
-  );
-  skirt.geometry.translate(0, yWaist / 2, 0);
-  skirt.name = 'figurehead_drapery';
-  g.add(skirt);
+  const h = S('figurehead_height');
+  const plinth = S('figurehead_plinth_diameter') / 2;
+  const hem = S('figurehead_hem_diameter') / 2;
+  const yHem = S('figurehead_hem_height');
+  const hip = S('figurehead_hip_breadth') / 2;
+  const yHip = S('figurehead_hip_height');
+  const waist = S('figurehead_waist_diameter') / 2;
+  const yWaist = S('figurehead_waist_height');
+  const chest = S('figurehead_chest_breadth') / 2;
+  const shoulder = S('figurehead_shoulder_breadth') / 2;
+  const yShoulder = S('figurehead_shoulder_height');
+  const neck = S('figurehead_neck_diameter') / 2;
+  const yNeck = yShoulder + S('figurehead_neck_height');
+  const headR = S('figurehead_head_diameter') / 2;
+  const yHead = h - headR;              // the centre of the head; its crown is at h
+  const depth = S('figurehead_depth_fraction');
 
-  // Torso and shoulders, in the white lead that a painted head of the period wore.
-  const torso = new THREE.Mesh(
-    new THREE.CylinderGeometry(shoulder, waist, yShoulder - yWaist, radial),
-    mats.white
-  );
-  torso.geometry.translate(0, (yShoulder + yWaist) / 2, 0);
-  torso.name = 'figurehead_torso';
-  g.add(torso);
+  // The profile of the body, as [half-breadth, height]. Read it as the outline of the
+  // carving seen from ahead: the drapery rolling under at the plinth, standing widest a
+  // few inches up, drawing in through the hips to the waist, opening out again to the
+  // shoulders, then the step in to the neck and the ball of the head above it.
+  const outline = simple
+    ? [[plinth, 0], [hem, yHem], [waist, yWaist], [shoulder, yShoulder],
+       [neck, yNeck], [headR, yHead], [0.02 * h, h]]
+    : [
+      [plinth, 0],
+      [hem * 0.98, yHem * 0.5],
+      [hem, yHem],
+      [(hem + hip) / 2, (yHem + yHip) / 2],
+      [hip, yHip],
+      [waist * 1.06, (yHip + yWaist) / 2],
+      [waist, yWaist],
+      [chest, (yWaist + yShoulder) / 2],
+      [shoulder, yShoulder * 0.97],
+      [shoulder * 0.72, yShoulder],
+      [neck, (yShoulder + yNeck) / 2],
+      [neck, yNeck],
+      [headR * 0.78, yNeck + (yHead - yNeck) * 0.45],
+      [headR, yHead],
+      [headR * 0.86, yHead + headR * 0.55],
+      [headR * 0.45, yHead + headR * 0.9],
+      [0.02 * h, h],
+    ];
 
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(headR, radial, Math.max(3, Math.round(radial / 2))),
-    mats.white
+  // LatheGeometry turns the outline about +Y; scaling z afterwards flattens the carving
+  // fore and aft without touching its breadth or its height, so the audited caliper of the
+  // body is still the plinth-to-crown span and nothing else.
+  const body = new THREE.LatheGeometry(
+    outline.map(([r, y]) => new THREE.Vector2(Math.max(r, 0.004), y)),
+    radial
   );
-  head.geometry.translate(0, h - headR, 0);
-  head.name = 'figurehead_head';
-  g.add(head);
+  body.scale(1, 1, depth);
+  body.computeVertexNormals();
+  const bodyMesh = new THREE.Mesh(body, mats.white);
+  bodyMesh.name = 'figurehead_body';
+  g.add(bodyMesh);
+
+  // The mantle: the blue drapery over her shoulders. In the reference photograph the blue
+  // is a band across the upper body with the pale robe below it and the pale head above,
+  // so it is built as a skin standing a inch off the body between those two lines.
+  const proud = S('figurehead_mantle_proud');
+  const yMantleLo = yWaist - S('figurehead_mantle_below_waist');
+  const yMantleHi = yNeck - S('figurehead_mantle_top_below_head');
+  const mantleOutline = [
+    [waist * 1.1 + proud, yMantleLo],
+    [waist + proud, yWaist],
+    [chest + proud, (yWaist + yShoulder) / 2],
+    [shoulder + proud, yShoulder * 0.97],
+    [shoulder * 0.66, yMantleHi],
+  ];
+  const mantle = new THREE.LatheGeometry(
+    mantleOutline.map(([r, y]) => new THREE.Vector2(r, y)), radial, 0, Math.PI * 2
+  );
+  mantle.scale(1, 1, depth);
+  mantle.computeVertexNormals();
+  const mantleMesh = new THREE.Mesh(mantle, mats.bunting('ensign_blue'));
+  mantleMesh.name = 'figurehead_mantle';
+  g.add(mantleMesh);
 
   if (!simple) {
-    // Two arms: the near one down along the drapery, the far one raised forward, which
-    // is what gives the figure its gesture at any distance.
+    // Two arms carried down and forward, spread a little off the sides. They are what
+    // break the body's outline; without them the figure is a bottle.
+    const armR = S('figurehead_arm_diameter') / 2;
+    const armL = S('figurehead_arm_length');
+    const fwd = deg(S('figurehead_arm_forward_deg'));
+    const spread = deg(S('figurehead_arm_spread_deg'));
     const arms = [];
     for (const side of [1, -1]) {
-      const from = new THREE.Vector3(side * shoulder, yShoulder, 0);
-      const to = side > 0
-        ? new THREE.Vector3(side * shoulder, yShoulder - armL, -armL / 2)
-        : new THREE.Vector3(side * shoulder, yShoulder + armL / 2, -armL);
-      const dir = new THREE.Vector3().subVectors(to, from);
-      const arm = new THREE.CylinderGeometry(armR, armR, dir.length(), radial);
+      const dir = new THREE.Vector3(
+        side * Math.sin(spread),
+        -Math.cos(spread) * Math.cos(fwd),
+        -Math.cos(spread) * Math.sin(fwd)
+      ).normalize();
+      const from = new THREE.Vector3(side * shoulder * 0.86, yShoulder * 0.95, -armR * 0.5);
+      // Tapered from the shoulder to the wrist, which reads as an arm and not as a pipe.
+      const arm = new THREE.CylinderGeometry(armR * 0.7, armR, armL, Math.max(4, radial - 2));
+      arm.translate(0, -armL / 2, 0);
       arm.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0), dir.clone().normalize()
+        new THREE.Vector3(0, -1, 0), dir
       ));
-      arm.translate((from.x + to.x) / 2, (from.y + to.y) / 2, (from.z + to.z) / 2);
+      arm.translate(from.x, from.y, from.z);
       arms.push(arm);
     }
     const armMesh = new THREE.Mesh(mergeGeometries(arms), mats.white);
     armMesh.name = 'figurehead_arms';
     g.add(armMesh);
-
-    // The cloak falling behind her, which is what carries the blue up the figure and
-    // ties her back into the hair bracket.
-    // Half a cone, opening aft, so it reads as cloth falling behind her rather than
-    // as a shell over her face.
-    const cloak = new THREE.Mesh(
-      new THREE.CylinderGeometry(shoulder, hem, yShoulder, radial, 1, true, -Math.PI / 2, Math.PI),
-      mats.bunting('ensign_blue')
-    );
-    cloak.geometry.translate(0, yShoulder / 2, 0);
-    cloak.name = 'figurehead_cloak';
-    g.add(cloak);
   }
 
   return g;
@@ -754,7 +803,11 @@ export function buildHead(cfg, mats, model, ctx) {
     // Forward, over the water, following the rake of the head — a figure leaning back
     // reads as falling into the ship.
     fig.rotation.x = -deg(S('figurehead_rake_deg'));
-    audit(fig, 'figurehead_height', 'extent_max');
+    // Measured on the body alone and with the caliper, not with a bounding box. The figure
+    // is raked 30 degrees, so no side of any box round her is the height of anything; the
+    // caliper span from the edge of the plinth to the crown of her head does not care which
+    // way she leans, and is the height plus the half-plinth, about two per cent.
+    audit(fig.getObjectByName('figurehead_body'), 'figurehead_height', 'extent_caliper');
     group.add(fig);
   }
 

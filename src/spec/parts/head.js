@@ -92,9 +92,17 @@ export const HEAD_SPEC = {
   // fraction s of its length is s raised to this power, so a figure above 1 is a rail
   // that lies flat off the bow and sweeps up into the figure. Fitted to four points
   // traced off the lowest rail on ZAZ3067 — at 2.3, 4.5, 6.8 and 10.0 ft forward of the
-  // stem the rail has made 0.20, 0.38, 0.58 and 0.90 of its rise, against 0.20, 0.38,
-  // 0.58 and 0.90 for an exponent of 1.25.
-  head_rail_profile_exponent: n(1.25, `${Z}: fitted to four points on the lowest rail`, { noAudit: true }),
+  // stem the rail has made 0.20, 0.38, 0.58 and 0.90 of its rise.
+  //
+  // RE-FITTED. The figure carried here before was 1.25, and it does not fit those four
+  // points. The run of the lowest rail is from 1.0 ft ABAFT the stem to 10.0 ft forward
+  // of it, so the four traced stations stand at s = 0.30, 0.50, 0.71 and 1.00 of the
+  // run. Solving ln(rise)/ln(s) at the first three gives 1.34, 1.40 and 1.59; the fourth
+  // carries no information, because s = 1 gives a rise of 1 for any exponent at all. The
+  // mean of the three is 1.44. At 1.25 the rail is very nearly a straight line, which is
+  // neither what the draught draws nor what the reference photograph shows — the
+  // photograph's rails are three long hollow sweeps up into the figure.
+  head_rail_profile_exponent: n(1.44, `${Z}: re-fitted to the same four points on the lowest rail — see the note above`, { noAudit: true }),
 
   // Each rail is fixed by three things: where it lands on the ship's side, how high its
   // fore end stands at the hair bracket, and how far out it bows in plan. The three
@@ -208,18 +216,49 @@ export const HEAD_SPEC = {
   // personification, pine, painted rather than gilt.
   figurehead_forward_of_stem: m(ft(11, 0), `${R8F}; sited on the head of the knee where ZAZ3067 draws a small figure, 66 px forward of the stem`, { noAudit: true }),
   figurehead_above_rail: m(ft(0, 6), `${R8F}; the plinth on the hair bracket`, { noAudit: true }),
-  // The audit measures the figure's longest dimension, which is not her height but the
-  // reach of her raised arm out over the water, so the tolerance is wide.
-  figurehead_height: m(ft(4, 0), `${R8F}; research 08 §4.4 — "the scale was drastically reduced", so a small figure`, { tolerance: 0.22 }),
-  figurehead_rake_deg: n(30, `${R8F}; the figure leans back against the hair bracket, following the run of the head`, { noAudit: true }),
+  // The audit measures the caliper span of the figure's body — the greatest distance
+  // between any two points on the plinth-to-crown stack, which is from the outer edge of
+  // the plinth to the top of her head. That is the height and the half-plinth together,
+  // and on these numbers it is about 2 per cent longer than the height alone, which is
+  // what the tolerance allows for. The caliper is used rather than a bounding box because the
+  // figure is raked 30 degrees, and a bounding box of a raked figure is not the height of
+  // anything. The arms and the mantle are deliberately outside the measured mesh.
+  figurehead_height: m(ft(4, 0), `${R8F}; research 08 §4.4 — "the scale was drastically reduced", so a small figure`, { tolerance: 0.05 }),
+  figurehead_rake_deg: n(30, `${R8F}; the figure leans forward over the water, following the run of the head`, { noAudit: true }),
   figurehead_hem_diameter: m(ft(2, 0), `${R8F}; the spread of the drapery at the plinth`, { noAudit: true }),
   figurehead_waist_diameter: m(ft(1, 2), `${R8F}`, { noAudit: true }),
   figurehead_waist_height: m(ft(2, 3), `${R8F}`, { noAudit: true }),
-  figurehead_shoulder_height: m(ft(3, 3), `${R8F}`, { noAudit: true }),
+  // 3 ft 0 in, not 3 ft 3 in. The head is 9 in through and her whole height is 4 ft, so a
+  // shoulder line at 3 ft 3 in leaves nothing at all between the shoulders and the crown —
+  // the head has to be sunk into the chest, which is exactly what made the old figure read
+  // as a cone. At 3 ft 0 in there is a 3 in neck and a 9 in head above it, and the two come
+  // out level with the top of the drapery's height.
+  figurehead_shoulder_height: m(ft(3, 0), `${R8F}; set so that the neck and the head together make up the remaining quarter of her height`, { noAudit: true }),
   figurehead_shoulder_breadth: m(ft(1, 4), `${R8F}`, { noAudit: true }),
   figurehead_head_diameter: m(ft(0, 9), `${R8F}`, { noAudit: true }),
   figurehead_arm_diameter: m(ft(0, 4), `${R8F}`, { noAudit: true }),
   figurehead_arm_length: m(ft(1, 9), `${R8F}`, { noAudit: true }),
+
+  // What turns a cone into a person. A figurehead is read at a hundred metres and in one
+  // second, so what has to be right is the outline: a head clear of the shoulders on a
+  // neck, a waist, and two arms that break the line of the body. These rows carve those.
+  figurehead_neck_diameter: m(ft(0, 4.5), `${R8F}; the neck at three fifths of the head, so that the head reads as a head and not as a knob on the shoulders`, { noAudit: true }),
+  figurehead_neck_height: m(ft(0, 3), `${R8F}; the gap between the shoulder line and the chin`, { noAudit: true }),
+  figurehead_chest_breadth: m(ft(1, 3), `${R8F}; the body between the waist and the shoulder, wider than the waist and narrower than the shoulder, which is what gives the torso its taper`, { noAudit: true }),
+  figurehead_hip_breadth: m(ft(1, 5), `${R8F}; the drapery over the hips, the widest of the body above the hem`, { noAudit: true }),
+  figurehead_hip_height: m(ft(1, 6), `${R8F}; the hips, under the drapery`, { noAudit: true }),
+  figurehead_plinth_diameter: m(ft(1, 8), `${R8F}; the foot of the carving where it is let into the hair bracket, narrower than the hem because the drapery rolls under above it`, { noAudit: true }),
+  figurehead_hem_height: m(ft(0, 4), `${R8F}; how far above the plinth the drapery stands widest`, { noAudit: true }),
+  // A figure carved on the head of the knee is a slab of pine sided a little wider than
+  // the knee it stands on, so she is broader athwartships than she is deep fore and aft.
+  figurehead_depth_fraction: n(0.62, `${R8F}; the fore-and-aft depth of the carving as a fraction of its athwartships breadth — a figurehead is carved out of a stack sided close to the knee of the head, so it is a flat-backed relief rather than a statue in the round`, { noAudit: true }),
+  figurehead_arm_forward_deg: n(24, `${R8F}; both arms carried forward of the body, which is the pose every surviving small figurehead of the date is carved in and the one thing that reads at a distance`, { noAudit: true }),
+  figurehead_arm_spread_deg: n(16, `${R8F}; and spread a little off the sides, so the arms show against the drapery instead of disappearing into it`, { noAudit: true }),
+  // The mantle: the blue drapery over her shoulders in the reference photograph, which is
+  // the only strong colour anywhere on the head of the ship.
+  figurehead_mantle_top_below_head: m(ft(0, 2), `${R8F}; the collar of the mantle, just below the neck`, { noAudit: true }),
+  figurehead_mantle_below_waist: m(ft(0, 5), `${R8F}; the mantle falling a little past the waist, which is where the blue stops and the pale robe begins in the reference photograph`, { noAudit: true }),
+  figurehead_mantle_proud: m(ft(0, 1), `${R8F}; the cloth standing off the body`, { noAudit: true }),
 
   hair_bracket_length: m(ft(4, 0), 'SECONDARY §6 Steel :3043, the moulding terminating the head rails and running into the back of the figure', { noAudit: true }),
   hair_bracket_sided: m(ft(0, 5), 'RECONSTRUCTED §6 a moulding sided as the rails it gathers', { noAudit: true }),

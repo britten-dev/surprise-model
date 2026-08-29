@@ -11,9 +11,11 @@
 // generator can ask "where is the wale at this station" and get an answer.
 import * as THREE from 'three';
 import { SPEC, OFFSETS } from '../spec/spec.js';
+
+const KEEL_HALF_SIDING = 0.168;
 import { monotoneCubic, naturalCubic } from '../util/interp.js';
 import { loftSections, mergeGeometries } from '../util/loft.js';
-import { lerp, clamp, deg } from '../util/math.js';
+import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 
 // The feature stops, bottom to top. The V values are arbitrary but fixed: they are the
@@ -53,11 +55,11 @@ export function hullModel() {
   // not bulge past its neighbours just to be smooth.
   const sectionX = stationZ.map((_, i) => {
     const yBottom = OFFSETS.rabbetY[i];
-    // The section is carried right up to the rail, not stopped at the deck. The two
-    // highest waterlines on the draught are above the gun deck at side and describe the
-    // tumblehome of the topside, so truncating at the deck would throw away the only
-    // measured evidence there is for the shape of the bulwark.
-    const yTop = OFFSETS.railY[i];
+    // The section is carried right up past the top of the side, not stopped at the deck.
+    // The two highest waterlines on the draught are above the gun deck at side and
+    // describe the tumblehome of the topside, so truncating at the deck would throw away
+    // the only measured evidence there is for the shape of the bulwark.
+    const yTop = OFFSETS.topOfSideY[i];
     const ys = [yBottom], xs = [OFFSETS.rabbetX[i]];
     for (let j = 0; j < wlY.length; j++) {
       const x = OFFSETS.halfBreadth[i][j];
@@ -70,6 +72,12 @@ export function hullModel() {
       ys.push(wlY[j]); xs.push(x);
     }
     ys.push(yTop); xs.push(OFFSETS.railX[i]);
+    // One more control point well above the measured top of the side, carrying on at the
+    // station's own tumblehome. The rail is derived from the decks and at the forecastle
+    // and quarterdeck it stands higher than the traced curve, so the interpolant has to
+    // be defined up there rather than flattening off at its last known point.
+    ys.push(yTop + 2.0);
+    xs.push(Math.max(KEEL_HALF_SIDING, OFFSETS.railX[i] - 2.0 * OFFSETS.tumblehome[i]));
     const f = monotoneCubic(ys, xs);
     // Outside its own range a station's interpolant means nothing, so clamp rather than
     // extrapolate. Without this, evaluating a forward station down at a waterline that
@@ -104,23 +112,107 @@ export function hullModel() {
     ));
   }
 
-  // The rail and the tumblehome both come off the draught now, one value per station,
-  // so they are interpolated the same way every other line of the ship is.
-  const railYAt = naturalCubic(stationZ, OFFSETS.railY);
   const tumblehomeAt = naturalCubic(stationZ, OFFSETS.tumblehome);
+  const topOfSideAt = naturalCubic(stationZ, OFFSETS.topOfSideY);
+
+  const L = zAft - zFwd;
+  const zFcBreak = zFwd + SPEC.forecastle_break_u.value * L;
+  const zQdBreak = zFwd + SPEC.quarterdeck_break_u.value * L;
+
+  /**
+   * The height of the deck you would be standing on at a given station: the gundeck
+   * through the waist, the forecastle forward of its break, the quarterdeck abaft its
+   * own. The upper decks are laid on their own beams and are much flatter than the
+   * gundeck under them, so they are built from their height at the break and given a
+   * gentle rise toward the ends rather than made to follow the gundeck's sheer.
+   */
+  function standingDeckAt(z) {
+    if (z <= zFcBreak) {
+      const base = sheerY(zFcBreak) + SPEC.forecastle_above_gundeck.value;
+      const t = clamp((zFcBreak - z) / (zFcBreak - zFwd), 0, 1);
+      return base + SPEC.forecastle_sheer_rise.value * t * t;
+    }
+    if (z >= zQdBreak) {
+      const base = sheerY(zQdBreak) + SPEC.quarterdeck_above_gundeck.value;
+      const t = clamp((z - zQdBreak) / (zAft - zQdBreak), 0, 1);
+      return base + SPEC.quarterdeck_sheer_rise.value * t * t;
+    }
+    return sheerY(z);
+  }
+
+  /**
+   * The rail: the top of the planking.
+   *
+   * It is DERIVED, not traced, and it is derived from one rule — the rail stands a
+   * bulwark's height above whichever deck is under it. That rule is what stops the
+   * forecastle and the quarterdeck from being laid on top of the rail with sixteen guns
+   * standing in the open air, which is what happened when the rail was taken as one
+   * height above the base line the whole length of the ship.
+   *
+   * The result is checked against the measured top-of-side curve, which sweeps the same
+   * way; where the two differ, the difference is the hammock rail and netting that stand
+   * above the planking through the waist, and which the deck furniture builds.
+   */
+  function railYAt(z) {
+    const gun = sheerY(z) + SPEC.bulwark_height_waist.value;
+    // The forecastle and quarterdeck bulwarks stand well above the waist rail — that
+    // deep open well amidships is one of the things that makes a frigate look like a
+    // frigate — but the change is not a step. The bulwark is one continuous run of
+    // planking, so the rail fairs from the waist up to the end bulwark over a couple of
+    // metres either side of each break.
+    const blend = SPEC.bulwark_break_fairing.value;
+    const fc = standingDeckAt(Math.min(z, zFcBreak)) + SPEC.bulwark_height_forecastle.value;
+    const qd = standingDeckAt(Math.max(z, zQdBreak)) + SPEC.bulwark_height_quarterdeck.value;
+    if (z <= zFcBreak + blend) {
+      const t = smoothstep(zFcBreak + blend, zFcBreak, z);
+      return Math.max(gun, lerp(gun, fc, t));
+    }
+    if (z >= zQdBreak - blend) {
+      const t = smoothstep(zQdBreak - blend, zQdBreak, z);
+      return Math.max(gun, lerp(gun, qd, t));
+    }
+    return gun;
+  }
 
   /** Height of the bulwark above the deck at side, which changes along the ship. */
   function bulwarkHeightAt(z) {
     return railYAt(z) - sheerY(z);
   }
 
+  // The keel: a straight timber, dead level, running between the forefoot and the
+  // sternpost. The rabbet — where the planking lands — rises above it toward both ends,
+  // and the wedge between the two is the deadwood.
+  //
+  // Without this the hull's bottom followed the rabbet all the way up, so she had no
+  // keel, no forefoot and no deadwood, her underwater body was a smooth canoe with both
+  // ends turned up to the waterline, and the fore and mizzen masts — stepped on the
+  // keelson at a constant height — came out through the planking underneath.
+  const keelBottomY = -SPEC.hull_draught_aft.value;
+  const keelHalf = SPEC.keel_straight_length.value / 2;
+  const zKeelFwd = -keelHalf + (zFwd + zAft) / 2;
+  const zKeelAft = keelHalf + (zFwd + zAft) / 2;
+
+  function keelBottomAt(z) {
+    const rab = rabbetY(z);
+    if (z >= zKeelFwd && z <= zKeelAft) return keelBottomY;
+    // Beyond the ends of the keel the stem and the post carry the bottom up, meeting the
+    // rabbet at the extremities.
+    const t = z < zKeelFwd
+      ? clamp((zKeelFwd - z) / (zKeelFwd - zFwd), 0, 1)
+      : clamp((z - zKeelAft) / (zAft - zKeelAft), 0, 1);
+    return lerp(keelBottomY, Math.max(keelBottomY, rab - SPEC.keel_moulding.value * 0.3), t * t);
+  }
+
   /** The named feature heights at a station. The paint and the fittings both use these. */
   function featureYAt(z) {
     const deck = sheerY(z);
     const rab = rabbetY(z);
+    const keelBottom = Math.min(keelBottomAt(z), rab - SPEC.keel_moulding.value);
     const out = {
-      keel_bottom: rab - SPEC.keel_moulding.value,
-      keel_top: rab - SPEC.keel_moulding.value * 0.35,
+      keel_bottom: keelBottom,
+      // The top of the keel and the deadwood above it: a narrow fin of the same siding,
+      // carried up from the keel to meet the rabbet.
+      keel_top: lerp(keelBottom, rab, 0.55),
       rabbet: rab,
       waterline: 0,
       wale_top: deck - SPEC.wale_top_below_deck.value,
@@ -133,6 +225,8 @@ export function hullModel() {
     // The three shape-only stops sit proportionally between the rabbet and the wale.
     out.floor = lerp(rab, 0, 0.30);
     out.bilge = lerp(rab, 0, 0.66);
+    if (out.keel_top <= out.keel_bottom) out.keel_top = out.keel_bottom + 0.01;
+    if (out.rabbet <= out.keel_top) out.rabbet = out.keel_top + 0.01;
     if (out.floor <= rab) out.floor = rab + 0.01;
     if (out.bilge <= out.floor) out.bilge = out.floor + 0.01;
     out.sheer_strake = lerp(out.wale_top, deck, 0.55);
@@ -193,7 +287,14 @@ export function hullModel() {
      */
     /** Tangent of the tumblehome angle at a station, from the draught. */
     tumblehomeAt,
+    /** The underside of the keel at a station — level between forefoot and sternpost. */
+    keelBottomAt,
     railYAt,
+    /** The deck a man would be standing on at this station — the one the rail guards. */
+    standingDeckAt,
+    /** The measured top-of-side curve, for comparison with the derived rail. */
+    topOfSideAt,
+    zFcBreak, zQdBreak,
     fromStem: (metresAftOfStem) => zFwd + metresAftOfStem,
     toStem: (z) => z - zFwd,
     lengthOnDeck: zAft - zFwd,

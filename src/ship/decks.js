@@ -19,7 +19,7 @@ import { audit } from '../audit/measure.js';
  *
  * @param {'gundeck'|'forecastle'|'quarterdeck'} which
  */
-function deckSurface(model, cfg, which, zFrom, zTo, rise) {
+function deckSurface(model, cfg, which, zFrom, zTo) {
   const camber = SPEC.deck_camber.value;
   const nz = Math.max(6, Math.round(cfg.hullStations * (zTo - zFrom) / model.lengthOnDeck));
   const nx = Math.max(5, Math.round(cfg.hullPoints / 5));
@@ -31,10 +31,13 @@ function deckSurface(model, cfg, which, zFrom, zTo, rise) {
     // The deck at side, then the camber added toward the centreline. Above the gundeck
     // the deck sits at the side where the hull has narrowed, which is why the
     // quarterdeck and forecastle are narrower than the waist.
-    const yEdge = f.deck + rise;
-    const xEdge = which === 'gundeck'
-      ? model.halfBreadthAt(z, f.deck)
-      : Math.max(0.05, model.halfBreadthAt(z, f.deck + rise));
+    //
+    // The height of the upper decks comes from the hull model rather than from a fixed
+    // rise above the gundeck, because the rail is derived from them: taking a fixed rise
+    // put both of them above the rail, and left the sixteen guns on them standing in the
+    // open air with nothing round them.
+    const yEdge = which === 'gundeck' ? f.deck : model.standingDeckAt(z);
+    const xEdge = model.halfBreadthAt(z, yEdge);
     for (let j = 0; j < nx; j++) {
       const t = (j / (nx - 1)) * 2 - 1;           // -1 port, +1 starboard
       const x = t * xEdge;
@@ -111,7 +114,7 @@ export function buildDecks(cfg, mats, model) {
   // The gundeck runs the whole length of the ship. Forward of the forecastle break and
   // abaft the quarterdeck break it is covered over, but it is still there, and in the
   // waist it is the deck you stand on.
-  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern - 0.4, 0), mats.deck);
+  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern - 0.4), mats.deck);
   gundeck.name = 'gundeck';
   // The height of this deck is audited from a marker at the midship station in hull.js,
   // not from the mesh: the deck sweeps up at both ends with the sheer, so its average
@@ -120,14 +123,14 @@ export function buildDecks(cfg, mats, model) {
 
   // The forecastle and the quarterdeck, raised above it.
   const fc = new THREE.Mesh(
-    deckSurface(model, cfg, 'forecastle', zStem + 0.8, zFcBreak, SPEC.forecastle_above_gundeck.value),
+    deckSurface(model, cfg, 'forecastle', zStem + 0.8, zFcBreak),
     mats.deck
   );
   fc.name = 'forecastle';
   group.add(fc);
 
   const qd = new THREE.Mesh(
-    deckSurface(model, cfg, 'quarterdeck', zQdBreak, zStern - 0.4, SPEC.quarterdeck_above_gundeck.value),
+    deckSurface(model, cfg, 'quarterdeck', zQdBreak, zStern - 0.4),
     mats.deck
   );
   qd.name = 'quarterdeck';
@@ -142,10 +145,10 @@ export function buildDecks(cfg, mats, model) {
     const w = SPEC.gangway_width.value;
     for (let i = 0; i < n; i++) {
       const z = lerp(zFcBreak, zQdBreak, i / (n - 1));
-      const f = model.featureYAt(z);
-      const rise = lerp(SPEC.forecastle_above_gundeck.value, SPEC.quarterdeck_above_gundeck.value, i / (n - 1));
-      const y = f.deck + rise;
-      const xOuter = model.halfBreadthAt(z, f.deck + rise) - SPEC.side_thickness.value;
+      // The gangways run at the level of the two decks they join, so they take their
+      // height from the same place those decks do.
+      const y = lerp(model.standingDeckAt(zFcBreak), model.standingDeckAt(zQdBreak), i / (n - 1));
+      const xOuter = model.halfBreadthAt(z, y) - SPEC.side_thickness.value;
       for (let j = 0; j < 2; j++) {
         const x = (xOuter - j * w) * side;
         pos.push(x, y, z);

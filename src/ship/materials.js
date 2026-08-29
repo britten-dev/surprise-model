@@ -44,15 +44,18 @@ function hullPaintStrip(size = 1024, cfg) {
     g.fillRect(0, y0, 8, y1 - y0);
   }
 
-  // The mouldings: the thin raised ochre lines that follow the sheer. They read as
-  // trim because they are lighter than the black either side and only a few rows tall.
-  const moulding = (v, thickness, colour) => {
-    g.fillStyle = colour;
-    g.fillRect(0, Math.round((1 - v) * size) - thickness / 2, 8, thickness);
-  };
-  const t = Math.max(2, Math.round(size / 340));
-  moulding(V.sheer_strake, t, PAINT.ochre_trim.hex);
-  moulding(V.rail - 0.012, t, PAINT.ochre_trim.hex);
+  // The moulding: the thin ochre line that follows the sheer strake, down in the black
+  // topside below the ports. It reads as trim because it is lighter than the black either
+  // side and only a few rows tall. Its line comes from the hull's own feature table, so
+  // it follows the sheer rather than the horizon and cannot drift from the surface.
+  //
+  // There is exactly one, and it is here rather than up at the rail. The band between the
+  // port heads and the rail is the bulwark, and the photograph shows it near-black,
+  // #2b2320-#3d1903, right over the cap. It is a narrow band, so a light line drawn
+  // across it swallows most of it — which is most of why the bulwark used to sample tan.
+  const t = Math.max(2, Math.round(PAINT.ochre_moulding_v.value * size));
+  g.fillStyle = PAINT.ochre_trim.hex;
+  g.fillRect(0, Math.round((1 - V.sheer_strake) * size) - t / 2, 8, t);
 
   // Soften every boundary by a pixel or two. A hard edge on a painted plank reads as a
   // decal; a real paint line has a brush edge.
@@ -103,10 +106,21 @@ export function makeMaterials(cfg) {
   );
   hullPlank.wrapT = THREE.ClampToEdgeWrapping;
 
+  // The sheathing, and the same pattern again as a height field for the hull's normal
+  // map. Drawing it twice from one generator is what keeps the relief on the laps and the
+  // nails registered with the laps and the nails in the colour.
+  const copperArgs = {
+    sheetsX: PAINT.copper_sheets_along.value,
+    sheetsY: PAINT.copper_sheets_up.value,
+    variation: PAINT.copper_sheet_variation.value,
+    lap: PAINT.copper_lap_relief.value,
+    nailRelief: PAINT.copper_nail_relief.value,
+    size: N,
+  };
   const copperTex = asTexture(
     copperSheathing({
+      ...copperArgs,
       base: PAINT.copper.hex, edge: PAINT.copper_dark.hex, nail: PAINT.copper_bright.hex,
-      sheetsX: 22, sheetsY: 26, size: N,
     }),
     { repeat: [1, 1] }
   );
@@ -143,9 +157,17 @@ export function makeMaterials(cfg) {
     iron: std({ color: col('iron'), roughness: PAINT.iron.roughness, metalness: PAINT.iron.metalness }),
     brass: std({ color: col('brass'), roughness: PAINT.brass.roughness, metalness: 1.0 }),
 
-    // Sails are thin cloth with the sun behind them as often as not, so they need
-    // transmission rather than plain opacity, and they must be double-sided.
-    sail: new THREE.MeshPhysicalMaterial({
+    // Sails are thin cloth with the sun behind them as often as not, and they must be
+    // double-sided.
+    //
+    // The glow of light through canvas used to be got with `transmission`, and that was
+    // the wrong tool twice over. A transmissive material is drawn in a separate pass off
+    // a copy of the frame buffer, so a double-sided sail seen from its back side with
+    // nothing but sky behind it came out of that pass black: the spanker rendered as a
+    // solid black polygon from aft and to port. It is a MeshStandardMaterial now, and the
+    // glow is a faint emission through the same cloth map — which cannot go black from
+    // any angle, costs nothing, and is core glTF rather than an extension.
+    sail: std({
       map: sailTex,
       // The map already carries the cloth colour. Tinting it again with the same value
       // multiplies the colour into itself and turns warm flax canvas into cold sage.
@@ -154,12 +176,13 @@ export function makeMaterials(cfg) {
       roughness: PAINT.sail.roughness,
       metalness: 0,
       side: THREE.DoubleSide,
-      // A little transmission gives a sail the glow it has with the sun behind it. Only
-      // a little: sails overlap three deep on this rig, and transmission is applied per
-      // surface, so a value that looks right on one sail turns the whole suit to gauze.
-      transmission: cfg.textureSize > 256 ? PAINT.sail_transmission.value : 0,
-      thickness: 0.06,
-      ior: 1.05,
+      // Emission through the weave, at the cloth's own pattern so the seams stay visible
+      // in it. Only a little: sails overlap three deep on this rig and it is applied per
+      // surface, so a value that looks right on one sail lights the whole suit like paper
+      // lanterns.
+      emissive: col('sail_glow_tint'),
+      emissiveMap: sailTex,
+      emissiveIntensity: PAINT.sail_glow.value,
     }),
 
     standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness, metalness: 0 }),
@@ -193,10 +216,14 @@ export function makeMaterials(cfg) {
     roughnessMap: mats.hullSurface,
     metalnessMap: mats.hullSurface,
     roughness: 1, metalness: 1,
+    // The sheathed band is metal, so it has no diffuse colour at all and the environment
+    // is the only thing lighting it. Turn this down and the bottom of the ship goes
+    // black; leave it at unity and it reads as dark brick.
+    envMapIntensity: PAINT.hull_env_intensity.value,
     normalMap: cfg.copperNails
-      ? asTexture(normalFrom(copperSheathing({ sheetsX: 22, sheetsY: 26, size: cfg.textureSize }), 1.1), { srgb: false })
+      ? asTexture(normalFrom(copperSheathing({ ...copperArgs, height: true }), 1.1), { srgb: false })
       : null,
-    normalScale: new THREE.Vector2(0.4, 0.4),
+    normalScale: new THREE.Vector2(PAINT.hull_normal_scale.value, PAINT.hull_normal_scale.value),
   });
 
   return mats;
@@ -245,7 +272,7 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
     const src = underwater ? copper : plank;
     // Copper is a metal and carries its own colour through the metalness map, so its
     // pattern is allowed to modulate more strongly than paint on planking does.
-    const depth = underwater ? 0.42 : 0.26;
+    const depth = underwater ? PAINT.copper_pattern_depth.value : 0.26;
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
       const k = 1 + (lum(src, i) - 0.5) * 2 * depth;

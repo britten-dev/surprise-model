@@ -168,26 +168,67 @@ function gridGeometry(rows, { mirror = true, inward = false } = {}) {
 }
 
 /**
- * An oval patch lying on a parametric surface. Carved work is round: a row of gilt
- * rectangles on the transom reads as another tier of gunports, and a row of cartouches
- * and bosses reads as carving.
+ * How far the face of a piece of carved work stands off its ground, at `r` of the way
+ * from the middle of the piece to its rim.
+ *
+ * The rim is on the ground, so nothing can float clear of what it is cut from. From the
+ * rim inwards the face climbs steeply through the chamfer and then flattens into the
+ * field, which is what a chisel leaves and what makes the piece read as carving: the
+ * chamfer faces a different way from the field and takes a different shade.
  */
-function oval(pointAt, xc, halfW, yc, halfH, nu = 10, nv = 5) {
+function reliefAt(r, crown, bevel) {
+  const t = clamp((1 - r) / bevel, 0, 1);
+  return crown * (1 - (1 - t) ** 2);
+}
+
+/**
+ * How far a point is from the middle of a piece of carved work, as a fraction of the
+ * way to its rim. `corner` is the shape: 2 is an oval, and the larger it is the squarer
+ * the piece, up to a panel with rounded corners.
+ */
+function carvedRadius(u, v, corner) {
+  return (Math.abs(u) ** corner + Math.abs(v) ** corner) ** (1 / corner);
+}
+
+/**
+ * A piece of carved work: an oval boss cut on a parametric surface, its rim lying on
+ * that surface and its face standing proud of it.
+ *
+ * Flat gilt ovals do not work. Gold is a metal, so a flat face takes one shade over the
+ * whole of it whatever the light is doing, and a row of them across the taffrail reads
+ * as a row of yellow decals. The same ovals with a chamfer round them and a field in
+ * the middle catch the light along every edge and read as carving from any angle.
+ *
+ * `at(u, v, out)` is the ground surface, `out` metres along its own outward normal;
+ * `flip` reverses the winding for a surface parametrised the other way round, which is
+ * the port and starboard difference on the quarter badges.
+ */
+function carved(at, uc, halfU, vc, halfV, { crown, bevel, corner = 2, nu = 12, nv = 4, flip = false }) {
   const pos = [], uvs = [], idx = [];
-  for (let i = 0; i <= nv; i++) {
-    const t = (i / nv) * 2 - 1;
-    const w = halfW * Math.sqrt(Math.max(0, 1 - t * t));
-    for (let j = 0; j <= nu; j++) {
-      const p = pointAt(xc + lerp(-w, w, j / nu), yc + t * halfH);
+  // The rim, as a fraction of the half-width and half-height at each angle round it.
+  // Raising the cosine and the sine to 2/corner is what squares the shape off: the
+  // point then satisfies |x|^corner + |y|^corner = 1 rather than the sum of squares.
+  const sup = (t) => Math.sign(t) * Math.abs(t) ** (2 / corner);
+  const c = at(uc, vc, crown);
+  pos.push(c.x, c.y, c.z);
+  uvs.push(0.5, 0.5);
+  for (let i = 1; i <= nv; i++) {
+    const r = i / nv, h = reliefAt(r, crown, bevel);
+    for (let j = 0; j < nu; j++) {
+      const a = (j / nu) * Math.PI * 2;
+      const p = at(uc + halfU * r * sup(Math.cos(a)), vc + halfV * r * sup(Math.sin(a)), h);
       pos.push(p.x, p.y, p.z);
-      uvs.push(j / nu, i / nv);
+      uvs.push(0.5 + (r * Math.cos(a)) / 2, 0.5 + (r * Math.sin(a)) / 2);
     }
   }
-  const w = nu + 1;
-  for (let i = 0; i < nv; i++) {
+  const tri = (a, b, c2) => (flip ? idx.push(a, c2, b) : idx.push(a, b, c2));
+  for (let j = 0; j < nu; j++) tri(0, 1 + j, 1 + ((j + 1) % nu));
+  for (let i = 1; i < nv; i++) {
+    const ring = 1 + (i - 1) * nu;
     for (let j = 0; j < nu; j++) {
-      const a = i * w + j, b = a + 1, c = a + w, d = c + 1;
-      idx.push(a, b, c, b, d, c);
+      const a = ring + j, b = ring + ((j + 1) % nu);
+      tri(a, a + nu, b);
+      tri(b, a + nu, b + nu);
     }
   }
   const g = new THREE.BufferGeometry();
@@ -362,7 +403,13 @@ function sternLights(cfg, mats, sp, group, build = true) {
   const halfSpan = sp.halfBreadth((ySill + yHead) / 2) - SPEC.stern_quarter_piece_width.value;
   if (!build) return { ySill, yHead, halfSpan };
   const bar = SPEC.stern_glazing_bar.value;
+  // The joinery of a light, in the order it stands off the planking: the sash frame is
+  // the frontmost of it, the glass is bedded in a rebate behind the face of the frame,
+  // and the glazing bars stand a bar's thickness off the glass, still inside the frame.
+  // Putting the glass in front of its own frame — which is what a single depth for all
+  // three gives — makes every light read as a pane laid over the joinery.
   const depth = SPEC.stern_light_frame_depth.value;
+  const glassDepth = depth - SPEC.stern_glazing_rebate.value;
   const munions = (count - 1) * SPEC.stern_light_munion.value;
   const w = (2 * halfSpan - munions) / count;
   const pitch = w + SPEC.stern_light_munion.value;
@@ -378,21 +425,21 @@ function sternLights(cfg, mats, sp, group, build = true) {
     // ochre instead of as a window with the dark cabin behind it.
     const fx0 = x0 - bar * 2, fx1 = x1 + bar * 2;
     const fy0 = ySill - bar * 2, fy1 = yHead + bar * 2;
-    frames.push(patch(at(depth * 0.5), fx0, x0, fy0, fy1, 1, 3));
-    frames.push(patch(at(depth * 0.5), x1, fx1, fy0, fy1, 1, 3));
-    frames.push(patch(at(depth * 0.5), x0, x1, fy0, ySill, 3, 1));
-    frames.push(patch(at(depth * 0.5), x0, x1, yHead, fy1, 3, 1));
-    glass.push(patch(at(depth), x0, x1, ySill, yHead, 3, 3));
+    frames.push(patch(at(depth), fx0, x0, fy0, fy1, 1, 3));
+    frames.push(patch(at(depth), x1, fx1, fy0, fy1, 1, 3));
+    frames.push(patch(at(depth), x0, x1, fy0, ySill, 3, 1));
+    frames.push(patch(at(depth), x0, x1, yHead, fy1, 3, 1));
+    glass.push(patch(at(glassDepth), x0, x1, ySill, yHead, 3, 3));
     if (!cfg.galleryGlazing) continue;
     // Glazing bars: small rectangular panes in a grid, as contemporary sash windows were
     // glazed. Leaded diamond quarries were a century out of date by 1798.
     for (let k = 1; k < SPEC.stern_panes_wide.value; k++) {
       const bx = lerp(x0, x1, k / SPEC.stern_panes_wide.value);
-      bars.push(patch(at(depth * 1.4), bx - bar / 2, bx + bar / 2, ySill, yHead, 1, 3));
+      bars.push(patch(at(glassDepth + bar), bx - bar / 2, bx + bar / 2, ySill, yHead, 1, 3));
     }
     for (let k = 1; k < SPEC.stern_panes_high.value; k++) {
       const by = lerp(ySill, yHead, k / SPEC.stern_panes_high.value);
-      bars.push(patch(at(depth * 1.4), x0, x1, by - bar / 2, by + bar / 2, 3, 1));
+      bars.push(patch(at(glassDepth + bar), x0, x1, by - bar / 2, by + bar / 2, 3, 1));
     }
   }
 
@@ -419,7 +466,7 @@ function sternLights(cfg, mats, sp, group, build = true) {
     const half = (edge ? SPEC.stern_quarter_piece_width.value : SPEC.stern_light_munion.value) / 2;
     const px = (i - count / 2) * pitch;
     const c = i === 0 ? px - half : i === count ? px + half : px;
-    piers.push(patch(at(depth * 0.75), c - half * 1.15, c + half * 1.15, ySill - bar * 2, yHead + bar * 2, 1, 3));
+    piers.push(patch(at(depth), c - half * 1.15, c + half * 1.15, ySill - bar * 2, yHead + bar * 2, 1, 3));
   }
   const pier = new THREE.Mesh(mergeGeometries(piers), mats.ochre);
   pier.name = 'stern_munions';
@@ -510,25 +557,9 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const glass = [], frames = [];
   const fz = (u, v) => at(lerp(z0, z1, u), v);
   const bar = SPEC.stern_glazing_bar.value / SPEC.quarter_gallery_length.value;
-  // The lights are laid out inside a margin at each end of the badge. Running the frames
-  // past u = 1 makes `at()` extrapolate abaft the badge and throws a great sheet of ochre
-  // out over the quarter.
-  const margin = 0.08, slot = (1 - 2 * margin) / n;
-  const centres = [];
-  for (let i = 0; i < n; i++) {
-    const c = margin + slot * (i + 0.5);
-    const half = slot * 0.34;
-    const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
-    const q0 = p0 - 0.04, q1 = p1 + 0.04;
-    frames.push(patch(fz, f0, c - half, q0, q1, 1, 3));
-    frames.push(patch(fz, c + half, f1, q0, q1, 1, 3));
-    frames.push(patch(fz, c - half, c + half, q0, p0, 3, 1));
-    frames.push(patch(fz, c - half, c + half, p1, q1, 3, 1));
-    glass.push(patch(fz, c - half, c + half, p0, p1, 3, 3));
-    centres.push(c);
-  }
-  // Both sit proud of the badge's own surface, pushed out along its normal. Pushing
-  // along x alone buries them where the badge turns to face aft at the quarter.
+  // The badge's own outward normal, which is what the joinery on it has to be set off.
+  // Pushing along x alone buries a light where the badge turns to face aft at the
+  // quarter.
   const normalAt = (u, v) => {
     const h = 0.02;
     const a = fz(clamp(u + h, 0, 1), v).sub(fz(clamp(u - h, 0, 1), v));
@@ -538,19 +569,38 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
     nrm.normalize();
     return nrm.x * side < 0 ? nrm.negate() : nrm;
   };
-  const push = (geom, d, u, v) => {
-    const nrm = normalAt(u, v).multiplyScalar(d);
-    geom.translate(nrm.x, nrm.y, nrm.z);
-    geom.computeVertexNormals();
-    return geom;
-  };
-  const gf = new THREE.Mesh(
-    mergeGeometries(frames.map((g, i) => push(g, 0.014, centres[Math.floor(i / 4)], 0.5))), mats.ochre);
+  // The offset surface, `d` metres off the badge along its normal AT EVERY POINT. The
+  // frames and the glass used to be built on the badge and then translated bodily along
+  // one normal taken at their middle, which is only right for a flat badge: this one is
+  // barrelled fore and aft and rolled over from the rim to the hood, so a rigid push
+  // walked the glass out of its frame and left the two curving different ways.
+  const onBadge = (u, v, d) => fz(u, v).addScaledVector(normalAt(u, v), d);
+  const off = (d) => (u, v) => onBadge(u, v, d);
+  // The frame stands proud of the badge and the glass is bedded in a rebate behind its
+  // face, the same way round as the lights across the transom.
+  const proud = SPEC.quarter_gallery_frame_proud.value;
+  const inFrame = off(proud);
+  const inGlass = off(Math.max(proud - SPEC.stern_glazing_rebate.value, proud * 0.25));
+  // The lights are laid out inside a margin at each end of the badge. Running the frames
+  // past u = 1 makes `at()` extrapolate abaft the badge and throws a great sheet of ochre
+  // out over the quarter.
+  const margin = 0.08, slot = (1 - 2 * margin) / n;
+  for (let i = 0; i < n; i++) {
+    const c = margin + slot * (i + 0.5);
+    const half = slot * 0.34;
+    const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
+    const q0 = p0 - 0.04, q1 = p1 + 0.04;
+    frames.push(patch(inFrame, f0, c - half, q0, q1, 1, 3));
+    frames.push(patch(inFrame, c + half, f1, q0, q1, 1, 3));
+    frames.push(patch(inFrame, c - half, c + half, q0, p0, 3, 1));
+    frames.push(patch(inFrame, c - half, c + half, p1, q1, 3, 1));
+    glass.push(patch(inGlass, c - half, c + half, p0, p1, 3, 3));
+  }
+  const gf = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
   gf.name = 'quarter_gallery_frames';
   group.add(gf);
   if (cfg.galleryGlazing) {
-    const gg = new THREE.Mesh(
-      mergeGeometries(glass.map((g, i) => push(g, 0.026, centres[i], 0.5))), mats.glass);
+    const gg = new THREE.Mesh(mergeGeometries(glass), mats.glass);
     gg.name = 'quarter_gallery_glazing';
     group.add(gg);
   }
@@ -571,29 +621,38 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   rims.name = 'quarter_gallery_rims';
   group.add(rims);
 
-  // The carved brackets that appear to carry the badge, gadrooned on the underside.
+  // The gilt carving on the badge: the brackets that appear to carry it, and a boss on
+  // the bell-top hood over the lights.
+  //
+  // The brackets are cut on the ship's own side, not built out from it as blocks. The
+  // blocks that were here before were tapered toward the planking by moving their
+  // vertices, which left the top of each one standing clear of the hull and the bottom
+  // of it a flat gilt lozenge lying on the black — two bright shapes floating below the
+  // badge with nothing carrying them. A boss whose rim is BY CONSTRUCTION on the ship's
+  // side cannot float, because every point of its rim is a point of the hull.
   const drop = SPEC.quarter_gallery_bracket_drop.value;
-  const brackets = [];
+  const bLen = SPEC.quarter_gallery_bracket_length.value;
+  const relief = SPEC.quarter_gallery_carving_relief.value;
+  const bevel = SPEC.stern_carving_bevel.value;
+  const nu = Math.max(8, Math.round(cfg.sternStations * 0.75));
+  const nv = Math.max(3, Math.round(cfg.sternStations * 0.28));
+  const onSide = (z, y, out) => new THREE.Vector3((model.halfBreadthAt(z, y) + out) * side, y, z);
+  const panel = SPEC.stern_carving_panel_corner.value;
+  const carvings = [];
   for (const u of [0.20, 0.80]) {
-    const b = at(lerp(z0, z1, u), 0.06);
-    const g = block(0.16, drop, 0.34, 1);
-    g.translate(0, -drop, 0);
-    g.translate(b.x - 0.05 * side, b.y, b.z);
-    // Taper the bracket in toward the ship's side as it drops away below the rim.
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      const t = clamp((b.y - p.getY(i)) / drop, 0, 1);
-      // The bracket dies onto the planking, not into it: without the margin it sinks
-      // inside the hull and all that survives is a gilt splinter on the topside.
-      const onSide = (model.halfBreadthAt(b.z, p.getY(i)) + 0.03) * side;
-      p.setX(i, lerp(p.getX(i), onSide, t ** 1.4));
-      p.setZ(i, lerp(p.getZ(i), b.z, t * 0.5));
-    }
-    g.computeVertexNormals();
-    brackets.push(g);
+    const zc = lerp(z0, z1, u);
+    // The bracket hangs from the lower rim of the badge and drops its full depth below
+    // it, so its head is under the rim rather than behind the badge.
+    const yRim = yBotAt(zc);
+    carvings.push(carved(onSide, zc, bLen / 2, yRim - drop * 0.45, drop * 0.45,
+      { crown: relief, bevel, corner: panel, nu, nv, flip: side > 0 }));
   }
-  const bk = new THREE.Mesh(mergeGeometries(brackets), mats.gilt);
-  bk.name = 'quarter_gallery_brackets';
+  // The boss on the hood, worked in the fore-and-aft and up-the-section coordinates of
+  // the badge itself so that it lies on the bell-top however the bell-top is shaped.
+  carvings.push(carved(onBadge, 0.5, 0.17, (p1 + 1) / 2, (1 - p1) * 0.40,
+    { crown: relief, bevel, nu, nv, flip: side > 0 }));
+  const bk = new THREE.Mesh(mergeGeometries(carvings), mats.gilt);
+  bk.name = 'quarter_gallery_carving';
   group.add(bk);
 }
 
@@ -697,47 +756,72 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
 // Carved work
 // ---------------------------------------------------------------------------
 
-// A three-by-five stroke alphabet, enough for the ship's name. Each letter is a list of
-// segments in a box three wide and five high; they are laid on the counter as relief.
+// The alphabet the ship's name is cut in. Each letter is a set of open polylines in a
+// box one wide and one high, with y up from the baseline, and each leg of a polyline is
+// cut as one stroke.
+//
+// The letters were a three-by-five stroke alphabet before, and at the size a name board
+// is on a Sixth Rate's counter that alphabet cannot be read. Every round letter came out
+// as a rectangle: a squared S is a 5, and a squared P differs from an F only by a stroke
+// two units long at the far right of the box, which the letter beside it closed up
+// against. SURPRISE read as SURFRISE. So the round letters are drawn round — as
+// many-sided polygons through the real shape of the bowl — and the space between one
+// letter and the next comes from the spec rather than from dividing the board by the
+// number of letters, which left no space at all.
 const LETTERS = {
-  S: [[0, 5, 3, 5], [0, 3, 0, 5], [0, 3, 3, 3], [3, 0, 3, 3], [0, 0, 3, 0]],
-  U: [[0, 0.5, 0, 5], [3, 0.5, 3, 5], [0, 0, 3, 0]],
-  R: [[0, 0, 0, 5], [0, 5, 3, 5], [3, 3, 3, 5], [0, 3, 3, 3], [1.4, 3, 3, 0]],
-  P: [[0, 0, 0, 5], [0, 5, 3, 5], [3, 3, 3, 5], [0, 3, 3, 3]],
-  I: [[1.5, 0, 1.5, 5]],
-  E: [[0, 0, 0, 5], [0, 5, 3, 5], [0, 3, 2.4, 3], [0, 0, 3, 0]],
+  S: [[[0.94, 0.79], [0.82, 0.93], [0.58, 1.00], [0.30, 0.98], [0.09, 0.87], [0.04, 0.70],
+    [0.17, 0.58], [0.48, 0.52], [0.79, 0.45], [0.93, 0.32], [0.90, 0.14], [0.70, 0.02],
+    [0.40, 0.00], [0.15, 0.05], [0.02, 0.19]]],
+  U: [[[0.00, 1.00], [0.00, 0.30], [0.07, 0.12], [0.25, 0.01], [0.50, 0.00], [0.75, 0.03],
+    [0.90, 0.16], [0.94, 0.36], [0.94, 1.00]]],
+  R: [[[0.00, 0.00], [0.00, 1.00], [0.56, 1.00], [0.80, 0.93], [0.91, 0.78], [0.86, 0.62],
+    [0.62, 0.54], [0.00, 0.54]], [[0.44, 0.54], [0.96, 0.00]]],
+  P: [[[0.00, 0.00], [0.00, 1.00], [0.58, 1.00], [0.85, 0.92], [0.96, 0.74], [0.90, 0.55],
+    [0.62, 0.46], [0.00, 0.46]]],
+  I: [[[0.50, 0.00], [0.50, 1.00]], [[0.14, 1.00], [0.86, 1.00]], [[0.14, 0.00], [0.86, 0.00]]],
+  E: [[[0.94, 1.00], [0.00, 1.00], [0.00, 0.00], [0.96, 0.00]], [[0.00, 0.50], [0.74, 0.50]]],
 };
 
-/** The ship's name in carved relief on the counter, inside its cartouche. */
-function nameOnCounter(sp, name, yCentre) {
-  const width = SPEC.stern_cartouche_width.value * 0.76;
-  const hLetter = SPEC.stern_cartouche_height.value * 0.50;
-  const wLetter = hLetter * 0.60;
-  const pitch = width / name.length;
-  const stroke = hLetter / 11;
-  const relief = SPEC.stern_cartouche_relief.value * 0.6;
+/**
+ * The ship's name in carved relief on the counter, standing on the field of its
+ * cartouche.
+ *
+ * `field(x, y)` is how far the face of the cartouche stands off the counter at a point,
+ * so that the letters sit on the board rather than being buried in it where it swells or
+ * left hanging over it where it falls away to the chamfer.
+ */
+function nameOnCounter(sp, name, yCentre, field) {
+  const hLetter = SPEC.stern_name_letter_height.value;
+  const wLetter = SPEC.stern_name_letter_width.value;
+  const pitch = wLetter + SPEC.stern_name_letter_gap.value;
+  const stroke = SPEC.stern_name_stroke.value;
+  const relief = SPEC.stern_name_relief.value;
 
   const parts = [];
   for (let i = 0; i < name.length; i++) {
-    const segs = LETTERS[name[i]];
-    if (!segs) continue;
+    const glyph = LETTERS[name[i]];
+    if (!glyph) continue;
     // Laid out with x increasing to starboard, which is how the name reads the right way
     // round from astern: a camera abaft the ship looking forward has starboard on its
     // right, so +x is left-to-right in the picture.
     const ox = (i - (name.length - 1) / 2) * pitch;
-    for (const [ax, ay, bx, by] of segs) {
-      const x0 = ox + (ax / 3 - 0.5) * wLetter, x1 = ox + (bx / 3 - 0.5) * wLetter;
-      const y0 = yCentre + (ay / 5 - 0.5) * hLetter, y1 = yCentre + (by / 5 - 0.5) * hLetter;
-      const len = Math.hypot(x1 - x0, y1 - y0) + stroke;
-      const g = new THREE.BoxGeometry(len, stroke, relief);
-      g.rotateZ(Math.atan2(y1 - y0, x1 - x0));
-      const my = (y0 + y1) / 2, mx = (x0 + x1) / 2;
-      const s = clamp(Math.abs(mx) / Math.max(sp.halfBreadth(my), 1e-4), 0, 1);
-      const n = sp.surfaceNormal(my, s);
-      g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
-      const mid = sp.surfaceAtX(my, mx, relief * 0.6);
-      g.translate(mid.x, mid.y, mid.z);
-      parts.push(g);
+    for (const line of glyph) {
+      for (let k = 0; k < line.length - 1; k++) {
+        const x0 = ox + (line[k][0] - 0.5) * wLetter, x1 = ox + (line[k + 1][0] - 0.5) * wLetter;
+        const y0 = yCentre + (line[k][1] - 0.5) * hLetter, y1 = yCentre + (line[k + 1][1] - 0.5) * hLetter;
+        // The stroke is run on past each end by its own width, so that two strokes
+        // meeting at a corner of a letter fill the corner instead of leaving a notch.
+        const len = Math.hypot(x1 - x0, y1 - y0) + stroke;
+        const g = new THREE.BoxGeometry(len, stroke, relief);
+        g.rotateZ(Math.atan2(y1 - y0, x1 - x0));
+        const my = (y0 + y1) / 2, mx = (x0 + x1) / 2;
+        const s = clamp(Math.abs(mx) / Math.max(sp.halfBreadth(my), 1e-4), 0, 1);
+        const n = sp.surfaceNormal(my, s);
+        g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
+        const mid = sp.surfaceAtX(my, mx, field(mx, my) + relief * 0.35);
+        g.translate(mid.x, mid.y, mid.z);
+        parts.push(g);
+      }
     }
   }
   return parts;
@@ -829,40 +913,61 @@ export function buildStern(cfg, mats, model, ctx) {
   //    with yellow carvings" — which is also what the reference photograph shows here.
   if (cfg.sternOrnament !== 'none') {
     const gilt = [];
-    const relief = SPEC.stern_cartouche_relief.value;
-    const on = (d) => (x, y) => sp.surfaceAtX(y, x, d);
+    // The transom as a ground for carving: a point `out` metres off it along its own
+    // outward normal, which is what every boss here is cut on.
+    const on = (x, y, out) => sp.surfaceAtX(y, x, out);
+    const bevel = SPEC.stern_carving_bevel.value;
     // Carved work is cheap in triangles only if its roundness is bought at the LOD's own
-    // rate, so every oval here is subdivided against the same switch.
+    // rate, so every boss here is subdivided against the same switch.
     const fine = cfg.sternOrnament === 'carved';
     const seg = (a, b) => (fine ? a : b);
 
     // The cartouche on the counter. ZAZ3067 is catalogued as showing "sternboard
     // decoration and name in a cartouche on stern counter", so the name goes on it.
+    // It is a name board rather than a boss: a flat field with a chamfer round it, so
+    // that the letters have something flat to stand on.
     const yName = lerp(sp.yTuck, sp.yWing, 0.78);
     const cwid = SPEC.stern_cartouche_width.value, chgt = SPEC.stern_cartouche_height.value;
-    gilt.push(oval(on(relief * 0.35), 0, cwid / 2, yName, chgt / 2, seg(16, 8), seg(6, 4)));
+    const crown = SPEC.stern_cartouche_relief.value;
+    const nameBevel = SPEC.stern_cartouche_bevel.value;
+    const panel = SPEC.stern_carving_panel_corner.value;
+    gilt.push(carved(on, 0, cwid / 2, yName, chgt / 2,
+      { crown, bevel: nameBevel, corner: panel, nu: seg(28, 14), nv: seg(4, 2) }));
+    // How high the face of that board stands at a point on it, so the letters can be
+    // stood on the board and not left hanging over the chamfer at its ends.
+    const field = (x, y) => reliefAt(
+      Math.min(1, carvedRadius(x / (cwid / 2), (y - yName) / (chgt / 2), panel)), crown, nameBevel);
 
     // The taffrail's central cartouche, "a centre of attention within all the
     // decoration", with scrollwork spreading either side of it and dying away toward
     // the quarters.
     const yOrn = lerp(lights.yHead + SPEC.stern_light_munion.value * 2, sp.yTaff, 0.42);
     const ow = SPEC.taffrail_ornament_width.value, oh = SPEC.taffrail_ornament_height.value;
-    gilt.push(oval(on(relief * 0.9), 0, ow / 2, yOrn, oh / 2, seg(16, 8), seg(6, 4)));
+    gilt.push(carved(on, 0, ow / 2, yOrn, oh / 2,
+      { crown: SPEC.taffrail_ornament_relief.value, bevel, nu: seg(24, 12), nv: seg(5, 3) }));
     for (const s of [1, -1]) {
       for (let i = 0; i < 3; i++) {
         const x = s * (ow / 2 + lights.halfSpan * lerp(0.14, 0.62, i / 2));
         const r = oh * lerp(0.34, 0.16, i / 2);
-        gilt.push(oval(on(relief * 0.6), x, r * 1.5, yOrn, r, seg(8, 5), seg(4, 3)));
+        gilt.push(carved(on, x, r * 1.5, yOrn, r,
+          { crown: SPEC.stern_scroll_relief.value * lerp(1, 0.6, i / 2), bevel, nu: seg(14, 8), nv: seg(4, 2) }));
       }
     }
 
-    // The term pieces: Steel's "carved work under each end of the taffarel".
+    // The term pieces: Steel's "carved work under each end of the taffarel". These are
+    // the faces of the quarter pieces, which is where the stern is seen from abaft the
+    // beam, so they are cut as boldly as the cartouche.
     const tw = SPEC.stern_term_piece_width.value;
     for (const s of [1, -1]) {
       const y0 = lights.yHead + SPEC.stern_light_munion.value;
       const y1 = sp.yTaff - SPEC.taffrail_cap_thickness.value;
+      // Set in from the corner by its own width, not by half of it. The transom turns
+      // hard into the quarter at the corner, and a boss whose rim reaches the turn is
+      // dragged round it and reads as a smear of gold over the edge instead of as a
+      // piece of carving standing on the quarter piece.
       const bAt = sp.halfBreadth((y0 + y1) / 2);
-      gilt.push(oval(on(relief * 0.7), (bAt - tw * 0.6) * s, tw / 2, (y0 + y1) / 2, (y1 - y0) / 2, seg(6, 4), seg(8, 5)));
+      gilt.push(carved(on, (bAt - tw) * s, tw / 2, (y0 + y1) / 2, (y1 - y0) / 2,
+        { crown: SPEC.stern_term_piece_relief.value, bevel, nu: seg(14, 8), nv: seg(5, 3) }));
     }
 
     const carving = new THREE.Mesh(mergeGeometries(gilt), mats.gilt);
@@ -872,8 +977,9 @@ export function buildStern(cfg, mats, model, ctx) {
     // The name itself, carved in relief on the gilt cartouche and picked out dark, which
     // is the only way eight letters read at this size against gold.
     if (cfg.sternOrnament === 'carved') {
-      const letters = new THREE.Mesh(mergeGeometries(nameOnCounter(sp, 'SURPRISE', yName)), mats.black);
+      const letters = new THREE.Mesh(mergeGeometries(nameOnCounter(sp, 'SURPRISE', yName, field)), mats.black);
       letters.name = 'stern_name';
+      audit(letters, 'stern_name_length', 'extent_x');
       group.add(letters);
     }
   }

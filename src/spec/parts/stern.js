@@ -93,6 +93,11 @@ export const STERN_SPEC = {
   stern_light_munion: m(ft(0, 6), 'RECONSTRUCTED §12.2 munions 6 in wide between the lights', { noAudit: true }),
   stern_quarter_piece_width: m(ft(1, 0), 'RECONSTRUCTED §12.2 the quarter piece bounding the row of lights each side', { noAudit: true }),
   stern_light_frame_depth: m(ft(0, 4), 'RECONSTRUCTED §5.2 the sash frame stands proud of the transom planking', { noAudit: true }),
+  // How deep the glass sits inside the face of its frame. A sash is rebated: the frame
+  // stands proud of the planking and the glass is set into the back of it. Without the
+  // rebate the pane is the frontmost thing on the stern and every light reads as a slab
+  // of glass laid over the joinery rather than as a window in it.
+  stern_glazing_rebate: m(ft(0, 1.5), 'RECONSTRUCTED §5.2 the rebate a crown-glass pane is bedded in, from contemporary sash practice', { noAudit: true }),
   stern_glazing_bar: m(ft(0, 1), 'SECONDARY §5.2 wooden glazing bars about 1 in, following contemporary domestic sash practice', { noAudit: true }),
   stern_panes_wide: n(2, 'SECONDARY §5.2 rectangular panes 2 wide per light, not leaded diamonds', { noAudit: true }),
   stern_panes_high: n(3, 'RECONSTRUCTED §12.2 sash bars dividing each light into 6 panes, 2 wide by 3 high', { noAudit: true }),
@@ -105,18 +110,58 @@ export const STERN_SPEC = {
   quarter_gallery_projection: m(ft(1, 3), 'RECONSTRUCTED §12.3 a closed badge stands about 15 in off the ship\'s side', { noAudit: true }),
   quarter_gallery_rim_depth: m(ft(1, 0), 'RECONSTRUCTED §12.3 the lower stool and rim below the lights', { noAudit: true }),
   quarter_gallery_hood_depth: m(ft(1, 2), 'RECONSTRUCTED §12.3 the bell-top hood over the lights; Steel, the upper stool hollowed', { noAudit: true }),
-  quarter_gallery_bracket_drop: m(ft(1, 8), 'RECONSTRUCTED §5.2 the carved bracket under the badge, gadrooned on its underside', { noAudit: true }),
+  // The bracket under the badge is cut on the ship's own side, and the side falls away
+  // fast here in both directions at once — the hull narrows toward the sternpost and
+  // tumbles home above the wale. A bracket of any size therefore comes out warped, so it
+  // is kept to the foot it needs to be rather than the foot and a half a bracket on a
+  // flatter part of the side could carry.
+  quarter_gallery_bracket_drop: m(ft(1, 0), 'RECONSTRUCTED §5.2 the carved bracket under the badge, gadrooned on its underside; about a foot deep on a Sixth Rate badge', { noAudit: true }),
+  quarter_gallery_bracket_length: m(ft(0, 9), 'RECONSTRUCTED §5.2 the bracket seen fore and aft, rather less than it is deep', { noAudit: true }),
+  quarter_gallery_frame_proud: m(ft(0, 1.5), 'RECONSTRUCTED §12.3 the sash frame of a badge light stands proud of the badge planking', { noAudit: true }),
+  quarter_gallery_carving_relief: m(ft(0, 2), 'RECONSTRUCTED §5.2 the gilt carving on a quarter badge, cut a little shallower than the work on the counter because it is seen edge-on from abaft the beam', { noAudit: true }),
 
   // ------------------------------------------------------------------- ornament
   // English practice for a ship in RN service: "Stern, Stern Galleries, Quarter Badges:
   // black with yellow carvings." The ground is therefore the hull's own black and the
   // carving gilt, which is what the reference photograph shows.
-  stern_cartouche_width: m(ft(4, 6), 'RECONSTRUCTED §12.1 the name cartouche on the counter, drawn on ZAZ3067 and on the parallel Unite plan ZAZ3181', { noAudit: true }),
+  //
+  // Every piece of that carving is cut out of the ground and left standing proud of it,
+  // and each row below says how far. The figure matters more than it looks: gilt is a
+  // metal, and a flat gilt shape takes one shade over its whole face and reads as a
+  // painted decal however bright the gold is. It is the chamfer round the edge of a
+  // boss, catching the light at a different angle from the field inside it, that makes
+  // carved work read as carving. `stern_carving_bevel` is how much of the half-width
+  // that chamfer takes.
+  stern_carving_bevel: n(0.42, 'RECONSTRUCTED §12.1 the ground cut away round a piece of carved work; about two fifths of its half-width taken by the chamfer, leaving a field in the middle', { noAudit: true }),
+  // The outline of a piece of carved work: 2 is an oval, and the larger the figure the
+  // squarer the piece. A boss is an oval; a name board and the bracket under a badge are
+  // panels with rounded corners, and drawn as ovals they pinch away to nothing at the
+  // ends — which cuts the first and last letters off the name and leaves the brackets
+  // hanging under the badge as two gilt crescents.
+  stern_carving_panel_corner: n(3.0, 'RECONSTRUCTED §12.1 a carved panel is worked square with the corners rounded off, not drawn as a lens', { noAudit: true }),
+  stern_cartouche_width: m(ft(6, 0), 'RECONSTRUCTED §12.1 the name cartouche on the counter, drawn on ZAZ3067 and on the parallel Unite plan ZAZ3181; wide enough to carry the eight letters of the name at the letter width below, with a margin each end', { noAudit: true }),
   stern_cartouche_height: m(ft(1, 4), 'RECONSTRUCTED §12.1 proportion of a period name cartouche to its width', { noAudit: true }),
   stern_cartouche_relief: m(ft(0, 3), 'RECONSTRUCTED §12.1 depth of the carved relief', { noAudit: true }),
+  // The name board is a flat field with a chamfer round it, not a dome: the letters
+  // have to stand on something flat or they follow the swell of the boss and lean.
+  stern_cartouche_bevel: n(0.18, 'RECONSTRUCTED §12.1 a name board is chamfered round its edge and left flat inside, so the chamfer takes much less of it than a boss does', { noAudit: true }),
   taffrail_ornament_width: m(ft(3, 6), 'RECONSTRUCTED §5.2 the central carved and gilded cartouche of the taffrail, "a centre of attention within all the decoration"', { noAudit: true }),
   taffrail_ornament_height: m(ft(1, 2), 'RECONSTRUCTED §5.2 flanked by scrollwork and trophies of arms', { noAudit: true }),
+  taffrail_ornament_relief: m(ft(0, 4), 'RECONSTRUCTED §5.2 the centre of attention of the stern, and the boldest cut of any of it', { noAudit: true }),
+  stern_scroll_relief: m(ft(0, 2.5), 'RECONSTRUCTED §5.2 the scrollwork either side of the taffrail cartouche, cut shallower than the cartouche and dying away toward the quarters', { noAudit: true }),
   stern_term_piece_width: m(ft(0, 9), 'RECONSTRUCTED §12.4 Steel, term pieces: carved work under each end of the taffrail', { noAudit: true }),
+  stern_term_piece_relief: m(ft(0, 3), 'RECONSTRUCTED §12.4 the term piece stands out from the quarter piece it is cut on', { noAudit: true }),
+
+  // The ship's name on the counter. It is set out from the letters rather than from the
+  // cartouche, so that the letters keep their own width and the space between them
+  // whatever the board they are cut on: laying eight letters out as eight equal shares
+  // of a board leaves no gap between one and the next and the name reads as a smear.
+  stern_name_letter_height: m(ft(0, 8), 'RECONSTRUCTED §12.1 name letters 8 in high, half the depth of the cartouche they are cut on', { noAudit: true }),
+  stern_name_letter_width: m(ft(0, 4.5), 'RECONSTRUCTED §12.1 a condensed letter about four ninths of its height, as period name boards are lettered', { noAudit: true }),
+  stern_name_letter_gap: m(ft(0, 2.5), 'RECONSTRUCTED §12.1 the space between one letter and the next, rather more than half a letter width', { noAudit: true }),
+  stern_name_stroke: m(ft(0, 1), 'RECONSTRUCTED §12.1 the width of the cut stroke of a letter', { noAudit: true }),
+  stern_name_relief: m(ft(0, 1.5), 'RECONSTRUCTED §12.1 the letters stand proud of the field of the cartouche', { noAudit: true }),
+  stern_name_length: m(ft(4, 6.5), 'RECONSTRUCTED §12.1 SURPRISE: eight letters of 4½ in with 2½ in between them, and the cut stroke over the ends', { tolerance: 0.03 }),
 
   // -------------------------------------------------------------------- rudder
   // Nothing is recorded for this ship. The blade is set out from the measured sternpost

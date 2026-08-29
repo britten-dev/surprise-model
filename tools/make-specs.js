@@ -32,22 +32,23 @@ const GRADE = (src) => (src.match(/^(PRIMARY|SECONDARY|RECONSTRUCTED|FICTIONAL|M
 const GROUPS = [
   ['Principal dimensions', /^hull_(length|beam|depth|tons|draught|tumblehome)/],
   ['Decks and bulwarks', /^(gundeck|quarterdeck|forecastle|deck_camber|bulwark|side_thickness|rail_cap|gangway)/],
+  ['Backbone', /^keel_/],
   ['Gunports', /^(gunport|qd_port|fc_port)/],
-  ['Backbone and wales', /^(keel|wale)/],
+  ['Wales', /^wale_/],
   ['Masts and their stations', /^(fore_mast|main_mast|mizzen_mast|mast_step)/],
   ['Topmasts, topgallants and poles', /^(fore_topmast|main_topmast|mizzen_topmast|fore_topgallant_(length|diameter)|main_topgallant_(length|diameter)|mizzen_topgallant_(length|diameter)|fore_royal_pole|main_royal_pole|mizzen_royal_pole)/],
-  ['Bowsprit and jibboom', /^(bowsprit|jibboom)/],
+  ['Bowsprit, jibboom and dolphin striker', /^(bowsprit|jibboom|dolphin_striker|gammoning)/],
   ['Yards and booms', /(yard|boom|gaff)/],
   ['Tops', /^(main_top_|fore_top_|mizzen_top_|top_platform)/],
   ['Standing rigging', /(shroud|backstay|bobstay|ratline|stay_diameter|running_rigging_diameter)/],
   ['Sails', /^(sail_|square_sails|furled_)/],
   ['Channels, deadeyes and chainplates', /^(channel_|fore_channel|main_channel|mizzen_channel|deadeye|mizzen_deadeye|chainplate|mizzen_chainplate|chain_bolt|mizzen_chain_bolt|supporter_)/],
   ['Stern, galleries and rudder', /^(stern_|taffrail_|quarter_gallery|rudder_|tiller_|ensign_staff_step)/],
-  ['Head, beakhead and figurehead', /^(head_|stem_|cutwater|beakhead|knighthead|cathead|figurehead|gammoning|bowsprit_partner|seat_of_ease)/],
+  ['Head, beakhead and figurehead', /^(head_|stem_|cutwater|beakhead|knighthead|cathead|figurehead|bowsprit_partner|seat_of_ease|hair_bracket|trailboard|bow_chase)/],
   ['Deck furniture', /^(wheel_|binnacle_|capstan_|main_hatch|fore_hatch|after_hatch|ladderway|coaming_|grating_|riding_bitt|jeer_bitt|main_jeer_bitt|main_topsail_sheet_bitt|fore_topsail_sheet_bitt|chain_pump|pump_|elm_pump|belfry_|bell_|galley_|steam_grating|skylight_|companion_|skid_|hammock_|belaying_|fife_|ladder_|furniture_)/],
   ['Armament', /^(gun_|carronade_)/],
   ['Boats', /^(boat_|launch_|pinnace_|cutter_|jolly_|davit_)/],
-  ['Ground tackle', /^(anchor|cable_|hawse|cat_block|fish_)/],
+  ['Ground tackle', /^(anchor|cable_|hawse|cat_block|fish_|sheet_anchor|kedge_anchor|stowed_anchor|stowed_stock|shank_painter)/],
   ['Colours', /^(ensign_|pennant_|jack_|union_|flag_|canton_)/],
 ];
 
@@ -82,13 +83,13 @@ const offsetTable = () => {
     + `Station \`z\` is metres from the station of maximum breadth, negative forward. Waterline \`y\`\n`
     + `is metres above the design load waterline, so most are negative. \`—\` means the station does\n`
     + `not reach that waterline.\n\n`;
-  s += '| station | z | rabbet y | ' + wl.map((y) => `y ${y}`).join(' | ') + ' | deck y | deck half-b | rail y | rail half-b |\n';
+  s += '| station | z | rabbet y | ' + wl.map((y) => `y ${y}`).join(' | ') + ' | deck y | deck half-b | top of side y | top of side half-b |\n';
   s += '|---|---|---|' + wl.map(() => '---').join('|') + '|---|---|---|---|\n';
   for (let i = 0; i < OFFSETS.stationZ.length; i++) {
     s += `| ${i} | ${OFFSETS.stationZ[i].toFixed(2)} | ${OFFSETS.rabbetY[i].toFixed(2)} | `
       + OFFSETS.halfBreadth[i].map((v) => (v === null ? '—' : v.toFixed(3))).join(' | ')
       + ` | ${OFFSETS.deckAtSideY[i].toFixed(2)} | ${OFFSETS.deckAtSideX[i].toFixed(3)}`
-      + ` | ${OFFSETS.railY[i].toFixed(2)} | ${OFFSETS.railX[i].toFixed(3)} |\n`;
+      + ` | ${OFFSETS.topOfSideY[i].toFixed(2)} | ${OFFSETS.railX[i].toFixed(3)} |\n`;
   }
   return s;
 };

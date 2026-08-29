@@ -3,7 +3,7 @@
     "key": "anchor_arm_span",
     "metric": "extent_caliper",
     "expected": 2.7432000000000003,
-    "actual": 2.7823434693843736,
+    "actual": 2.782343469384373,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §13.2 fluke tip to fluke tip at 0.55 of the shank, the standard long-shank proportion"
   },
@@ -19,7 +19,7 @@
     "key": "anchor_shank_length",
     "metric": "extent_caliper",
     "expected": 5.0292,
-    "actual": 5.036410816645557,
+    "actual": 5.036410816645555,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 the period rule that the shank equals the stock; stock from Steel's series scaled by the cube root of the weight"
   },
@@ -27,7 +27,7 @@
     "key": "anchor_stock_length",
     "metric": "extent_caliper",
     "expected": 5.0292,
-    "actual": 5.037403481811887,
+    "actual": 5.037403481811888,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 Steel 1805 :43221 series (22-0 / 21-9 / 20-6 / …) carried to the 32-gun column by cube-root-of-weight scaling"
   },
@@ -112,10 +112,10 @@
   },
   {
     "key": "figurehead_height",
-    "metric": "extent_max",
+    "metric": "extent_caliper",
     "expected": 1.2192,
-    "actual": 1.3969456762880128,
-    "tolerance": 0.22,
+    "actual": 1.248755645740511,
+    "tolerance": 0.05,
     "source": "RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — \"the scale was drastically reduced\", so a small figure"
   },
   {
@@ -250,7 +250,7 @@
     "key": "jolly_length",
     "metric": "extent_max",
     "expected": 4.8768,
-    "actual": 5.034466922902951,
+    "actual": 5.007102783357411,
     "tolerance": 0.06,
     "source": "RECONSTRUCTED §8.3 jolly boat 16-18 ft, the smaller taken"
   },
@@ -407,10 +407,18 @@
     "source": "MEASURED §6 the stern elevation on the ZAZ3067 body plan shows a single row of seven lights; 06 §12.2 and 08 §5.2 reconstruct five from a breadth rule whose stated range is 5 to 7"
   },
   {
+    "key": "stern_name_length",
+    "metric": "extent_x",
+    "expected": 1.3843,
+    "actual": 1.3859569430351257,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §12.1 SURPRISE: eight letters of 4½ in with 2½ in between them, and the cut stroke over the ends"
+  },
+  {
     "key": "stern_taffrail_above_wl",
     "metric": "max_y",
     "expected": 5.080000000000001,
-    "actual": 5.079999923706055,
+    "actual": 5.182318210601807,
     "tolerance": 0.035,
     "source": "MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft. This is the figure the taffrail is built to; the height above the quarterdeck follows from it"
   },
@@ -418,7 +426,7 @@
     "key": "stern_transom_breadth_wing",
     "metric": "extent_x",
     "expected": 5.7912,
-    "actual": 5.673721790313721,
+    "actual": 5.673907279968262,
     "tolerance": 0.05,
     "source": "MEASURED §6 wing transom 19.0 ft across the stern elevation on the ZAZ3067 body plan"
   },
