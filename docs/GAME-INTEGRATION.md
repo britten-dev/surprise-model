@@ -1,9 +1,36 @@
-# Dropping the game LOD into the host game
+# The host game
 
-The `game` level of detail exists to replace the procedural ship in
-`hms-surprise/src/world/ocean/ship.js`. This is what has to line up, checked against that
-file rather than assumed. **Nothing in that repository has been changed** — this is a note
-for whoever does the integration.
+**Done.** The game at [britten-dev/hms-surprise](https://github.com/britten-dev/hms-surprise)
+takes its ship from this package — see
+[PR #1](https://github.com/britten-dev/hms-surprise/pull/1). What follows is the record of
+how it was fitted, and what a different host would need to know.
+
+## How it is wired
+
+```js
+import { buildShip } from 'surprise-model';
+import { SPEC } from 'surprise-model/spec';
+
+this.model = buildShip({ lod: 'game', sails: 'storm' });
+this.group.add(this.model);
+```
+
+The host keeps everything the model knows nothing about — the wave field, the motion, the
+wake, the spray, the mood lighting — and takes only the mesh. It reads her dimensions from
+`SPEC` rather than repeating them, so the wake and the flag stations follow the hull.
+
+Its flags are animated, and the model's are baked into one attitude, so the model's are
+hidden and used only for their positions. That keeps the model the authority on *where* a
+flag flies and the animation the host's.
+
+## What it costs
+
+| | |
+| --- | --- |
+| Build | about 920 ms cold, 80 ms after. Materials are cached per level, so changing canvas at runtime is a geometry rebuild and not another download. |
+| Triangles | 58,832 at the `game` level |
+| Materials | 19, all `MeshStandardMaterial` with baked procedural maps |
+| three | a peer dependency, so the host provides it and there is exactly one copy |
 
 ## What already matches
 
@@ -19,7 +46,7 @@ for whoever does the integration.
 The `game` GLB therefore drops straight in without a scale factor or a rotation. Load it,
 add it to `this.group`, and delete the procedural hull builder.
 
-## What needs a decision
+## What a host has to decide
 
 **1. The wave field is sampled in the host, not here.** `ship.js` samples at
 `±13 m` fore and aft and `±4.4 m` on each beam, and eases heave, pitch and roll toward
@@ -29,18 +56,16 @@ for a hull whose perpendiculars are 36.9 m apart: the fore and aft sample points
 about 0.70 of the half-length, which is a reasonable place to take a ship's trim from and
 is what the existing ship uses.
 
-**2. The flags are baked.** The GLB carries the ensign, the pennant and the jack as static
-meshes with a wind curve frozen into them. `ship.js` animates its own flags. Either strip
-the `flags` group from the loaded GLB and keep the host's animation, or keep the baked
-ones and drop the host's. The baked ones are more accurate; the host's move. Suggested:
-keep the host's animation, and drive it from the baked geometry — the meshes are named
-`ensign`, `pennant` and `jack` inside the `flags` group and can be found and re-animated.
+**2. The flags are baked.** The model flies the ensign, the pennant and the jack as static
+meshes with a wind curve frozen into them. A host that animates its own should hide these
+and read their positions — the meshes are named `ensign`, `pennant` and `jack` inside the
+`flags` group. That is what hms-surprise does, and it is the recommended arrangement: the
+model stays the authority on where a flag flies, and the motion stays the host's.
 
-**3. Sail state.** The host runs storm canvas. `surprise-game-storm.glb` is the one to
-load. All four states share the same hull and rig, so swapping between them at runtime
-means loading more than one GLB, or loading the hero source and generating in-browser —
-the generator takes about 400 ms for the whole ship, which is affordable at a loading
-screen but not mid-frame.
+**3. Sail state.** Building from source rather than loading a GLB is what makes this
+cheap: the materials are cached per level, so a second `buildShip` at a different sail
+state costs about 80 ms of geometry and no download at all. A ship can shorten sail in
+front of you.
 
 **4. Triangle count.** 59.7 k against the host's few thousand. That is the point of the
 exchange, but it is a real cost on a scene that also carries a wave field, spume and
@@ -54,10 +79,9 @@ procedural maps. Nothing needs the host's lighting to change. If the host batche
 material, the count could come down by merging the timber and mast materials, which differ
 only in roughness.
 
-## The one thing that would actually be wrong
+## The thing that was actually wrong
 
-The host's `HULL.length` of 39 m is used for more than drawing — the wake, the spume
-emitters and the boat's bounding checks all read it. It is 0.6 m longer than this hull's
-gundeck. Either set it to `38.4` and re-check anything that reads it, or accept a 1.5 per
-cent difference, which is smaller than the wave field's own amplitude and will not be
-visible.
+The host's `HULL.length` was 39 m, and it is read by more than the drawing — the wake, the
+spume emitters and the bounds all use it. Her gundeck is 38.4 m. It now comes from
+`SPEC.hull_length_gundeck`, so everything that reads it follows the hull rather than a
+number somebody typed once.
