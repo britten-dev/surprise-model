@@ -30,7 +30,14 @@ export const STERN_SPEC = {
   // that it keeps station with the sheer if the offsets change. The two agree: the rail
   // line stands 24.4 ft above base and the taffrail 29.5 ft.
   stern_taffrail_above_rail: m(ft(5, 1), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, rail line 24.4 ft', { noAudit: true }),
-  stern_taffrail_above_wl: m(ft(16, 8), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft', { tolerance: 0.05 }),
+  // The same measurement read against the quarterdeck instead of against the rail, and
+  // the one that actually governs. The traced offsets carry the rail line dead level from
+  // amidships to the sternpost, with no sheer at all, so setting the taffrail off it puts
+  // the taffrail BELOW the quarterdeck's own bulwark and the wheel stands over the stern
+  // in plain sight. Taking the greater of the two heights keeps the measured figure as a
+  // floor and lets the deck arrangement lift it where the rail line cannot be trusted.
+  stern_taffrail_above_quarterdeck: m(ft(4, 2), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, quarterdeck at side 25.3 ft', { noAudit: true }),
+  stern_taffrail_above_wl: m(ft(16, 8), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft; a floor, not the built height — see stern_taffrail_above_quarterdeck', { noAudit: true }),
 
   // How far abaft the tuck each of those heights lies. This is the rake of the counter
   // and of the transom above it.
@@ -72,6 +79,7 @@ export const STERN_SPEC = {
   stern_light_count: n(7, 'MEASURED §6 the stern elevation on the ZAZ3067 body plan shows a single row of seven lights; 06 §12.2 and 08 §5.2 reconstruct five from a breadth rule whose stated range is 5 to 7', { tolerance: 0.001 }),
   stern_light_height: m(ft(3, 0), 'RECONSTRUCTED §12.2 lights 3 ft 0 in deep for a Sixth Rate great cabin', { noAudit: true }),
   stern_light_sill_above_deck: m(ft(2, 6), 'RECONSTRUCTED §12.2 sill height of a great-cabin light above the gun deck at side', { noAudit: true }),
+  stern_light_row_breadth: m(ft(18, 0), 'MEASURED §6 the 20 ft transom at the window band less a 1 ft quarter piece each side', { tolerance: 0.06 }),
   stern_light_munion: m(ft(0, 6), 'RECONSTRUCTED §12.2 munions 6 in wide between the lights', { noAudit: true }),
   stern_quarter_piece_width: m(ft(1, 0), 'RECONSTRUCTED §12.2 the quarter piece bounding the row of lights each side', { noAudit: true }),
   stern_light_frame_depth: m(ft(0, 4), 'RECONSTRUCTED §5.2 the sash frame stands proud of the transom planking', { noAudit: true }),

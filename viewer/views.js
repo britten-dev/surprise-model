@@ -1,7 +1,10 @@
 // The named camera stations used for verification renders.
 //
-// `azimuth` is measured from dead ahead of the ship, turning to port; `elevation` is
-// above the waterline plane. `fill` is how much of the frame the ship takes up: 1.0
+// `azimuth` is where the camera stands, measured round the ship from dead ahead: 0 puts
+// the camera in front of her looking aft at her bow, 90 on her starboard beam, 180
+// astern looking forward, 270 on her port beam. `elevation` is above the waterline
+// plane. Most views here are taken from the port side, because that is the side the
+// reference photograph shows. `fill` is how much of the frame the ship takes up: 1.0
 // fits her bounding sphere exactly inside the field of view, so a close study is a
 // number well below 1 and a whole-ship view is a little above it. Framing that way
 // means a view keeps working when the ship changes size, and that the same view of the
@@ -14,19 +17,19 @@ export const VIEWS = {
   // looks, from a little above the rail, with the ship filling the frame.
   reference: { azimuth: 308, elevation: 9, fill: 0.84, fov: 30, aim: [0, 0.44, 0.02] },
 
-  bow: { azimuth: 176, elevation: 9, fill: 1.04, fov: 34, aim: [0, 0.44, 0] },
-  beam: { azimuth: 90, elevation: 7, fill: 1.02, fov: 32, aim: [0, 0.48, 0] },
-  quarter: { azimuth: 42, elevation: 14, fill: 1.05, fov: 34, aim: [0, 0.46, 0] },
-  stern: { azimuth: 3, elevation: 10, fill: 1.02, fov: 34, aim: [0, 0.42, 0] },
-  masthead: { azimuth: 122, elevation: 44, fill: 0.80, fov: 40, aim: [0, 0.62, 0] },
-  deck: { azimuth: 8, elevation: 4, fill: 0.28, fov: 58, aim: [0, 0.24, -0.10] },
+  bow: { azimuth: 348, elevation: 9, fill: 1.04, fov: 34, aim: [0, 0.44, 0] },
+  beam: { azimuth: 270, elevation: 7, fill: 1.02, fov: 32, aim: [0, 0.48, 0] },
+  quarter: { azimuth: 218, elevation: 14, fill: 1.05, fov: 34, aim: [0, 0.46, 0] },
+  stern: { azimuth: 183, elevation: 10, fill: 1.02, fov: 34, aim: [0, 0.42, 0] },
+  masthead: { azimuth: 296, elevation: 44, fill: 0.80, fov: 40, aim: [0, 0.62, 0] },
+  deck: { azimuth: 184, elevation: 5, fill: 0.30, fov: 58, aim: [0, 0.26, 0.12] },
 
   // Close studies, used when iterating on one region.
-  head: { azimuth: 156, elevation: 5, fill: 0.30, fov: 36, aim: [0, 0.16, -0.40] },
-  gallery: { azimuth: 34, elevation: 6, fill: 0.26, fov: 36, aim: [0, 0.15, 0.42] },
-  channels: { azimuth: 84, elevation: 5, fill: 0.30, fov: 36, aim: [0, 0.17, 0] },
-  underwater: { azimuth: 118, elevation: -14, fill: 0.72, fov: 34, aim: [0, 0.02, 0] },
-  waist: { azimuth: 62, elevation: 26, fill: 0.42, fov: 40, aim: [0, 0.26, 0] },
+  head: { azimuth: 322, elevation: 6, fill: 0.30, fov: 36, aim: [0, 0.17, -0.40] },
+  gallery: { azimuth: 214, elevation: 6, fill: 0.26, fov: 36, aim: [0, 0.16, 0.42] },
+  channels: { azimuth: 266, elevation: 5, fill: 0.30, fov: 36, aim: [0, 0.18, 0] },
+  underwater: { azimuth: 292, elevation: -14, fill: 0.72, fov: 34, aim: [0, 0.02, 0] },
+  waist: { azimuth: 244, elevation: 26, fill: 0.42, fov: 40, aim: [0, 0.28, 0] },
 };
 
 /**
@@ -89,7 +92,9 @@ export function applyView(camera, view, bounds, frame) {
   );
   camera.fov = fov;
   camera.near = Math.max(0.05, d / 400);
-  camera.far = d * 12;
+  // Far enough to keep the sky sphere and the sea plane inside the frustum on a close
+  // study, where the distance to the subject is small but the backdrop is not.
+  camera.far = Math.max(d * 12, 2400);
   camera.updateProjectionMatrix();
   camera.lookAt(tx, ty, tz);
   return { target: [tx, ty, tz] };

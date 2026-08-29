@@ -1,9 +1,9 @@
 [
   {
     "key": "anchor_arm_span",
-    "metric": "extent_max",
+    "metric": "extent_diagonal",
     "expected": 2.7432000000000003,
-    "actual": 2.566978775503917,
+    "actual": 3.273840461082808,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §13.2 fluke tip to fluke tip at 0.55 of the shank, the standard long-shank proportion"
   },
@@ -17,17 +17,17 @@
   },
   {
     "key": "anchor_shank_length",
-    "metric": "extent_max",
+    "metric": "extent_diagonal",
     "expected": 5.0292,
-    "actual": 5.007137583812881,
+    "actual": 5.162713287397183,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 the period rule that the shank equals the stock; stock from Steel's series scaled by the cube root of the weight"
   },
   {
     "key": "anchor_stock_length",
-    "metric": "extent_max",
+    "metric": "extent_diagonal",
     "expected": 5.0292,
-    "actual": 4.472383783685216,
+    "actual": 5.499585747344312,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 Steel 1805 :43221 series (22-0 / 21-9 / 20-6 / …) carried to the 32-gun column by cube-root-of-weight scaling"
   },
@@ -80,6 +80,14 @@
     "source": "PRIMARY §6.3 4 twelve-pounder carronades on the quarterdeck and 2 on the forecastle, Plymouth establishment 6.1796. ALTERNATIVE: 18-pdr carronades, 10 of them, in the 21.4.1798 fit"
   },
   {
+    "key": "cathead_spread",
+    "metric": "extent_x",
+    "expected": 8.8392,
+    "actual": 9.173444747924805,
+    "tolerance": 0.06,
+    "source": "SECONDARY §6 research 06-deck-layout §5.4, catheads: twice cathead_outer_half_breadth, the athwartships span over the two outer ends"
+  },
+  {
     "key": "cutter_length",
     "metric": "extent_z",
     "expected": 5.486400000000001,
@@ -94,6 +102,14 @@
     "actual": 15.15,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG"
+  },
+  {
+    "key": "figurehead_height",
+    "metric": "extent_max",
+    "expected": 1.2192,
+    "actual": 1.558662454270364,
+    "tolerance": 0.15,
+    "source": "RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — \"the scale was drastically reduced\", so a small figure"
   },
   {
     "key": "fore_channel_deadeyes_per_side",
@@ -190,6 +206,22 @@
     "actual": 0.739139974117279,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §4 Steel, port width for a 9-pounder"
+  },
+  {
+    "key": "head_knee_length",
+    "metric": "extent_z",
+    "expected": 3.81,
+    "actual": 3.809999465942383,
+    "tolerance": 0.05,
+    "source": "MEASURED §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the knee and stem together, from the aft face of the stem timber to the hair bracket — the fore-and-aft extent of the built piece"
+  },
+  {
+    "key": "head_rail_count",
+    "metric": "count",
+    "expected": 3,
+    "actual": 3,
+    "tolerance": 0.001,
+    "source": "SECONDARY §8 the reference photograph shows three rails curving up to the figurehead; Steel :4172 names four (lower, middle, main, upper) plus a false rail, so this is the photograph's reading of a four-rail arrangement"
   },
   {
     "key": "hull_beam_moulded",

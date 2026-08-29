@@ -25,10 +25,10 @@
 import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
-import { sweep, block, post } from '../util/solids.js';
+import { sweep, block } from '../util/solids.js';
 import { monotoneCubic } from '../util/interp.js';
 import { lerp, clamp, deg } from '../util/math.js';
-import { audit, audits } from '../audit/measure.js';
+import { audit } from '../audit/measure.js';
 
 /** Shorthand for a spec value. Every number in this file comes through here. */
 const S = (key) => SPEC[key].value;
@@ -106,9 +106,9 @@ function kneeOutline(model, cfg) {
   const yTopAft = f.rail + S('head_stem_head_above_rail');
 
   const n = Math.max(4, Math.round(cfg.headStations));
-  const pts = [[uAft, cut.yFoot]];
+  const pts = [[uAft, cut.yFoot], [0, cut.yFoot]];
   // Up the cutwater, forefoot to hair bracket.
-  for (let i = 0; i <= n; i++) {
+  for (let i = 1; i <= n; i++) {
     const y = lerp(cut.yFoot, cut.yHead, i / n);
     pts.push([cut(y), y]);
   }
@@ -131,7 +131,7 @@ function kneeOutline(model, cfg) {
  * In plan it sweeps out from the bow and comes back in to the knee. Between them those
  * two curves are what makes a frigate's bow look like a frigate's bow.
  */
-function headRail(model, side, aftFromStem, aftFeature, foreAboveRail, maxHalfBreadth) {
+function headRail(model, cfg, side, aftFromStem, aftFeature, foreAboveRail, maxHalfBreadth) {
   const zStem = model.zFwd;
   const yRail = model.featureYAt(zStem).rail;
   const pAft = model.pointAt(model.fromStem(aftFromStem), aftFeature, side);
@@ -141,14 +141,17 @@ function headRail(model, side, aftFromStem, aftFeature, foreAboveRail, maxHalfBr
   const xFore = S('head_knee_siding') / 2;
   const e = S('head_rail_profile_exponent');
 
-  const samples = 10;
+  const samples = Math.max(4, Math.round(cfg.headStations / 2));
   const pts = [];
   for (let i = 0; i <= samples; i++) {
     const s = i / samples;
     const u = lerp(uAft, uHair, s);
+    // In plan: a straight run from the ship's side to the knee, plus a bow that
+    // peaks halfway along, where the rail is at its widest. sin() is zero at both ends,
+    // so the rail still lands exactly on the hull and exactly on the hair bracket.
     const straight = lerp(Math.abs(pAft.x), xFore, s);
-    const mid = lerp(Math.abs(pAft.x), xFore, 0.5);
-    const h = straight + (maxHalfBreadth - mid) * Math.sin(Math.PI * s);
+    const atPeak = lerp(Math.abs(pAft.x), xFore, 0.5);
+    const h = straight + (maxHalfBreadth - atPeak) * Math.sin(Math.PI * s);
     pts.push(new THREE.Vector3(side * h, lerp(pAft.y, yFore, Math.pow(s, e)), zStem - u));
   }
   const curve = new THREE.CatmullRomCurve3(pts);
@@ -158,13 +161,13 @@ function headRail(model, side, aftFromStem, aftFeature, foreAboveRail, maxHalfBr
 }
 
 /** The three rails of one side, lowest first. */
-function railSet(model, side) {
+function railSet(model, cfg, side) {
   return [
-    headRail(model, side, S('head_rail_lower_aft_from_stem'), 'deck',
+    headRail(model, cfg, side, S('head_rail_lower_aft_from_stem'), 'deck',
       S('head_rail_lower_fore_above_rail'), S('head_rail_lower_half_breadth')),
-    headRail(model, side, S('head_rail_middle_aft_from_stem'), 'sheer_strake',
+    headRail(model, cfg, side, S('head_rail_middle_aft_from_stem'), 'sheer_strake',
       S('head_rail_middle_fore_above_rail'), S('head_rail_middle_half_breadth')),
-    headRail(model, side, S('head_rail_main_aft_from_stem'), 'rail',
+    headRail(model, cfg, side, S('head_rail_main_aft_from_stem'), 'rail',
       S('head_rail_main_fore_above_rail'), S('head_rail_main_half_breadth')),
   ];
 }
@@ -207,7 +210,7 @@ function figurehead(cfg, mats) {
 
   // The drapery from the plinth to the waist. Blue, as the reference photograph shows.
   const skirt = new THREE.Mesh(
-    new THREE.CylinderGeometry(waist, hem, yWaist, radial, 1, true),
+    new THREE.CylinderGeometry(waist, hem, yWaist, radial),
     mats.bunting('ensign_blue')
   );
   skirt.geometry.translate(0, yWaist / 2, 0);
@@ -216,7 +219,7 @@ function figurehead(cfg, mats) {
 
   // Torso and shoulders, in the white lead that a painted head of the period wore.
   const torso = new THREE.Mesh(
-    new THREE.CylinderGeometry(shoulder, waist, yShoulder - yWaist, radial, 1, true),
+    new THREE.CylinderGeometry(shoulder, waist, yShoulder - yWaist, radial),
     mats.white
   );
   torso.geometry.translate(0, (yShoulder + yWaist) / 2, 0);
@@ -234,7 +237,7 @@ function figurehead(cfg, mats) {
   if (!simple) {
     // A neck, so the head is not a ball balanced on a barrel.
     const neck = new THREE.Mesh(
-      new THREE.CylinderGeometry(headR / 2, headR / 2, h - headR * 2 - yShoulder, radial, 1, true),
+      new THREE.CylinderGeometry(headR / 2, headR / 2, h - headR * 2 - yShoulder, radial),
       mats.white
     );
     neck.geometry.translate(0, (h - headR * 2 + yShoulder) / 2, 0);
@@ -249,7 +252,7 @@ function figurehead(cfg, mats) {
         ? new THREE.Vector3(side * shoulder, yShoulder - armL, -armL / 2)
         : new THREE.Vector3(side * shoulder, yShoulder + armL / 2, -armL);
       const dir = new THREE.Vector3().subVectors(to, from);
-      const arm = new THREE.CylinderGeometry(armR, armR, dir.length(), radial, 1, true);
+      const arm = new THREE.CylinderGeometry(armR, armR, dir.length(), radial);
       arm.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(
         new THREE.Vector3(0, 1, 0), dir.clone().normalize()
       ));
@@ -326,16 +329,17 @@ export function buildHead(cfg, mats, model, ctx) {
   // makes the cutwater read against the black in the reference photograph.
   const cut = cutwaterAt(model);
   const trailPts = [];
-  for (let i = 0; i <= 12; i++) {
-    const y = lerp(0, cut.yHead, i / 12);
+  const nTrail = Math.max(6, Math.round(cfg.headStations / 2));
+  for (let i = 0; i <= nTrail; i++) {
+    const y = lerp(0, cut.yHead, i / nTrail);
     trailPts.push(new THREE.Vector3(0, y, fwd(cut(y))));
   }
   const trailCurve = new THREE.CatmullRomCurve3(trailPts);
   const trailW = S('head_knee_siding') / 2 + S('head_rail_sided') / 2;
   const trail = new THREE.Mesh(
     sweep(trailCurve, [
-      [-trailW, 0], [trailW, 0],
-      [trailW, S('trailboard_depth')], [-trailW, S('trailboard_depth')],
+      [-trailW, -S('trailboard_depth') / 2], [trailW, -S('trailboard_depth') / 2],
+      [trailW, S('trailboard_depth') / 2], [-trailW, S('trailboard_depth') / 2],
     ], { steps: Math.max(8, Math.round(cfg.mouldingSweeps / 4)), closed: true }),
     mats.ochre
   );
@@ -348,15 +352,20 @@ export function buildHead(cfg, mats, model, ctx) {
   // the offsets put it.
   const cheeks = [];
   for (const side of [1, -1]) {
-    for (const [k, feature] of [[0, 'wale_top'], [1, 'sheer_strake']]) {
+    // The lower cheek runs from the wale into the knee at the waterline; the upper
+    // from the sheer strake into the knee at the gun-deck line. Both ends of both are
+    // named lines of the ship, so neither is a number.
+    for (const [feature, uFore, yFore] of [
+      ['wale_top', S('head_knee_forward_at_waterline'), 0],
+      ['sheer_strake', S('head_knee_forward_at_deck'), f0.deck],
+    ]) {
       const aftPt = model.pointAt(model.fromStem(S('head_cheek_aft_from_stem')), feature, side);
-      const uFore = lerp(S('head_knee_forward_at_waterline'), S('head_knee_forward_at_deck'), k ? 1 : 0.55);
-      const yFore = k ? f0.deck : lerp(0, f0.deck, 0.6);
       const pts = [];
-      for (let i = 0; i <= 6; i++) {
-        const t = i / 6;
+      const nc = Math.max(4, Math.round(cfg.headStations / 4));
+      for (let i = 0; i <= nc; i++) {
+        const t = i / nc;
         const y = lerp(aftPt.y, yFore, t);
-        const u = lerp(-S('head_cheek_aft_from_stem'), uFore, Math.pow(t, 0.85));
+        const u = lerp(-S('head_cheek_aft_from_stem'), uFore, t);
         const xHull = model.halfBreadthAt(clamp(fwd(u), model.zFwd, model.zAft), y);
         const x = lerp(Math.abs(aftPt.x), Math.max(S('head_knee_siding') / 2, xHull), t);
         pts.push(new THREE.Vector3(side * x, y, fwd(u)));
@@ -374,7 +383,7 @@ export function buildHead(cfg, mats, model, ctx) {
   group.add(cheekMesh);
 
   // ---------------------------------------------------------------- the head rails
-  const rails = { 1: railSet(model, 1), '-1': railSet(model, -1) };
+  const rails = { 1: railSet(model, cfg, 1), '-1': railSet(model, cfg, -1) };
   if (cfg.headRails) {
     const sw = Math.max(8, Math.round(cfg.mouldingSweeps / 2));
     const profile = [
@@ -434,7 +443,7 @@ export function buildHead(cfg, mats, model, ctx) {
     const uA = -S('head_grating_aft_from_stem');
     const uB = S('head_grating_forward_of_stem');
     const rise = S('head_grating_above_lower_rail');
-    const nz = full ? 14 : 6;
+    const nz = Math.max(4, Math.round(cfg.headStations / 2));
     const pos = [], uvs = [], idx = [];
     const spine = [];
     for (let i = 0; i < nz; i++) {
@@ -472,7 +481,7 @@ export function buildHead(cfg, mats, model, ctx) {
         bars.push(sweep(new THREE.CatmullRomCurve3(line), [
           [-batten / 2, -batten / 2], [batten / 2, -batten / 2],
           [batten / 2, batten / 2], [-batten / 2, batten / 2],
-        ], { steps: 6, closed: true }));
+        ], { steps: Math.max(3, Math.round(cfg.mouldingSweeps / 12)), closed: true }));
       }
       const along = Math.max(2, Math.round(Math.abs(spine[nz - 1].z - spine[0].z) / pitch));
       for (let i = 0; i <= along; i++) {
@@ -527,7 +536,7 @@ export function buildHead(cfg, mats, model, ctx) {
     const planStation = (t) => zBk - round * (1 - t * t);
 
     const across = [];
-    const nAcross = full ? 13 : 7;
+    const nAcross = Math.max(5, Math.round(cfg.headStations / 2));
     for (let j = 0; j < nAcross; j++) {
       const t = (j / (nAcross - 1)) * 2 - 1;
       across.push(new THREE.Vector3(t * xMax, (yTop + yBot) / 2, planStation(t)));

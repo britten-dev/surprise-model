@@ -41,7 +41,15 @@ function sternProfile(model) {
   const yTuck = SPEC.stern_tuck_above_wl.value;
   const yWing = SPEC.stern_wing_transom_above_wl.value;
   const yUpper = SPEC.stern_upper_counter_above_wl.value;
-  const yTaff = f.rail + SPEC.stern_taffrail_above_rail.value;
+  // The taffrail has to top the quarterdeck's own bulwark, or the wheel and the after
+  // fittings stand over the stern in plain view. The traced offsets carry the rail line
+  // dead level the whole length of the ship, so measuring the taffrail off it alone puts
+  // it below the quarterdeck; the greater of the two readings of the same measurement is
+  // the one that stands up.
+  const yTaff = Math.max(
+    f.rail + SPEC.stern_taffrail_above_rail.value,
+    f.deck + SPEC.quarterdeck_above_gundeck.value + SPEC.stern_taffrail_above_quarterdeck.value,
+  );
 
   // How far abaft the tuck the centreline of the stern stands, by height. This is the
   // rake of the counter and of the transom over it.
@@ -343,7 +351,15 @@ function sternLights(cfg, mats, sp, group) {
   for (let i = 0; i < count; i++) {
     const cx = (i - (count - 1) / 2) * pitch;
     const x0 = cx - w / 2, x1 = cx + w / 2;
-    frames.push(patch(at(depth * 0.5), x0 - bar * 2, x1 + bar * 2, ySill - bar * 2, yHead + bar * 2, 3, 3));
+    // The frame is a ring, not a panel behind the glass. Crown glass is transmissive, so
+    // a solid frame behind it shows straight through and every light reads as a slab of
+    // ochre instead of as a window with the dark cabin behind it.
+    const fx0 = x0 - bar * 2, fx1 = x1 + bar * 2;
+    const fy0 = ySill - bar * 2, fy1 = yHead + bar * 2;
+    frames.push(patch(at(depth * 0.5), fx0, x0, fy0, fy1, 1, 3));
+    frames.push(patch(at(depth * 0.5), x1, fx1, fy0, fy1, 1, 3));
+    frames.push(patch(at(depth * 0.5), x0, x1, fy0, ySill, 3, 1));
+    frames.push(patch(at(depth * 0.5), x0, x1, yHead, fy1, 3, 1));
     glass.push(patch(at(depth), x0, x1, ySill, yHead, 3, 3));
     if (!cfg.galleryGlazing) continue;
     // Glazing bars: small rectangular panes in a grid, as contemporary sash windows were
@@ -362,6 +378,7 @@ function sternLights(cfg, mats, sp, group) {
   frame.name = 'stern_light_frames';
   frame.userData.count = count;
   audit(frame, 'stern_light_count', 'count');
+  audit(frame, 'stern_light_row_breadth', 'extent_x');
   group.add(frame);
 
   const pane = new THREE.Mesh(mergeGeometries(glass), mats.glass);
@@ -652,9 +669,12 @@ function nameOnCounter(sp, name, yCentre) {
   for (let i = 0; i < name.length; i++) {
     const segs = LETTERS[name[i]];
     if (!segs) continue;
-    const ox = (i - (name.length - 1) / 2) * pitch;
+    // Laid out from starboard to port. Seen from astern — the only place anyone reads a
+    // name on a counter from — starboard is on the left of the picture, so a name written
+    // with x increasing to starboard comes out backwards.
+    const ox = -(i - (name.length - 1) / 2) * pitch;
     for (const [ax, ay, bx, by] of segs) {
-      const x0 = ox + (ax / 3 - 0.5) * wLetter, x1 = ox + (bx / 3 - 0.5) * wLetter;
+      const x0 = ox - (ax / 3 - 0.5) * wLetter, x1 = ox - (bx / 3 - 0.5) * wLetter;
       const y0 = yCentre + (ay / 5 - 0.5) * hLetter, y1 = yCentre + (by / 5 - 0.5) * hLetter;
       const len = Math.hypot(x1 - x0, y1 - y0) + stroke;
       const g = new THREE.BoxGeometry(len, stroke, relief);

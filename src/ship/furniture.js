@@ -562,7 +562,9 @@ export function buildFurniture(cfg, mats, model, ctx) {
   // cap; aft the quarterdeck is carried up past the rail, and there they sit on the
   // deck edge, which is where the bulwark that carries them would stand.
   if (cfg.hammockCranes) {
-    const spacing = SPEC.hammock_crane_spacing.value;
+    // At the game LOD the cranes are set at twice their spacing: at that range the rail
+    // through their heads is what reads, and half the uprights carry it just as well.
+    const spacing = SPEC.hammock_crane_spacing.value * (cfg.hammockCranes === 'full' ? 1 : 2);
     const h = SPEC.hammock_crane_height.value;
     const r = SPEC.hammock_crane_diameter.value / 2;
     const spread = SPEC.hammock_crane_spread.value;

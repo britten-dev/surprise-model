@@ -256,15 +256,20 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
   );
 
   // ------------------------------------------------------------------ the catheads
-  // Not built here — the cathead timber belongs to the head module. Only its position is
-  // wanted, to know where the cat block hangs and where the ring is stopped up to it.
-  const zRoot = model.fromStem(S('anchor_cathead_root_from_stem'));
-  const fRoot = model.featureYAt(zRoot);
-  const catheadOut = model.halfBreadthAt(zRoot, fRoot.rail) + S('anchor_cathead_outboard_of_side');
-  const catheadY = fRoot.deck + SPEC.forecastle_above_gundeck.value
-    + S('anchor_cathead_end_above_forecastle');
-  const zCathead = model.fromStem(S('anchor_cathead_from_stem'));
-  const ringY = catheadY - S('anchor_cathead_moulded') - S('anchor_ring_below_cathead');
+  // Not built here — the cathead timber belongs to the head module. Its outer end is
+  // reconstructed exactly as that module reconstructs it, out of the head's own sourced
+  // rows, so that the anchor cannot end up hanging from a cathead that is somewhere else:
+  // the root at the cat beam, the outer end square with the bow, and the stive carried
+  // from one to the other.
+  const zRoot = model.fromStem(SPEC.cathead_root_from_stem.value);
+  const zCathead = model.fromStem(SPEC.cathead_outer_from_stem.value);
+  const xRoot = SPEC.cathead_root_half_breadth.value;
+  const catheadOut = SPEC.cathead_outer_half_breadth.value;
+  const run = Math.hypot(catheadOut - xRoot, zRoot - zCathead);
+  const catheadY = model.featureYAt(zRoot).rail + SPEC.cathead_moulded.value / 2
+    + run * Math.tan(deg(SPEC.cathead_stive_deg.value));
+  // The ring is stopped up in the cat block, which hangs under the cathead's underside.
+  const ringY = catheadY - SPEC.cathead_moulded.value / 2 - S('anchor_ring_below_cathead');
 
   const bowerGeom = anchorGeometry(cfg, 1);
 
@@ -280,7 +285,9 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     const fCrown = model.featureYAt(zCrown);
     const bed = new THREE.Vector3(
       (model.halfBreadthAt(zCrown, fCrown.port_head) + S('anchor_crown_outboard_of_side')) * side,
-      fCrown.port_head + S('anchor_channel_above_port_head'),
+      // The channel's own height is the channels module's row, read here rather than
+      // guessed again, so the fluke beds on the platform and not through it.
+      fCrown.rail - SPEC.channel_top_below_rail.value + S('anchor_crown_above_channel'),
       zCrown
     );
     const toCrown = bed.clone().sub(ring);
