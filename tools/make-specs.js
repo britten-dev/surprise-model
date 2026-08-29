@@ -153,7 +153,7 @@ ship should look and read, not for how big anything is.
 | 5 | Steel 1794 vol 2, the rigging warrant for a 28-gun ship of 594 tons. | SECONDARY | Shroud, backstay and bobstay counts; ratlines at thirteen inches. |
 | 6 | Steel, "The Elements and Practice of Naval Architecture", the "CENTRES OF MASTS" folio. | SECONDARY | Mast stations, mast rake, bowsprit steeve. |
 | 7 | Rif Winfield, *British Warships in the Age of Sail 1793–1817*, via [threedecks 6983](https://threedecks.org/index.php?display_type=show_ship&id=6983) and [Wikipedia](https://en.wikipedia.org/wiki/HMS_Surprise_(1796)) | SECONDARY | Dimensions, tonnage, armament, complement, career. |
-| 8 | \`reference/surprise-reference.jpg\` — a museum model by The Model Shipyard. Read pixel by pixel in \`docs/PHOTO-ANALYSIS.md\`. | INTERPRETATION | Paint, ornament, sail set, character. Never dimensions. |
+| 8 | A museum model by **The Model Shipyard**, [published on their site](https://www.stephensandkenau.com/ship/hms-surprise/). Read pixel by pixel in \`docs/PHOTO-ANALYSIS.md\`; the photograph itself is their work and is not redistributed here. | INTERPRETATION | Paint, ornament, sail set, character. Never dimensions. |
 | 9 | \`docs/research/\` — eight sourced research files behind all of the above. | — | Every citation, and an honest account of what could not be found. |
 
 **A trap worth recording.** The RMG catalogue links four plans (ZAZ3181–3184) to

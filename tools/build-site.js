@@ -24,7 +24,10 @@ await fs.mkdir(DIST, { recursive: true });
 // The generator and everything it imports.
 await copyDir(path.join(ROOT, 'src'), path.join(DIST, 'src'));
 await copyDir(path.join(ROOT, 'viewer'), path.join(DIST, 'viewer'));
-await copyDir(path.join(ROOT, 'reference'), path.join(DIST, 'reference'));
+// The reference folder's prose, but never its images: the photograph is a third party's
+// and is not republished, on this site or anywhere else. See reference/README.md.
+await copyDir(path.join(ROOT, 'reference'), path.join(DIST, 'reference'),
+  (_, e) => e.isDirectory() || e.name.endsWith('.md'));
 
 // three, at the paths the import map already names, so nothing in the source has to
 // know it is being deployed. The whole build directory goes, not just three.module.js:

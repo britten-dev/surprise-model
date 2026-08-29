@@ -29,6 +29,9 @@
            font-size: 11px; color: #8b97a5; white-space: pre; }
   #stats b { color: #d6d9dd; font-weight: 600; }
   #views { top: 12px; right: 12px; width: 132px; }
+  /* The reference photograph is not shipped with this project — it is The Model
+     Shipyard's, not ours. Anyone with their own copy in reference/ sees the overlay;
+     everyone else does not get the button. See reference/README.md. */
   #ref { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .15s;
          background: center/contain no-repeat url(/reference/surprise-reference.jpg); }
   #ref.on { opacity: .45; }
@@ -108,9 +111,19 @@ function paintSegs() {
 
 seg('lod', LODS.map((v) => ({ label: v, value: v })), (v) => state.lod === v, (v) => { state.lod = v; rebuild(); });
 seg('sails', SAIL_STATES.map((v) => ({ label: v, value: v })), (v) => state.sails === v, (v) => { state.sails = v; rebuild(); });
-seg('disp', [
+const DISPLAY_TOGGLES = [
   { label: 'wire', value: 'wire' }, { label: 'grid', value: 'grid' }, { label: 'photo', value: 'ref' },
-], (v) => state[v], (v) => {
+];
+// The photo overlay only exists for whoever has put their own copy of the reference
+// photograph in reference/. Ask for it once; if it is not there, drop the button.
+fetch('/reference/surprise-reference.jpg', { method: 'HEAD' })
+  .then((r) => { if (!r.ok) throw new Error('absent'); })
+  .catch(() => {
+    const el = document.getElementById('disp');
+    for (const b of [...el.children]) if (b.dataset.value === 'ref') b.remove();
+  });
+
+seg('disp', DISPLAY_TOGGLES, (v) => state[v], (v) => {
   state[v] = !state[v];
   document.getElementById('ref').classList.toggle('on', state.ref);
   grid.visible = state.grid;

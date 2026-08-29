@@ -10,9 +10,9 @@
 // means a view keeps working when the ship changes size, and that the same view of the
 // full suit and of the furled state is shot from the same place.
 export const VIEWS = {
-  // Matched to reference/surprise-reference.jpg: a museum model photographed from the
+  // Matched to The Model Shipyard's photograph: a museum model photographed from the
   // port bow, a little above deck level, the whole rig in frame.
-  // Matched to reference/surprise-reference.jpg by laying the two side by side: the
+  // Matched to The Model Shipyard's photograph by laying the two side by side: the
   // photograph is taken from the port bow but much closer to the beam than it first
   // looks, from a little above the rail, with the ship filling the frame.
   reference: { azimuth: 308, elevation: 9, fill: 0.84, fov: 30, aim: [0, 0.44, 0.02] },

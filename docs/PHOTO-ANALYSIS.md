@@ -1,8 +1,16 @@
 # What the reference photograph actually shows
 
-`reference/surprise-reference.jpg` — a hand-crafted museum model by The Model Shipyard,
-photographed from the port bow under a full suit of canvas, against a warm studio
-backdrop. 800 × 600.
+A hand-crafted museum model by **The Model Shipyard**, photographed from the port bow
+under a full suit of canvas against a warm studio backdrop, 800 × 600. It is published on
+their own site: <https://www.stephensandkenau.com/ship/hms-surprise/>
+
+**The photograph is not in this repository.** It is their work, not ours, so what is kept
+here is the reading of it rather than the image: the paint bands with the hex values
+sampled off them, the details visible on the model, and where the model is interpretation
+rather than evidence. Everything the photograph decided is written down below and cited
+from the relevant rows of `SPECS.md`, so the work is reproducible without it. Anyone who
+wants the comparison tools to run can put their own copy in `reference/` — see
+`reference/README.md`.
 
 The brief says the photograph decides paint and character while published plans decide
 dimensions. So the photograph needs reading carefully rather than from memory. These

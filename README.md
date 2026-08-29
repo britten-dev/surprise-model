@@ -8,8 +8,6 @@ at three levels of detail and four states of canvas.
 This is an asset project, not a game. Nothing here is downloaded: the hull is lofted
 from an offset table, every fitting is generated, and every texture is drawn in code.
 
-![the reference](reference/surprise-reference.jpg)
-
 ## What it produces
 
 | LOD | Triangles | Use |
@@ -133,6 +131,8 @@ prismatic of 0.614 and a block of 0.477 — all inside the band for a frigate.
 
 Unité's own lines do not survive in digitised form. Where a number is reconstructed
 rather than recorded, `SPECS.md` says so and gives the period rule it was derived from.
-The reference photograph is a hand-crafted museum model and is itself an
-interpretation: published plans decide dimensions, the photograph decides paint and
-character.
+The reference she was matched against is a hand-crafted museum model by The Model
+Shipyard, and is itself an interpretation: published plans decide dimensions, the
+photograph decides paint and character. The photograph is their work and is not
+redistributed here — `docs/PHOTO-ANALYSIS.md` records what it shows, with the colours
+sampled from it, so the reading survives without the image. See `reference/README.md`.
