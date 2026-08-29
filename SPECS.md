@@ -237,7 +237,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 |---|---|---|---|---|
 | `bobstay_hole_count` | 2 | — | SECONDARY | §6 Steel :41228, two bobstay holes |
 | `bobstay_hole_diameter` | 0.1016 | 0 ft 4 in | SECONDARY | §6 Steel :41229, 4 in diameter, OCR-doubtful |
-| `bobstay_hole_forward_of_stem` | 1.9812 | — | SECONDARY | §6 Steel :1537, cut through the fore part of the knee of the head below the lower cheek |
+| `bobstay_hole_forward_of_stem` | 1.9812 | — | SECONDARY | §6 Steel :1537, cut through the fore part of the knee of the head below the lower cheek. The model puts the eyes on the cutwater below the wale instead, which is the same place expressed as a line of the ship rather than as a distance |
 | `fore_channel_shroud_aim_y` | 15.545 | — | RECONSTRUCTED | §04 9 fore top platform 51 ft 0 in above the load waterline |
 | `main_channel_shroud_aim_y` | 17.993 | — | RECONSTRUCTED | §04 9 main top platform 59 ft 0 1/2 in above the load waterline |
 | `mizzen_channel_shroud_aim_y` | 15.342 | — | RECONSTRUCTED | §04 9 mizen top platform 50 ft 4 in above the load waterline |
@@ -253,6 +253,9 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `topgallant_backstay_deadeye_diameter` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §06 10 scaled from Steel 1805 OUTBOARD folio and Folio LIV: 7 in |
 | `mizzen_topgallant_backstay_deadeye_diameter` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §06 10 scaled from Steel 1805 OUTBOARD folio and Folio LIV: 6 in |
 | `shroud_deadeye_thickness` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §06 10 scaled from Steel 1805 OUTBOARD folio and Folio LIV: a deadeye is a little over half its diameter through |
+| `fore_topgallant_shroud_pairs` | 3 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
+| `main_topgallant_shroud_pairs` | 3 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
+| `mizzen_topgallant_shroud_pairs` | 2 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
 | `fore_futtock_shroud_pairs` | 4 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
 | `main_futtock_shroud_pairs` | 4 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
 | `mizzen_futtock_shroud_pairs` | 3 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons |
@@ -393,6 +396,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 |---|---|---|---|---|
 | `head_stem_siding` | 0.3302 | 1 ft 1 in | RECONSTRUCTED | §6 Steel: the stem is sided as the keel, and the keel of this ship is sided 1 ft 1 in (SPEC.keel_siding) |
 | `head_stem_aft_overlap` | 0.1524 | — | RECONSTRUCTED | modelling allowance: how far abaft the hull's foremost station the stem timber is carried, so that it closes the fore end of the lofted shell |
+| `head_stem_copper_above_waterline` | 0.762 | — | SECONDARY | §8 research 08 §3.5, sheathing carried 2 ft 6 in to 3 ft above the load waterline; the same height is used on the stem as on the hull |
+| `head_stem_sheathing_proud` | 0.0254 | — | RECONSTRUCTED | §8 the sheathing board and the copper over it, standing proud of the bare stem |
 | `head_stem_head_above_rail` | 0.2286 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the stem head between the knightheads reads 4 to 5 px above the rail line |
 | `head_knee_siding` | 0.2794 | 0 ft 11 in | RECONSTRUCTED | §6 Steel :41236 the gripe is sided as the knee of the head; a knee slightly thinner than the stem it lies against |
 | `head_knee_projection` | 3.6576 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the foremost ink of the head stands 75 px forward of the stem |
@@ -411,13 +416,13 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `head_rail_profile_exponent` | 1.25 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: fitted to four points on the lowest rail |
 | `head_rail_lower_aft_from_stem` | 0.3048 | 1 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the lowest rail runs into the ship's side within a foot of the stem, at about the gun-deck line |
 | `head_rail_lower_fore_above_rail` | 0.1524 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
-| `head_rail_lower_half_breadth` | 1.0668 | 3 ft 6 in | RECONSTRUCTED | : no plan view of the head is published; the widest point of the lowest rail, set inside the middle rail |
+| `head_rail_lower_half_breadth` | 1.3716 | 4 ft 6 in | RECONSTRUCTED | : no plan view of the head survives, so the three plan widths are set against the reference photograph and bounded by the catheads, which no head rail passes outside of |
 | `head_rail_middle_aft_from_stem` | 1.8288 | 6 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
 | `head_rail_middle_fore_above_rail` | 0.4572 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
-| `head_rail_middle_half_breadth` | 1.524 | 5 ft 0 in | RECONSTRUCTED | : as head_rail_lower_half_breadth |
+| `head_rail_middle_half_breadth` | 1.905 | 6 ft 3 in | RECONSTRUCTED | : as head_rail_lower_half_breadth |
 | `head_rail_main_aft_from_stem` | 3.6576 | 12 ft 0 in | SECONDARY | §6 Steel :15364, the after end of the main head rail bolts to the same timberhead the cat block does, so it ends at the cathead |
 | `head_rail_main_fore_above_rail` | 0.762 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the uppermost rail runs into the back of the figure about 15 px above the rail line |
-| `head_rail_main_half_breadth` | 1.9812 | 6 ft 6 in | RECONSTRUCTED | : the main rail sweeps out nearly to the cathead in plan |
+| `head_rail_main_half_breadth` | 2.4384 | 8 ft 0 in | RECONSTRUCTED | : the main rail sweeps out in plan to a little more than half the extreme half-breadth, and well inside the cathead at 14 ft 6 in |
 | `head_timber_count` | 4 | — | SECONDARY | §6 research 06-deck-layout §11, head structure: Steel :3133 defines the head timbers but tabulates no count; four a side is the Sixth-Rate norm — RECONSTRUCTED |
 | `head_timber_sided` | 0.127 | — | RECONSTRUCTED | §6 a head timber sided as the rails it crosses |
 | `head_timber_moulded` | 0.1016 | — | RECONSTRUCTED | §6 as above |
@@ -808,7 +813,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `anchor_crown_from_stem` | 7.3152 | 24 ft 0 in | RECONSTRUCTED | §13.3 research 06, crown and flukes bedded on the fore channel 24 ft abaft the stem |
 | `anchor_crown_above_channel` | 0.1016 | — | RECONSTRUCTED | §13.3 the arm bearing on the channel, not sunk into it |
 | `anchor_crown_outboard_of_side` | 0.4572 | — | RECONSTRUCTED | §13.3 the crown bedded a foot and a half outboard of the ship's side, inside the channel's outer edge |
-| `anchor_stock_cant_deg` | 58 | — | RECONSTRUCTED | §PHOTO the stock canted outboard over the rail, read off the reference photograph |
+| `anchor_stock_cant_deg` | 66 | — | RECONSTRUCTED | §PHOTO the stock canted outboard over the rail, read off the reference photograph |
 | `hawse_hole_count_per_side` | 2 | — | RECONSTRUCTED | §12 two hawse holes a side, the working hawse and the spare, as on every frigate of the rate |
 | `hawse_hole_first_from_stem` | 1.2192 | 4 ft 0 in | RECONSTRUCTED | §12 as far forward as the hawse pieces allow |
 | `hawse_hole_spacing` | 0.5334 | 1 ft 9 in | RECONSTRUCTED | §12 the two holes of a side set a bore and a half apart |

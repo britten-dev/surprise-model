@@ -17,6 +17,7 @@ import { mergeGeometries } from '../util/loft.js';
 import { deg, lerp, clamp } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 import { buildSails } from './sails.js';
+import { channelAnchors } from './channels.js';
 
 const S = (k) => SPEC[k].value;
 
@@ -70,8 +71,14 @@ export function mastGeometry(model) {
     const topmastHead = S(topmastHeadKey);
     const topmastHoundsH = topmastHeel + topmast - topmastHead;
     const tgHeel = topmastHoundsH;
+    // Steel's tabulated topgallant length already includes the long pole above the
+    // topgallant rigging stop — the internal check that the topgallant is exactly half
+    // its topmast only works if it does. Building the pole on top of the tabulated
+    // length as well made every mast some eight feet too tall and put the trucks at
+    // 41.1 m instead of Steel's 38.6 m.
     const tg = S(tgKey);
     const pole = S(poleKey);
+    const stop = tg - pole;          // the working part, up to the topgallant hounds
     const truckH = tgHeel + tg;
 
     // How far up the mast the deck is. Everything that lands on deck — a stay's foot, a
@@ -92,7 +99,7 @@ export function mastGeometry(model) {
       houndsH, capH: lower,
       topmastHeel, topmastLength: topmast, topmastHead, topmastDia: S(topmastDiaKey),
       topmastHoundsH, topmastCapH: topmastHeel + topmast,
-      tgHeel, tgLength: tg, tgDia: S(tgDiaKey), poleLength: pole,
+      tgHeel, tgLength: tg, tgDia: S(tgDiaKey), poleLength: pole, tgStop: stop,
       truckH,
       topBreadth: topBreadthKey ? S(topBreadthKey) : 0,
       topLength: topLengthKey ? S(topLengthKey) : 0,
@@ -101,8 +108,10 @@ export function mastGeometry(model) {
       yardH: {
         lower: houndsH - S('main_top_breadth') * 0.12,
         topsail: topmastHoundsH - 0.9,
-        topgallant: tgHeel + tg * 0.62,
-        royal: tgHeel + tg + pole * 0.55,
+        // The topgallant yard hoists to the topgallant hounds, at the head of the stop;
+        // the royal flies above it on the bare pole, there being no royal mast.
+        topgallant: tgHeel + stop * 0.86,
+        royal: tgHeel + stop + pole * 0.55,
       },
     };
   }
@@ -188,7 +197,7 @@ function buildMast(m, cfg, mats, group) {
   topmast.name = `${m.name}_topmast`;
   group.add(topmast);
 
-  const tg = stick(m.tgLength + m.poleLength, m.tgDia, TAPER.topmast, m.tgHeel, mats.mast);
+  const tg = stick(m.tgLength, m.tgDia, TAPER.topmast, m.tgHeel, mats.mast);
   tg.name = `${m.name}_topgallant`;
   group.add(tg);
 
@@ -436,13 +445,17 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
 
   const ratlineCurves = [];
 
+  // Where every shroud and backstay is set up. These come from the channels module, so
+  // that a shroud ends exactly at the top of its own deadeye instead of at a point the
+  // rig guessed at. When the rig guessed, the feet landed on the wale a metre and a half
+  // below the deadeye row, passing straight through the channel and the gunports on the
+  // way.
+  const anchors = channelAnchors(model, cfg);
+
   for (const [name, countKey] of SHROUDS) {
     const m = geo[name];
-    const n = S(countKey);
-    // The channel: the shrouds land on it, spread along its length. The channels
-    // module builds the platform itself; the rig only needs to know where it is.
-    const chanY = model.featureYAt(m.z0).deck - 0.15;
-    const chanX = model.halfBreadthAt(m.z0, chanY) + S('channel_width') * 0.72;
+    const a = anchors[name];
+    const n = Math.min(S(countKey), a.shrouds.length);
 
     for (const side of [1, -1]) {
       const shrouds = [];
@@ -452,9 +465,8 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
         // within the length of the head, so they start close together.
         const top = m.along(m.houndsH + m.lowerHead * (0.25 + 0.5 * t));
         top.x += side * m.lowerDia * 0.48;
-        // The deck end: spread along the channel, running aft as they go down.
-        const zc = m.z0 - S('channel_length') * 0.30 + S('channel_length') * 0.72 * t;
-        const foot = new THREE.Vector3(side * chanX, chanY, zc);
+        const e = a.shrouds[i];
+        const foot = new THREE.Vector3(e.x * side, e.y, e.z);
         shrouds.push({ top, foot, curve: addRope(top, foot, 0.006) });
       }
 
@@ -464,7 +476,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
       if (cfg.ratlines && shrouds.length > 1) {
         const spacing = S('ratline_spacing') * cfg.ratlineEvery;
         const topY = shrouds[0].top.y - 0.35;
-        const botY = chanY + 0.55;
+        const botY = a.shrouds[0].y + 0.55;
         const count = Math.max(0, Math.floor((topY - botY) / spacing));
         for (let k = 0; k < count; k++) {
           const y = botY + k * spacing;
@@ -515,14 +527,31 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
         addRope(top, foot, 0.005, r * 0.66);
       }
 
-      // Standing backstays, from the topmast head down abaft the channel.
-      const bsN = S('topmast_standing_backstay_pairs');
-      for (let i = 0; i < bsN; i++) {
+      // Standing backstays, from the topmast and topgallant heads down to the after end
+      // of the same channel, each to its own deadeye.
+      a.topmastBackstays.forEach((e) => {
         const top = m.along(m.topmastHoundsH + 0.1);
         top.x += side * m.topmastDia * 0.5;
-        const zc = m.z0 + S('channel_length') * (0.55 + 0.22 * i);
-        const foot = new THREE.Vector3(side * chanX, chanY, zc);
-        addRope(top, foot, 0.004, r * 0.8);
+        addRope(top, new THREE.Vector3(e.x * side, e.y, e.z), 0.004, r * 0.8);
+      });
+      a.topgallantBackstays.forEach((e) => {
+        const top = m.along(m.tgHeel + m.tgStop - 0.2);
+        top.x += side * m.tgDia * 0.5;
+        addRope(top, new THREE.Vector3(e.x * side, e.y, e.z), 0.003, r * 0.6);
+      });
+
+      // Topgallant shrouds, from the topgallant hounds down to the topmast crosstrees.
+      const tgN = S(`${name}_topgallant_shroud_pairs`);
+      for (let i = 0; i < tgN; i++) {
+        const t = tgN === 1 ? 0 : i / (tgN - 1);
+        const top = m.along(m.tgHeel + m.tgStop - 0.35 + 0.2 * t);
+        top.x += side * m.tgDia * 0.45;
+        const cross = m.along(m.topmastHoundsH);
+        addRope(top, new THREE.Vector3(
+          side * (m.topBreadth / 2) * 0.42,
+          cross.y,
+          cross.z + lerp(-0.3, 0.4, t)
+        ), 0.004, r * 0.5);
       }
     }
   }
@@ -611,16 +640,17 @@ function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
         : m.tgHeel + m.tgLength + m.poleLength * 0.8;
     for (const arm of y.arms) add(arm, m.along(aboveH), 0.01);
 
-    // Braces: aft from each yardarm to the mast behind, or to the deck for the mizzen.
-    const behind = m.name === 'fore' ? geo.main : m.name === 'main' ? geo.mizzen : null;
+    // Braces. The fore and main yards brace aft, to the mast behind them. The mizzen
+    // family is the exception and braces FORWARD, to the mainmast: there is nothing
+    // abaft the mizzen to lead to, and leading them aft to the quarterdeck rail — which
+    // is what this did — is not how the ship was rigged.
+    const lead = m.name === 'fore' ? geo.main : m.name === 'main' ? geo.mizzen : geo.main;
+    const forward = m.name === 'mizzen';
     for (const arm of y.arms) {
-      if (behind) {
-        add(arm, behind.along(behind.houndsH * (y.tier === 'lower' ? 0.75 : 0.95)), 0.03);
-      } else {
-        const z = model.zAft - 1.2;
-        add(arm, new THREE.Vector3(Math.sign(arm.x) * model.halfBreadthAt(z, model.featureYAt(z).deck) * 0.8,
-          model.featureYAt(z).deck + 0.4, z), 0.03);
-      }
+      const h = forward
+        ? lead.above(y.tier === 'lower' ? 0.55 : 0.85)
+        : lead.houndsH * (y.tier === 'lower' ? 0.75 : 0.95);
+      add(arm, lead.along(h), 0.03);
     }
   }
 

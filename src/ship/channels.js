@@ -242,6 +242,66 @@ function channelEdges(model, c, cfg) {
   return { n, ts, zs, yTop, xIn, xOut, thickIn: c.thickIn, thickOut: c.thickOut };
 }
 
+/**
+ * The deadeye row on one channel.
+ *
+ * The lower shrouds take the forward part of the channel and the standing backstays the
+ * after end, each with its own size of deadeye. They are spread evenly between the ends,
+ * set in from the butts so that the timber is not split.
+ *
+ * This is the one place the positions are worked out, because the rig has to set its
+ * shrouds up to exactly these points. A shroud that ends anywhere else lands on the wale
+ * with its deadeye hanging unattached above it, which is what happened when the two
+ * modules each had their own idea of where the channel was.
+ */
+function deadeyeRow(c, e) {
+  const total = c.nShroud + c.nBackstay;
+  const margin = S('channel_deadeye_end_margin') / c.length;
+  const eyes = [];
+  for (let i = 0; i < total; i++) {
+    const t = lerp(margin, 1 - margin, total === 1 ? 0.5 : i / (total - 1));
+    const p = edgeAt(e, t);
+    // The backstay deadeyes at the after end are smaller than the shrouds', and the
+    // topgallant's smaller again.
+    let dia = S(c.shroudDia);
+    if (i >= c.nShroud) dia = (i - c.nShroud) < c.nBackstay / 2 ? S(c.tmDia) : S(c.tgDia);
+    const r = dia / 2;
+    eyes.push({
+      t, r, p,
+      kind: i < c.nShroud ? 'shroud' : (i - c.nShroud) < c.nBackstay / 2 ? 'topmast_backstay' : 'topgallant_backstay',
+      centre: new THREE.Vector3(
+        p.xOut - S('channel_rail_width') * 0.5,
+        p.yTop + S('deadeye_bottom_above_channel') + r,
+        p.z
+      ),
+    });
+  }
+  return eyes;
+}
+
+/**
+ * Where every shroud and backstay is set up, for the rig to use. Returns, per mast, the
+ * points at the TOP of each upper deadeye — which is where a shroud's lower end actually
+ * is, the lanyard below it doing the setting up — grouped by what belongs there.
+ *
+ * Starboard only; the rig mirrors for the port side.
+ */
+export function channelAnchors(model, cfg) {
+  const out = {};
+  for (const c of channelPlan(model)) {
+    const e = channelEdges(model, c, cfg);
+    const eyes = deadeyeRow(c, e);
+    const at = (eye) => new THREE.Vector3(eye.centre.x, eye.centre.y + eye.r, eye.centre.z);
+    out[c.name] = {
+      shrouds: eyes.filter((x) => x.kind === 'shroud').map(at),
+      topmastBackstays: eyes.filter((x) => x.kind === 'topmast_backstay').map(at),
+      topgallantBackstays: eyes.filter((x) => x.kind === 'topgallant_backstay').map(at),
+      channelTopY: e.yTop[Math.floor(e.n / 2)],
+    };
+  }
+  return out;
+}
+
 /** Interpolate the edge tables at any fraction along the channel. */
 function edgeAt(e, t) {
   const x = clamp(t, 0, 1) * (e.n - 1);
@@ -323,30 +383,7 @@ export function buildChannels(cfg, mats, model, ctx) {
     const timber = [channelSlab(e)];
     const iron = [];
 
-    // ---------------------------------------------------------- the deadeye row
-    // The lower shrouds take the forward part of the channel and the standing backstays
-    // the after end, each with its own size of deadeye. They are spread evenly between
-    // the ends, set in from the butts so that the timber is not split.
-    const total = c.nShroud + c.nBackstay;
-    const margin = S('channel_deadeye_end_margin') / c.length;
-    const eyes = [];
-    for (let i = 0; i < total; i++) {
-      const t = lerp(margin, 1 - margin, total === 1 ? 0.5 : i / (total - 1));
-      const p = edgeAt(e, t);
-      // The backstay deadeyes at the after end are smaller than the shrouds', and the
-      // topgallant's smaller again.
-      let dia = S(c.shroudDia);
-      if (i >= c.nShroud) dia = (i - c.nShroud) < c.nBackstay / 2 ? S(c.tmDia) : S(c.tgDia);
-      const r = dia / 2;
-      eyes.push({
-        t, r, p,
-        centre: new THREE.Vector3(
-          p.xOut - S('channel_rail_width') * 0.5,
-          p.yTop + S('deadeye_bottom_above_channel') + r,
-          p.z
-        ),
-      });
-    }
+    const eyes = deadeyeRow(c, e);
 
     // The rail, in the pieces between the scores.
     if (cfg.channelRails) {
@@ -436,7 +473,7 @@ export function buildChannels(cfg, mats, model, ctx) {
     // length is only worth measuring on the two that come out at their full size.
     if (c.length >= S(c.lengthKey) - 1e-6) audit(platform, c.lengthKey, 'extent_z', { tolerance: 0.05 });
     if (cfg.deadeyes) {
-      platform.userData.count = total;
+      platform.userData.count = eyes.length;
       audit(platform, c.totalKey, 'count', { tolerance: 0.001 });
     }
     group.add(platform);

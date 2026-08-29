@@ -221,57 +221,77 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   }
 
   // ------------------------------------------------------------------- fore-and-aft
+  //
+  // Headsails and staysails are narrow. Their tack is far forward and low, on the
+  // bowsprit or the jibboom; their head is up the stay; and their clew is sheeted DOWN
+  // to the rail a little abaft the tack — not up the mast. Running the clew up to the
+  // masthead, which is what this did, turns each of them into an enormous triangle that
+  // fills the whole space between the masts, hides the square sails behind it and makes
+  // a frigate read as a schooner. The photograph shows the opposite: three slim
+  // headsails and small staysails, with the square pyramid dominating.
   const fa = [];
-  const addTriangle = (head, tack, clew) => fa.push(foreAndAftSail([head, tack, clew], cfg, { side: -1 }));
+  const lee = -1;                                  // the sails belly to leeward
+  const addTriangle = (head, tack, clew) => fa.push(foreAndAftSail([head, tack, clew], cfg, { side: lee }));
 
+  // A sheeting point at the rail, so many metres abaft a mast and to leeward.
+  const sheetAt = (mast, abaft, above = 0.9) => {
+    const z = mast.z0 + abaft;
+    const f = model.featureYAt(z);
+    return new THREE.Vector3(lee * model.halfBreadthAt(z, f.rail) * 0.55, f.rail + above, z);
+  };
+
+  const bs = geo.bowsprit;
   if (setNames.has('fore_topmast_staysail')) {
     addTriangle(
-      geo.fore.along(geo.fore.topmastHoundsH),
-      geo.bowsprit.at(geo.bowsprit.length * 0.92),
-      geo.fore.along(geo.fore.above(0.18))
+      geo.fore.along(geo.fore.topmastHeel + (geo.fore.topmastHoundsH - geo.fore.topmastHeel) * 0.72),
+      bs.at(bs.length * 0.58),
+      sheetAt(geo.fore, -1.4, 1.1)
     );
   }
   if (setNames.has('jib')) {
     addTriangle(
-      geo.fore.along(geo.fore.topmastHoundsH + 1.4),
-      geo.bowsprit.end.clone().lerp(geo.bowsprit.cap, 0.30),
-      geo.fore.along(geo.fore.above(0.52))
+      geo.fore.along(geo.fore.topmastHoundsH),
+      bs.cap.clone().lerp(bs.end, 0.42),
+      sheetAt(geo.fore, -4.2, 1.4)
     );
   }
   if (setNames.has('flying_jib')) {
     addTriangle(
-      geo.fore.along(geo.fore.tgHeel + geo.fore.tgLength * 0.62),
-      geo.bowsprit.end,
-      geo.fore.along(geo.fore.houndsH + 1.0)
+      geo.fore.along(geo.fore.tgHeel + geo.fore.tgStop * 0.55),
+      bs.end,
+      sheetAt(geo.fore, -7.4, 1.7)
     );
   }
-  // Staysails between the masts, set on the stays that run forward from each masthead.
+
+  // The staysails between the masts are set on the stays that run forward and down from
+  // each masthead, and are sheeted to the deck abaft the mast in front. They are modest
+  // sails, filling the lower half of the gap and no more.
   if (setNames.has('main_staysail')) {
     addTriangle(
-      geo.main.along(geo.main.houndsH - 0.5),
-      new THREE.Vector3(0, model.featureYAt(geo.fore.z0 + 2).deck + 0.6, geo.fore.z0 + 2.2),
-      geo.main.along(geo.main.above(0.10))
+      geo.main.along(geo.main.above(0.86)),
+      new THREE.Vector3(0, model.featureYAt(geo.fore.z0 + 2.4).deck + 0.5, geo.fore.z0 + 2.4),
+      sheetAt(geo.main, -1.6, 0.7)
     );
   }
   if (setNames.has('main_topmast_staysail')) {
     addTriangle(
-      geo.main.along(geo.main.topmastHoundsH),
-      geo.fore.along(geo.fore.houndsH + 0.6),
-      geo.main.along(geo.main.above(0.62))
+      geo.main.along(geo.main.topmastHeel + (geo.main.topmastHoundsH - geo.main.topmastHeel) * 0.78),
+      geo.fore.along(geo.fore.houndsH + 0.4),
+      geo.main.along(geo.main.above(0.42))
     );
   }
   if (setNames.has('mizzen_staysail')) {
     addTriangle(
-      geo.mizzen.along(geo.mizzen.houndsH - 0.4),
-      geo.main.along(geo.main.above(0.14)),
-      geo.mizzen.along(geo.mizzen.above(0.12))
+      geo.mizzen.along(geo.mizzen.above(0.88)),
+      geo.main.along(geo.main.above(0.16)),
+      sheetAt(geo.mizzen, -1.2, 0.6)
     );
   }
 
   // The spanker: a four-cornered sail on the gaff and boom abaft the mizzen.
   if (setNames.has('spanker') && ctx.spanker) {
     const sp = ctx.spanker;
-    fa.push(foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: -1 }));
+    fa.push(foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: lee }));
   }
 
   if (squares.length) {
