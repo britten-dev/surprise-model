@@ -14,8 +14,11 @@ import * as THREE from 'three';
  * @param {object} [opts]
  * @param {boolean} [opts.mirror] also emit the mirrored (port) half and weld the seam
  * @param {(u:number,v:number)=>[number,number]} [opts.uv] custom UV mapping
+ * @param {(z:number,v0:number,v1:number)=>boolean} [opts.skipQuad] drop a quad from the
+ *   surface. This is how the gunports are cut: the loft grid is regular, so a port is
+ *   simply a rectangle in station and V, and the faces inside it are never emitted.
  */
-export function loftSections(sections, { mirror = false, uv = null } = {}) {
+export function loftSections(sections, { mirror = false, uv = null, skipQuad = null } = {}) {
   const ns = sections.length;
   const np = sections[0].points.length;
   for (const s of sections) {
@@ -41,11 +44,16 @@ export function loftSections(sections, { mirror = false, uv = null } = {}) {
     }
     const idx = [];
     for (let i = 0; i < ns - 1; i++) {
+      const zMid = (sections[i].z + sections[i + 1].z) / 2;
       for (let j = 0; j < np - 1; j++) {
+        if (skipQuad && skipQuad(zMid, j / (np - 1), (j + 1) / (np - 1), sign)) continue;
         const a = i * np + j, b = a + 1, c = a + np, d = c + 1;
-        // Winding flips with the mirror so that both halves face outward.
-        if (sign > 0) idx.push(a, c, b, b, c, d);
-        else idx.push(a, b, c, b, d, c);
+        // Winding flips with the mirror so that both halves face outward. On the
+        // starboard half, j runs up the section and i runs aft, so (a, b, c) is the
+        // order whose normal points outboard; mirroring reverses the handedness and
+        // the order has to reverse with it.
+        if (sign > 0) idx.push(a, b, c, b, d, c);
+        else idx.push(a, c, b, b, c, d);
       }
     }
     const g = new THREE.BufferGeometry();

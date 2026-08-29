@@ -59,7 +59,10 @@ const MEASURES = {
     const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(obj.getWorldQuaternion(new THREE.Quaternion()));
     return rad(Math.atan2(axis.y, Math.hypot(axis.x, axis.z)));
   },
-  count: ({ obj }) => (obj.isInstancedMesh ? obj.count : obj.children.length),
+  // A count of things built. Instanced meshes know their own count; anything merged
+  // into a single mesh has to say how many it merged, in `userData.count`.
+  count: ({ obj }) =>
+    obj.userData.count ?? (obj.isInstancedMesh ? obj.count : obj.children.length),
 };
 
 /**

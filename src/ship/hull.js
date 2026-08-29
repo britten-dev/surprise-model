@@ -193,6 +193,15 @@ export function hullModel() {
   return {
     stationZ, zFwd, zAft,
     halfBreadthAt, featureYAt, sectionAt, bulwarkHeightAt,
+    /**
+     * Convert the period way of locating things — so many feet abaft the stem, measured
+     * along the gundeck — into the model's `z`. Every dimension taken off a deck plan
+     * arrives in that form, and doing the conversion here means no other module has to
+     * know where the midship station happens to fall.
+     */
+    fromStem: (metresAftOfStem) => zFwd + metresAftOfStem,
+    toStem: (z) => z - zFwd,
+    lengthOnDeck: zAft - zFwd,
     sheerY, sheerX, rabbetY, rabbetX,
     /** A world-space point on the hull surface at a station and a named feature. */
     pointAt(z, feature, side = 1) {
@@ -213,8 +222,12 @@ export function hullModel() {
   };
 }
 
-/** Build the hull mesh group. */
-export function buildHull(cfg, mats, model = hullModel()) {
+/**
+ * Build the hull mesh group.
+ * @param {object} [opts.skipQuad] the port cutter, which drops the faces inside each
+ *   gunport so the openings are real holes through the ship's side.
+ */
+export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = {}) {
   const group = new THREE.Group();
   group.name = 'hull';
 
@@ -233,6 +246,7 @@ export function buildHull(cfg, mats, model = hullModel()) {
   // planking does; V is the paint coordinate.
   const geom = loftSections(sections, {
     mirror: true,
+    skipQuad,
     uv: (u, v) => [u * SPEC.hull_length_gundeck.value / 3.0, v],
   });
   const hull = new THREE.Mesh(geom, mats.hull);

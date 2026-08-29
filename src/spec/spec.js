@@ -40,8 +40,8 @@ export const SPEC = {
   // Where the quarterdeck and forecastle end, as a fraction of the gundeck length from
   // forward. Between them lies the open waist, which is what makes a frigate read as a
   // frigate rather than as a small two-decker.
-  forecastle_break_u: { value: 0.22, source: 'RECONSTRUCTED §5 measured off ZAZ3068, the Marshall deck plan', noAudit: true },
-  quarterdeck_break_u: { value: 0.55, source: 'RECONSTRUCTED §5 measured off ZAZ3068, the Marshall deck plan', noAudit: true },
+  forecastle_break_u: { value: 33 / 126, source: 'RECONSTRUCTED §5 aft side of the forecastle 33 ft abaft the stem, from Steel\'s forecastle-length series', noAudit: true },
+  quarterdeck_break_u: { value: 78 / 126, source: 'RECONSTRUCTED §5 fore side of the quarterdeck 7 ft abaft the mainmast', noAudit: true },
 
   bulwark_height_waist: m(ft(4, 6), 'RECONSTRUCTED §5 period practice for a sixth rate', { noAudit: true }),
   bulwark_height_quarterdeck: m(ft(4, 4), 'RECONSTRUCTED §5 period practice for a sixth rate', { noAudit: true }),
@@ -53,11 +53,19 @@ export const SPEC = {
   gunport_height: m(ft(2, 4), 'RECONSTRUCTED §4 Steel, port height for a 9-pounder', { tolerance: 0.04 }),
   gunport_sill_above_deck: m(ft(2, 0), 'RECONSTRUCTED §4 Steel, sill height above the deck', { noAudit: true }),
   gunport_spacing: m(ft(8, 6), 'RECONSTRUCTED §4 12 ports spread over the length available between the bow and the transom', { tolerance: 0.05 }),
+  gunport_lining_depth: m(ft(0, 9), 'RECONSTRUCTED §4 thickness of the side at the ports, plank and timber', { noAudit: true }),
   gunport_lid_thickness: m(ft(0, 3), 'SECONDARY §4 Steel, port-lid thickness', { noAudit: true }),
 
   qd_port_width: m(ft(2, 4), 'SECONDARY §4 Steel, quarterdeck port', { noAudit: true }),
   qd_port_height: m(ft(2, 4), 'SECONDARY §4 Steel, quarterdeck port', { noAudit: true }),
   qd_port_sill_above_deck: m(ft(1, 8), 'SECONDARY §4 Steel, quarterdeck port sill', { noAudit: true }),
+
+  // Where the battery sits along the ship, as metres abaft the stem measured on the
+  // gundeck. Twelve ports at 8 ft 6 in centres spread over 93 ft 6 in, set so the
+  // foremost port clears the bow and the aftermost clears the quarter.
+  gunport_first_from_stem: m(ft(24, 0), 'RECONSTRUCTED §4 foremost port clear of the round of the bow on ZAZ3067', { noAudit: true }),
+  qd_port_count_per_side: { value: 6, source: 'PRIMARY §2 threedecks, 8 x 4-pdr and 4 x 12-pdr carronades on the quarterdeck', noAudit: true },
+  fc_port_count_per_side: { value: 2, source: 'PRIMARY §2 threedecks, 2 x 4-pdr and 2 x 12-pdr carronades on the forecastle', noAudit: true },
 
   // -------------------------------------------------------------- hull surface
   wale_top_below_deck: m(ft(2, 6), 'RECONSTRUCTED §4 traced from the ZAZ3067 profile', { noAudit: true }),

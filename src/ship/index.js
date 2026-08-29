@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { lodConfig, LODS } from './lod.js';
 import { makeMaterials } from './materials.js';
 import { buildHull, hullModel } from './hull.js';
+import { portLayout, makePortCutter, buildPorts } from './ports.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
@@ -26,8 +27,10 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   const model = hullModel();
   const ctx = { cfg, mats, model, sails, lod };
 
-  const hull = buildHull(cfg, mats, model);
+  const ports = portLayout(model);
+  const hull = buildHull(cfg, mats, model, { skipQuad: makePortCutter(model, ports) });
   ship.add(hull.group);
+  ship.add(buildPorts(cfg, mats, model, ports));
 
   return ship;
 }
