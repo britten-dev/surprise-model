@@ -11,7 +11,7 @@ import { V } from './hull.js';
 import { loftSections, mergeGeometries, weldByPosition } from '../util/loft.js';
 import { sweep } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
-import { audit, audits } from '../audit/measure.js';
+import { audit } from '../audit/measure.js';
 
 /**
  * One deck surface, cambered. A deck is not flat: it is rounded up toward the
@@ -113,7 +113,9 @@ export function buildDecks(cfg, mats, model) {
   // waist it is the deck you stand on.
   const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern - 0.4, 0), mats.deck);
   gundeck.name = 'gundeck';
-  audits(gundeck, ['gundeck_above_wl_at_midships', 'centre_y']);
+  // The height of this deck is audited from a marker at the midship station in hull.js,
+  // not from the mesh: the deck sweeps up at both ends with the sheer, so its average
+  // height is a good foot above the figure the spec gives for amidships.
   group.add(gundeck);
 
   // The forecastle and the quarterdeck, raised above it.

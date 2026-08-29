@@ -16,11 +16,13 @@
 // full value at the fly. One function makes all three flags, because a commissioning
 // pennant is only an ensign that is twenty times longer than it is deep and tapers.
 //
-// The third is that nothing here knows where the masts are. The rig is being built in
-// parallel and the mizen gaff, the main truck and the jackstaff do not exist yet, so
-// the four points the flags hang from are reconstructed in this module's own spec and
-// marked for reconciliation. Everything else is sited off the hull model, so it moves
-// when the hull does.
+// The third is that nothing here knows where the masts are. The rig was built in
+// parallel with this module, so the four points the flags hang from — the gaff peak,
+// the taffrail staff, the main truck and the jackstaff — are reconstructed in this
+// module's own spec and marked for reconciliation. They have since been trued to the
+// spars the rig builds, but nothing enforces the agreement, so a change to the rig's
+// masting is a change this spec has to follow. Everything else is sited off the hull
+// model, so it moves when the hull does.
 import * as THREE from 'three';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { ropeCurve, ropeTube, ropeLines } from '../util/solids.js';
@@ -184,19 +186,21 @@ function buntingMaterial(mats, fieldKey, canvasEl) {
 /**
  * One flag, as a sheet hanging by its hoist and streaming to leeward.
  *
- * The head of the hoist is at `head`; the cloth runs `fly` metres along `dir` and
- * `hoist` metres straight down. Three displacements are added on top of that, each of
- * them zero at the hoist because that edge is bent to the halliard and cannot move:
- * the sag of the fly under the weight of wet wool, the long wave running down the
- * cloth, and the shortening that the wave itself takes up.
+ * The geometry is built about the head of the hoist, and the mesh is then placed at
+ * the point the flag is bent to, so that the object's own origin is the peak, the truck
+ * or the staff head and the audit can measure it directly. The cloth runs `fly` metres
+ * along `dir` and `hoist` metres straight down. Three displacements are added on top of
+ * that, each of them zero at the hoist because that edge is bent to the halliard and
+ * cannot move: the sag of the fly under the weight of wet wool, the long wave running
+ * down the cloth, and the shortening that the wave itself takes up.
  */
-function flagGeometry({ head, dir, fly, hoist, tipHoist, segsU, segsV, phase }) {
+function flagGeometry({ dir, fly, hoist, tipHoist, segsU, segsV, phase }) {
   const ef = dir.clone().setY(0).normalize();
   const eh = new THREE.Vector3(0, -1, 0);
   const en = new THREE.Vector3().crossVectors(ef, eh).normalize();
 
   const droop = S('flag_droop_frac');
-  const amp = S('flag_wave_amplitude_frac') * fly;
+  const amp = S('flag_wave_amplitude_frac') * hoist;
   const k = (Math.PI * 2) / (S('flag_wave_length_frac') * fly);
   const skew = S('flag_wave_skew');
   const slack = S('flag_stream_slack');
@@ -218,7 +222,7 @@ function flagGeometry({ head, dir, fly, hoist, tipHoist, segsU, segsV, phase }) 
         Math.sin(k * along + skew * v * Math.PI * 2 + phase)
         + harm * Math.sin(2 * k * along + phase)
       );
-      const p = new THREE.Vector3().copy(head)
+      const p = new THREE.Vector3()
         .addScaledVector(ef, along)
         .addScaledVector(eh, across)
         .addScaledVector(en, wave);
@@ -281,14 +285,17 @@ export function buildFlags(cfg, mats, model, ctx) {
 
   const ensign = new THREE.Mesh(
     flagGeometry({
-      head: ensignHead, dir: stream,
+      dir: stream,
       fly: S('ensign_fly'), hoist: S('ensign_hoist'), tipHoist: S('ensign_hoist'),
       segsU, segsV, phase: S('flag_wave_phase'),
     }),
     buntingMaterial(mats, fieldKey, drawEnsign(cfg.textureSize / 2, fieldKey, post1801))
   );
   ensign.name = 'ensign';
-  audits(ensign, ['ensign_fly', 'extent_max'], ['ensign_peak_height', 'max_y']);
+  ensign.position.copy(ensignHead);
+  // The flag's own origin is the point it is bent to, so this measures the gaff peak
+  // itself rather than the bounding box of a piece of cloth blowing about.
+  if (S('ensign_at_staff') === 0) audits(ensign, ['ensign_peak_height', 'origin_y']);
   group.add(ensign);
 
   // The peak halliard: rove through a block at the peak and belayed at the mizen fife
@@ -302,7 +309,7 @@ export function buildFlags(cfg, mats, model, ctx) {
     const truck = new THREE.Vector3(0, S('pennant_height'), model.fromStem(S('pennant_from_stem')));
     const pennant = new THREE.Mesh(
       flagGeometry({
-        head: truck, dir: stream,
+        dir: stream,
         fly: S('pennant_length'), hoist: S('pennant_hoist'), tipHoist: S('pennant_fly_width'),
         segsU: Math.round(segsU * S('pennant_segment_multiple')), segsV,
         phase: S('flag_wave_phase_pennant'),
@@ -310,7 +317,8 @@ export function buildFlags(cfg, mats, model, ctx) {
       buntingMaterial(mats, fieldKey, drawPennant(cfg.textureSize / 8, fieldKey))
     );
     pennant.name = 'pennant';
-    audits(pennant, ['pennant_length', 'extent_max'], ['pennant_height', 'max_y']);
+    pennant.position.copy(truck);
+    audits(pennant, ['pennant_height', 'origin_y']);
     group.add(pennant);
 
     halliardTo(truck, new THREE.Vector3(truck.x, truck.y - S('pennant_halliard_drop'), truck.z));
@@ -325,15 +333,15 @@ export function buildFlags(cfg, mats, model, ctx) {
     const jackHead = new THREE.Vector3(0, model.featureYAt(zJack).rail + S('flag_jack_staff_height'), zJack);
     const jack = new THREE.Mesh(
       flagGeometry({
-        head: jackHead, dir: stream,
+        dir: stream,
         fly: S('jack_fly'), hoist: S('jack_hoist'), tipHoist: S('jack_hoist'),
         segsU, segsV, phase: S('flag_wave_phase_jack'),
       }),
       buntingMaterial(mats, fieldKey, drawJack(cfg.textureSize / 2, post1801))
     );
     jack.name = 'jack';
+    jack.position.copy(jackHead);
     jack.visible = S('jack_worn_under_way') > 0;
-    audits(jack, ['jack_fly', 'extent_max']);
     group.add(jack);
 
     if (jack.visible) {

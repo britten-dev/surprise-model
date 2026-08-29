@@ -6,7 +6,7 @@ import path from 'node:path';
 import { ROOT } from './serve.js';
 
 const specMd = await fs.readFile(path.join(ROOT, 'SPECS.md'), 'utf8');
-const { SPEC } = await import(path.join(ROOT, 'src/spec/spec.js'));
+const { SPEC, PAINT } = await import(path.join(ROOT, 'src/spec/spec.js'));
 
 // Keys as SPECS.md writes them: a snake_case token in the first cell of a table row.
 const inDoc = new Set(
@@ -15,7 +15,11 @@ const inDoc = new Set(
 
 const codeKeys = Object.keys(SPEC);
 const undocumented = codeKeys.filter((k) => !inDoc.has(k));
-const unused = [...inDoc].filter((k) => !(k in SPEC));
+// The material table and the level-of-detail table use the same Markdown shape as the
+// dimension tables, so their first cells look like spec keys. They are documented
+// elsewhere in the file and are not generator dimensions.
+const NOT_DIMENSIONS = new Set([...Object.keys(PAINT), 'station', 'hero', 'game', 'distant']);
+const unused = [...inDoc].filter((k) => !(k in SPEC) && !NOT_DIMENSIONS.has(k));
 
 // A source citation on every row is the other half of traceability.
 const uncited = codeKeys.filter((k) => {

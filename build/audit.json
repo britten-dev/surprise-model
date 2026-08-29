@@ -1,0 +1,306 @@
+[
+  {
+    "key": "bell_mouth_diameter",
+    "metric": "extent_x",
+    "expected": 0.2794,
+    "actual": 0.2793999910354614,
+    "tolerance": 0.06,
+    "source": "RECONSTRUCTED §6 research 06 deck-layout §7.1, period Sixth-Rate norm; no dimensioned source found"
+  },
+  {
+    "key": "boat_count",
+    "metric": "count",
+    "expected": 4,
+    "actual": 4,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §8.3 launch, pinnace, cutter and jolly boat — the outfit of a sixth rate of 578 tons; no boat list for Surprise was found"
+  },
+  {
+    "key": "bowsprit_steeve_deg",
+    "metric": "steeve_deg",
+    "expected": 21.9,
+    "actual": 21.89999999999998,
+    "tolerance": 0.08,
+    "source": "SECONDARY §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 1 ft 2 1/2 in of stive per yard of length"
+  },
+  {
+    "key": "capstan_bar_hole_count",
+    "metric": "count",
+    "expected": 12,
+    "actual": 12,
+    "tolerance": 0.001,
+    "source": "SECONDARY §6 Steel 1805 :38565, bar-holes in the drumhead"
+  },
+  {
+    "key": "capstan_drumhead_diameter",
+    "metric": "extent_x",
+    "expected": 1.2192,
+    "actual": 1.2192000150680542,
+    "tolerance": 0.03,
+    "source": "SECONDARY §6 Steel 1805 :38437, row X"
+  },
+  {
+    "key": "carronade_12pdr_count",
+    "metric": "count",
+    "expected": 6,
+    "actual": 6,
+    "tolerance": 0.001,
+    "source": "PRIMARY §6.3 4 twelve-pounder carronades on the quarterdeck and 2 on the forecastle, Plymouth establishment 6.1796. ALTERNATIVE: 18-pdr carronades, 10 of them, in the 21.4.1798 fit"
+  },
+  {
+    "key": "cutter_length",
+    "metric": "extent_z",
+    "expected": 5.486400000000001,
+    "actual": 5.537468671798706,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §8.3 cutter 18-22 ft; the shortest taken so that she nests inside the 24 ft launch"
+  },
+  {
+    "key": "ensign_peak_height",
+    "metric": "origin_y",
+    "expected": 15.15,
+    "actual": 15.15,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG"
+  },
+  {
+    "key": "fore_channel_deadeyes_per_side",
+    "metric": "count",
+    "expected": 11,
+    "actual": 11,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §04 11.1 seven lower shrouds and four standing backstays"
+  },
+  {
+    "key": "fore_channel_length",
+    "metric": "extent_z",
+    "expected": 6.096,
+    "actual": 6.095999717712402,
+    "tolerance": 0.06,
+    "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
+  },
+  {
+    "key": "fore_mast_rake_deg",
+    "metric": "rake_deg",
+    "expected": 0.1,
+    "actual": 0.1,
+    "tolerance": 0.35,
+    "source": "SECONDARY §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 1/16 in of rake per yard of mast"
+  },
+  {
+    "key": "fore_yard_length",
+    "metric": "extent_horizontal",
+    "expected": 18.9484,
+    "actual": 19.093551392033525,
+    "tolerance": 0.02,
+    "source": "SECONDARY §3 Steel 1794 v1 p.50, \"28 GUNS. 594 Tons.\" column"
+  },
+  {
+    "key": "gun_4pdr_count",
+    "metric": "count",
+    "expected": 10,
+    "actual": 10,
+    "tolerance": 0.001,
+    "source": "PRIMARY §6.3 8 long 4-pdr on the quarterdeck and 2 on the forecastle, Plymouth establishment 6.1796. ALTERNATIVE: only the 2 forecastle chase guns survive in the 21.4.1798 fit"
+  },
+  {
+    "key": "gun_9pdr_count",
+    "metric": "count",
+    "expected": 24,
+    "actual": 24,
+    "tolerance": 0.001,
+    "source": "PRIMARY §6.3 threedecks ex Winfield BWAS-1793, Plymouth establishment 6.1796: 24 long 9-pdr on the upper deck. ALTERNATIVE: 24 x 32-pdr carronades in the 21.4.1798 fit"
+  },
+  {
+    "key": "gun_truck_carriage_count",
+    "metric": "count",
+    "expected": 34,
+    "actual": 34,
+    "tolerance": 0.001,
+    "source": "PRIMARY §6.3 one four-truck carriage under each of the 24 long 9-pdr and 10 long 4-pdr; the carronades are on slides and are not counted here"
+  },
+  {
+    "key": "gundeck_above_wl_at_midships",
+    "metric": "origin_y",
+    "expected": 1.89992,
+    "actual": 1.904,
+    "tolerance": 0.05,
+    "source": "MEASURED §5 deck at side 5.82 ft above the LWL at the midship station, plus the full camber to the centreline"
+  },
+  {
+    "key": "gunport_count_per_side",
+    "metric": "count",
+    "expected": 12,
+    "actual": 12,
+    "tolerance": 0.001,
+    "source": "PRIMARY §2 threedecks, 24 x 9-pdr on the upper deck, June 1796"
+  },
+  {
+    "key": "hull_beam_moulded",
+    "metric": "extent_x",
+    "expected": 9.4488,
+    "actual": 9.440433502197266,
+    "tolerance": 0.012,
+    "source": "MEASURED §2 breadth box on the ZAZ3067 body plan at 6.0 px per foot; the title-block row is illegible at this resolution"
+  },
+  {
+    "key": "hull_length_bp",
+    "metric": "extent_z",
+    "expected": 36.8808,
+    "actual": 36.88079833984375,
+    "tolerance": 0.01,
+    "source": "MEASURED §2 126 ft on the gundeck less the stem rake above the LWL and the post rake"
+  },
+  {
+    "key": "jolly_length",
+    "metric": "extent_max",
+    "expected": 4.8768,
+    "actual": 5.300880122394512,
+    "tolerance": 0.06,
+    "source": "RECONSTRUCTED §8.3 jolly boat 16-18 ft, the smaller taken"
+  },
+  {
+    "key": "launch_length",
+    "metric": "extent_z",
+    "expected": 7.315200000000001,
+    "actual": 7.363162279129028,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §8.3 24 ft launch for a ship of this rate"
+  },
+  {
+    "key": "main_channel_deadeyes_per_side",
+    "metric": "count",
+    "expected": 11,
+    "actual": 11,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §04 11.1 seven lower shrouds and four standing backstays"
+  },
+  {
+    "key": "main_channel_length",
+    "metric": "extent_z",
+    "expected": 6.934200000000001,
+    "actual": 6.934200286865234,
+    "tolerance": 0.06,
+    "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
+  },
+  {
+    "key": "main_hatch_length",
+    "metric": "extent_z",
+    "expected": 2.1336,
+    "actual": 2.1335999965667725,
+    "tolerance": 0.03,
+    "source": "SECONDARY §6 Steel 1805 :33355 fore-and-aft, 32-gun column"
+  },
+  {
+    "key": "main_hatch_width",
+    "metric": "extent_x",
+    "expected": 1.3716000000000002,
+    "actual": 1.3716000318527222,
+    "tolerance": 0.03,
+    "source": "SECONDARY §6 Steel 1805 :33355 thwartships, 32-gun column"
+  },
+  {
+    "key": "main_mast_rake_deg",
+    "metric": "rake_deg",
+    "expected": 0.99,
+    "actual": 0.9900000000000004,
+    "tolerance": 0.12,
+    "source": "SECONDARY §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 5/8 in per yard"
+  },
+  {
+    "key": "main_top_breadth",
+    "metric": "extent_x",
+    "expected": 4.953,
+    "actual": 4.953000068664551,
+    "tolerance": 0.03,
+    "source": "SECONDARY §7.1 Steel 1794 v1 p.37, one third of the topmast length"
+  },
+  {
+    "key": "main_topsail_yard_length",
+    "metric": "extent_horizontal",
+    "expected": 15.8496,
+    "actual": 15.959526306498045,
+    "tolerance": 0.02,
+    "source": "SECONDARY §3 Steel 1794 v1 p.50, \"28 GUNS. 594 Tons.\" column"
+  },
+  {
+    "key": "main_yard_length",
+    "metric": "extent_horizontal",
+    "expected": 21.717000000000002,
+    "actual": 21.882149145942705,
+    "tolerance": 0.02,
+    "source": "SECONDARY §3 Steel 1794 v1 p.50, \"28 GUNS. 594 Tons.\" column"
+  },
+  {
+    "key": "mizzen_channel_deadeyes_per_side",
+    "metric": "count",
+    "expected": 7,
+    "actual": 7,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §04 11.1 five lower shrouds and two standing backstays"
+  },
+  {
+    "key": "mizzen_channel_length",
+    "metric": "extent_z",
+    "expected": 4.2672,
+    "actual": 4.267199516296387,
+    "tolerance": 0.06,
+    "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
+  },
+  {
+    "key": "mizzen_mast_rake_deg",
+    "metric": "rake_deg",
+    "expected": 1.59,
+    "actual": 1.5900000000000005,
+    "tolerance": 0.1,
+    "source": "SECONDARY §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 1 in per yard"
+  },
+  {
+    "key": "pennant_height",
+    "metric": "origin_y",
+    "expected": 41.15,
+    "actual": 41.15,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §04-9 main truck; 38.618 m by Steel's masting, 41.15 m as the rig builds the royal pole — RECONCILE WITH RIG"
+  },
+  {
+    "key": "pinnace_length",
+    "metric": "extent_z",
+    "expected": 7.315200000000001,
+    "actual": 7.355953216552734,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §8.3 pinnace 24-26 ft; the shorter figure taken so that she stows on the same skid beams as the launch"
+  },
+  {
+    "key": "skid_beam_count",
+    "metric": "count",
+    "expected": 4,
+    "actual": 4,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §6 research 06 deck-layout §8.2"
+  },
+  {
+    "key": "spanker_boom_length",
+    "metric": "extent_horizontal",
+    "expected": 10.3632,
+    "actual": 10.345559305399574,
+    "tolerance": 0.02,
+    "source": "RECONSTRUCTED from the reference photograph: a gaff spanker whose boom overhangs the taffrail by about 10 ft"
+  },
+  {
+    "key": "square_sails_set",
+    "metric": "count",
+    "expected": 8,
+    "actual": 8,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED the full suit in the reference photograph: two courses, three topsails and three topgallants"
+  },
+  {
+    "key": "wheel_swept_diameter",
+    "metric": "extent_y",
+    "expected": 1.9304000000000001,
+    "actual": 1.930400013923645,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §6 research 06 deck-layout §2.1, the rim plus a turned handle projecting 7 in at each end of a spoke"
+  }
+]

@@ -251,7 +251,7 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
   mesh.position.copy(p);
   mesh.rotation.y = deg(braceDeg);
   mesh.name = name;
-  if (auditKey) audit(mesh, auditKey, 'extent_max');
+  if (auditKey) audit(mesh, auditKey, 'extent_horizontal');
   group.add(mesh);
   return mesh;
 }
@@ -373,7 +373,7 @@ export function buildRig(cfg, mats, model, ctx) {
   boom.position.copy(boomRoot);
   boom.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0.09, 1).normalize());
   boom.name = 'spanker_boom';
-  audit(boom, 'spanker_boom_length', 'extent_max');
+  audit(boom, 'spanker_boom_length', 'extent_horizontal');
   group.add(boom);
 
   const gaffRoot = miz.along(miz.above(0.52));

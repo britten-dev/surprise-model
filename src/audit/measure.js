@@ -35,6 +35,10 @@ const MEASURES = {
   // The longest of the three, for a spar whose orientation the audit should not care
   // about — a yard braced round still has the same length.
   extent_max: ({ size }) => Math.max(size.x, size.y, size.z),
+  // The length of a spar that lies in the horizontal plane at some angle to the ship.
+  // A yard braced round twelve degrees has a bounding box two per cent shorter than the
+  // yard is, which would read as a two per cent error in a yard that is exactly right.
+  extent_horizontal: ({ size }) => Math.hypot(size.x, size.z),
   min_y: ({ box }) => box.min.y,
   max_y: ({ box }) => box.max.y,
   min_z: ({ box }) => box.min.z,

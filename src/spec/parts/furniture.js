@@ -203,6 +203,8 @@ export const FURNITURE_SPEC = {
   hammock_crane_height: m(ft(2, 0), 'RECONSTRUCTED §6 from the reference photograph, standing about 2 ft above the cap rail', { noAudit: true }),
   hammock_crane_diameter: m(ft(0, 1.25), 'RECONSTRUCTED §6 wrought-iron crane', { noAudit: true }),
   hammock_crane_spread: m(ft(1, 2), 'RECONSTRUCTED §6 the fork at the head of the crane, which carries the netting outboard of the rail', { noAudit: true }),
+  hammock_crane_run_from_stem: m(ft(12, 0), 'RECONSTRUCTED §6 the cranes begin where the rail leaves the head', { noAudit: true }),
+  hammock_crane_run_short_of_stern: m(ft(2, 6), 'RECONSTRUCTED §6 the after run stops short of the taffrail', { noAudit: true }),
   hammock_netting_rows: n(3, 'RECONSTRUCTED §6 from the reference photograph, three rows of netting between the cranes', { noAudit: true }),
 
   // -------------------------------------------------------------- belaying gear

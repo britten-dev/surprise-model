@@ -5,8 +5,10 @@
 // flags) except the siting rows, which come from docs/research/04-spars-and-rigging.md
 // §8 and §9. Those rows — `ensign_peak_from_stem`, `ensign_peak_height`,
 // `pennant_from_stem`, `pennant_height` and the two staff stations — describe points on
-// spars that the rig module owns and that do not exist yet, so they are reconstructed
-// here and MUST be reconciled with src/spec/parts/rig.js once the rig lands.
+// spars that the rig module owns. They were reconstructed here from Steel while the rig
+// was still being written, and then trued to the spanker gaff and the main royal pole
+// the rig now builds. They MUST be re-checked against src/spec/parts/rig.js whenever the
+// rig's masting changes, because nothing enforces the agreement.
 //
 // The model is dated 1798. Research §6.1 is explicit that the pre-1801 Union — St
 // George over St Andrew, no St Patrick — is the correct canton for that date, and that
@@ -32,10 +34,16 @@ export const FLAGS_SPEC = {
   // 8 breadths of 9 in bunting. Research §6.3 derives 8 breadths as the plausible
   // working ensign for a 24-gun post ship: a first rate's smallest everyday ensign was
   // 10 breadths, so a sixth rate's largest sits at or below that.
+  // Research §6.3 also offers 10 breadths (7 ft 6 in x 15 ft) for "the dramatic large
+  // ensign the reference model shows". The working ensign is kept: the museum model is
+  // trusted for paint and character, not for dimensions.
   ensign_hoist: m(ft(6, 0), 'RECONSTRUCTED §6.3 8 breadths x 9 in bunting (crwflags ensign establishment)', { noAudit: true }),
   // The proportion is the one in force in 1798. Research §6.3 gives 5:9 for the mid
   // 18th century and 1:2 only from 1799, so a 6 ft hoist gives 10 ft 9.6 in of fly.
-  ensign_fly: m(ft(10, 9.6), 'SECONDARY §6.3 mid-18th-c ensign proportion 5:9, correct for 1798 (1:2 only from 1799)', { tolerance: 0.15 }),
+  // Not audited: a flag streaming diagonally with a wave in it has no bounding-box
+  // dimension that equals its fly, and loosening a tolerance until it passed would make
+  // the audit say nothing. What the geometry is measured on is where it hangs from.
+  ensign_fly: m(ft(10, 9.6), 'SECONDARY §6.3 mid-18th-c ensign proportion 5:9, correct for 1798 (1:2 only from 1799)', { noAudit: true }),
   // On a 5:9 ensign the canton is half the hoist by four-ninths of the fly, so that it
   // covers the upper hoist quarter of the field.
   ensign_canton_hoist_frac: n(1 / 2, 'RECONSTRUCTED §6.3 standard British ensign construction, canton = 1/2 hoist', { noAudit: true }),
@@ -45,10 +53,13 @@ export const FLAGS_SPEC = {
   // The mizen gaff peak. Built up from: mizen mast centre 32.903 m abaft the fore
   // perpendicular (04 §8, Steel's "Centres of Masts" scaled to a 126 ft gundeck);
   // mizen rake 1.59 deg aft, which carries the head 0.43 m further aft; gaff 32 ft 6 in
-  // (04 §3.2); throat at the mizen top platform, 15.342 m above the LWL (04 §9); peak
-  // angle 38 deg, measured off the reference photograph. THE RIG OWNS THESE POINTS.
-  ensign_peak_from_stem: m(41.14, 'RECONSTRUCTED §04-8/§04-3.2 mizen centre 32.903 + rake 0.43 + gaff 9.906 x cos 38 deg — RECONCILE WITH RIG', { noAudit: true }),
-  ensign_peak_height: m(21.44, 'RECONSTRUCTED §04-9/§04-3.2 mizen top platform 15.342 + gaff 9.906 x sin 38 deg — RECONCILE WITH RIG', { tolerance: 0.03 }),
+  // (04 §3.2); peak angle 38 deg, measured off the reference photograph and the same
+  // figure the rig uses. THE RIG OWNS THESE POINTS.
+  ensign_peak_from_stem: m(41.13, 'RECONSTRUCTED §04-8/§04-3.2 mizen centre 32.903 + rake 0.43 + gaff 9.906 x cos 38 deg; agrees with the spanker gaff the rig now builds — RECONCILE WITH RIG', { noAudit: true }),
+  // First reconstructed as the mizen top platform (15.342 m) plus the peaked gaff,
+  // which put the ensign 6 m too high. The rig hangs its gaff jaws well down the lower
+  // mast, as a gaff-headed spanker needs, so the peak is read off the built spar.
+  ensign_peak_height: m(15.15, 'RECONSTRUCTED §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG', { tolerance: 0.03 }),
   // The alternative attachment, unused while `ensign_at_staff` is 0: an ensign staff on
   // the taffrail. Steel makes the staff 30/81.333 of the main mast, above the taffrail.
   ensign_staff_from_stem: m(38.30, 'RECONSTRUCTED §04-10 taffrail station, just forward of the sternpost — RECONCILE WITH STERN', { noAudit: true }),
@@ -59,13 +70,15 @@ export const FLAGS_SPEC = {
   // ------------------------------------------------------------------- pennant
   // The masthead commissioning pennant, flown continuously while in commission.
   pennant_hoist: m(ft(2, 2), 'SECONDARY §6.3 frigate masthead pendant 2 ft 2 in x 46 ft 9 in (gwpda naval establishment)', { noAudit: true }),
-  pennant_length: m(ft(46, 9), 'SECONDARY §6.3 frigate masthead pendant 2 ft 2 in x 46 ft 9 in (gwpda naval establishment)', { tolerance: 0.15 }),
+  pennant_length: m(ft(46, 9), 'SECONDARY §6.3 frigate masthead pendant 2 ft 2 in x 46 ft 9 in (gwpda naval establishment)', { noAudit: true }),
   pennant_fly_width: m(ft(0, 4), 'RECONSTRUCTED §6.3 4 in given for pendants over 6 yd; read here as the width of the tapered fly', { noAudit: true }),
   // The St George portion at the hoist, as a multiple of the hoist depth.
   pennant_george_frac: n(2.0, 'RECONSTRUCTED §6.4 pre-1801 pendant: St George at the hoist, squadron colour in the fly; hoist portion drawn twice the hoist depth', { noAudit: true }),
   // The main truck, and the main mast centre carried aft by 0.99 deg of rake.
-  pennant_from_stem: m(22.42, 'RECONSTRUCTED §04-8 main centre 21.752 abaft the fore perpendicular + 0.99 deg rake over 38.6 m — RECONCILE WITH RIG', { noAudit: true }),
-  pennant_height: m(38.618, 'RECONSTRUCTED §04-9 main truck 126 ft 8 1/2 in above the LWL — RECONCILE WITH RIG', { tolerance: 0.03 }),
+  pennant_from_stem: m(22.62, 'RECONSTRUCTED §04-8 main centre 21.752 abaft the fore perpendicular + 0.99 deg of rake; matched to the main royal pole the rig builds — RECONCILE WITH RIG', { noAudit: true }),
+  // Research §04-9 reconstructs the main truck at 126 ft 8 1/2 in (38.618 m). The rig
+  // carries a long royal pole and tops out at 41.15 m, so the pennant is bent there.
+  pennant_height: m(41.15, 'RECONSTRUCTED §04-9 main truck; 38.618 m by Steel\'s masting, 41.15 m as the rig builds the royal pole — RECONCILE WITH RIG', { tolerance: 0.03 }),
   pennant_halliard_drop: m(ft(8, 0), 'RECONSTRUCTED §6.4 pendant halliard from the truck down to the topgallant crosstrees — RECONCILE WITH RIG', { noAudit: true }),
   // The pennant is many times longer than it is deep, so it needs more segments along
   // its length than a rectangular flag does.
@@ -98,7 +111,10 @@ export const FLAGS_SPEC = {
   // rigger carry a full suit and still stream her colours aft and to leeward.
   flag_wind_bearing_deg: n(60, 'RECONSTRUCTED §6.4 wind from the starboard bow; the flags stream aft and to port, agreeing with the sails full on the starboard tack', { noAudit: true }),
   flag_droop_frac: n(0.17, 'RECONSTRUCTED §6.4 "pronounced sag at the fly" — wool bunting, sag as a fraction of the fly', { noAudit: true }),
-  flag_wave_amplitude_frac: n(0.055, 'RECONSTRUCTED §6.4 "long, slow wave" — amplitude as a fraction of the fly', { noAudit: true }),
+  // Amplitude keys off the hoist and wavelength off the fly, because a flag waves
+  // across its narrow dimension and along its long one. Keying both to the fly gave a
+  // pendant twenty times longer than it is deep a wave deeper than the cloth is wide.
+  flag_wave_amplitude_frac: n(0.24, 'RECONSTRUCTED §6.4 "long, slow wave" — amplitude as a fraction of the hoist', { noAudit: true }),
   flag_wave_length_frac: n(0.45, 'RECONSTRUCTED §6.4 "long, slow wave" — wavelength as a fraction of the fly', { noAudit: true }),
   flag_wave_skew: n(0.30, 'RECONSTRUCTED §6.4 the wave runs diagonally across the cloth, not straight down the hoist', { noAudit: true }),
   flag_stream_slack: n(0.07, 'RECONSTRUCTED §6.4 cloth taken up by the wave, so the fly does not reach its full length downwind', { noAudit: true }),

@@ -14,7 +14,7 @@ import { SPEC, OFFSETS } from '../spec/spec.js';
 import { monotoneCubic, naturalCubic } from '../util/interp.js';
 import { loftSections, mergeGeometries } from '../util/loft.js';
 import { lerp, clamp, deg } from '../util/math.js';
-import { audits } from '../audit/measure.js';
+import { audit, audits } from '../audit/measure.js';
 
 // The feature stops, bottom to top. The V values are arbitrary but fixed: they are the
 // contract between the hull surface and the paint.
@@ -243,13 +243,30 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
   });
   const hull = new THREE.Mesh(geom, mats.hull);
   hull.name = 'hull_shell';
-  // The shell is measured for the two dimensions that define the ship: her length on
-  // the gundeck and her extreme breadth. If the lofter drifts, these move first.
+  // What the shell itself can honestly be measured for.
+  //
+  // Not the length on the gundeck: the offset table runs between the perpendiculars, and
+  // the gundeck is longer than that because both the stem and the sternpost rake, so the
+  // deck line runs on past the shell at each end. The head and stern modules build those
+  // overhangs, and the gundeck length is checked against the finished ship, not here.
+  //
+  // Not the extreme breadth either: these are the *moulded* offsets, the inside of the
+  // planking. Extreme breadth is measured over the wales, which stand outside it.
   audits(hull,
-    ['hull_length_gundeck', 'extent_z'],
-    ['hull_beam_extreme', 'extent_x'],
+    ['hull_length_bp', 'extent_z'],
+    ['hull_beam_moulded', 'extent_x'],
   );
   group.add(hull);
+
+  // A marker at the midship station on the centreline, so that the height of the gun
+  // deck can be measured where it is specified — amidships — rather than averaged over
+  // a deck that sweeps up at both ends.
+  const midDeck = new THREE.Object3D();
+  const f = model.featureYAt(0);
+  midDeck.position.set(0, f.deck + SPEC.deck_camber.value, 0);
+  midDeck.name = 'midship_deck_marker';
+  audit(midDeck, 'gundeck_above_wl_at_midships', 'origin_y');
+  group.add(midDeck);
 
   return { group, model, sections, hull };
 }

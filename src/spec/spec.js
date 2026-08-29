@@ -25,10 +25,15 @@ const CORE = {
   // L'UNITE", Plymouth Yard February 1798, signed John Marshall. These four are the
   // only dimensions of this ship that are genuinely recorded, and everything else is
   // built off them.
-  hull_length_gundeck: m(ft(126, 0), 'PRIMARY §1 ZAZ3067 title cartouche; Winfield via threedecks', { tolerance: 0.01 }),
+  hull_length_gundeck: m(ft(126, 0), 'PRIMARY §1 ZAZ3067 title cartouche; Winfield via threedecks', { noAudit: true }),
+  // The length the offset table actually spans: the load waterline, from the fore side
+  // of the stem rabbet to the after side of the sternpost. Five feet shorter than the
+  // gundeck, because both the stem and the post rake and the deck line runs on past the
+  // perpendiculars at each end.
+  hull_length_bp: m(ft(121, 0), 'MEASURED §2 126 ft on the gundeck less the stem rake above the LWL and the post rake', { tolerance: 0.01 }),
   hull_length_keel: m(ft(108, 6.125), 'PRIMARY §1 ZAZ3067; confirmed by the tonnage arithmetic', { noAudit: true }),
-  hull_beam_extreme: m(ft(31, 8), 'PRIMARY §1 ZAZ3067; confirmed by the tonnage arithmetic', { tolerance: 0.015 }),
-  hull_beam_moulded: m(ft(31, 2), 'RECONSTRUCTED §1 extreme less twice 3 in bottom plank (Steel 1805 scantlings)', { noAudit: true }),
+  hull_beam_extreme: m(ft(31, 8), 'PRIMARY §1 ZAZ3067; confirmed by the tonnage arithmetic. Measured over the wales, which stand outside the moulded surface the offsets describe', { noAudit: true }),
+  hull_beam_moulded: m(ft(31, 0), 'MEASURED §2 breadth box on the ZAZ3067 body plan at 6.0 px per foot; the title-block row is illegible at this resolution', { tolerance: 0.012 }),
   hull_depth_in_hold: m(ft(10, 0.5), 'PRIMARY §1 threedecks citing Winfield BWAS-1793', { noAudit: true }),
   hull_tons_burthen: { value: 578.777, source: 'PRIMARY §1 578 73/94 tons bm; (108.5104 x 31.6667 x 15.83335) / 94 checks exactly', noAudit: true },
 
@@ -77,7 +82,7 @@ const CORE = {
   wale_depth: m(ft(1, 8), 'MEASURED §8 main wale 15.2 to 16.9 ft above the moulded base line', { noAudit: true }),
   // Where the gundeck sits at the centreline amidships, which is the one deck height
   // the audit can measure directly off the built surface.
-  gundeck_above_wl_at_midships: m(ft(5, 9.8) + ft(0, 5) / 2, 'MEASURED §5 deck at side 5.82 ft above the LWL, plus half the camber', { tolerance: 0.12 }),
+  gundeck_above_wl_at_midships: m(ft(5, 9.8) + ft(0, 5), 'MEASURED §5 deck at side 5.82 ft above the LWL at the midship station, plus the full camber to the centreline', { tolerance: 0.05 }),
 
   side_thickness: m(ft(0, 9), 'RECONSTRUCTED §4 the ship\'s side at the ports: plank, timber and inboard plank', { noAudit: true }),
   rail_cap_thickness: m(ft(0, 4), 'RECONSTRUCTED §4 the capping over the top timbers', { noAudit: true }),
