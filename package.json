@@ -1,0 +1,19 @@
+{
+  "name": "surprise-model",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Parametric 3D model of HMS Surprise (ex-French corvette Unite, 1794)",
+  "scripts": {
+    "build": "node tools/build.js",
+    "audit": "node tools/audit.js",
+    "render": "node tools/render.js",
+    "viewer": "node tools/serve.js"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
