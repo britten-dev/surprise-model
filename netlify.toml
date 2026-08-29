@@ -1,0 +1,25 @@
+# The deployed site is the interactive viewer. It builds the ship in the browser from
+# the generator source, so there is nothing to bake and no model files to ship.
+
+[build]
+  command = "node tools/build-site.js"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Playwright is only needed to export the GLB files and take the verification
+  # renders, neither of which the site does. Skipping the dev dependencies keeps the
+  # deploy from downloading a browser it will never open.
+  NPM_FLAGS = "--omit=dev"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # The viewer is a static page that loads only its own modules.
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

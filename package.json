@@ -10,7 +10,8 @@
     "trace": "node tools/trace.js",
     "render": "node tools/render.js",
     "check": "node tools/trace.js && node tools/audit.js && node tools/build.js",
-    "viewer": "node tools/serve.js"
+    "viewer": "node tools/serve.js",
+    "site": "node tools/build-site.js"
   },
   "dependencies": {
     "three": "^0.180.0"

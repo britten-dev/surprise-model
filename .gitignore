@@ -5,3 +5,4 @@ build/*.glb
 renders/*.png
 !build/.gitkeep
 !renders/.gitkeep
+dist/
