@@ -8,6 +8,7 @@ import { lodConfig, LODS } from './lod.js';
 import { makeMaterials } from './materials.js';
 import { buildHull, hullModel } from './hull.js';
 import { portLayout, makePortCutter, buildPorts } from './ports.js';
+import { buildDecks } from './decks.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
@@ -30,6 +31,8 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   const ports = portLayout(model);
   const hull = buildHull(cfg, mats, model, { skipQuad: makePortCutter(model, ports) });
   ship.add(hull.group);
+  const decks = buildDecks(cfg, mats, model);
+  ship.add(decks.group);
   ship.add(buildPorts(cfg, mats, model, ports));
 
   return ship;

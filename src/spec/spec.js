@@ -11,10 +11,15 @@
 //   RECONSTRUCTED derived from a period rule; the rule is named in `note`
 //   FICTIONAL     from O'Brian's novels or the 2003 film, never mixed with the above
 import { ft } from '../util/math.js';
+import { PART_SPECS } from './parts/index.js';
 
-const m = (metres, source, opts = {}) => ({ value: metres, source, ...opts });
+export const m = (metres, source, opts = {}) => ({ value: metres, source, ...opts });
 
-export const SPEC = {
+// The core of the spec: the ship herself, her decks and her battery. Regions of the
+// ship that are built by their own module keep their dimensions in
+// `src/spec/parts/<region>.js` and are merged in below, so that two people working on
+// two regions never edit the same file.
+const CORE = {
   // ---------------------------------------------------------------- principal
   // The dockyard survey figures from the title cartouche of ZAZ3067, "SURPRISE late
   // L'UNITE", Plymouth Yard February 1798, signed John Marshall. These four are the
@@ -70,6 +75,14 @@ export const SPEC = {
   // -------------------------------------------------------------- hull surface
   wale_top_below_deck: m(ft(2, 6), 'RECONSTRUCTED §4 traced from the ZAZ3067 profile', { noAudit: true }),
   wale_depth: m(ft(1, 9), 'RECONSTRUCTED §4 traced from the ZAZ3067 profile', { noAudit: true }),
+  // Where the gundeck sits at the centreline amidships, which is the one deck height
+  // the audit can measure directly off the built surface.
+  gundeck_above_wl_at_midships: m(ft(4, 6) + ft(0, 5) / 2, 'RECONSTRUCTED §3 deck at side plus half the camber', { tolerance: 0.12 }),
+
+  side_thickness: m(ft(0, 9), 'RECONSTRUCTED §4 the ship\'s side at the ports: plank, timber and inboard plank', { noAudit: true }),
+  rail_cap_thickness: m(ft(0, 4), 'RECONSTRUCTED §4 the capping over the top timbers', { noAudit: true }),
+  gangway_width: m(ft(3, 6), 'RECONSTRUCTED §8 gangway wide enough for one man and a hand rope', { noAudit: true }),
+
   // The backbone. A keel of this scantling for a 578-ton ship, sided (its width) and
   // moulded (its depth below the rabbet).
   keel_siding: m(ft(1, 1), 'RECONSTRUCTED §4 Steel 1805 scantling tables, keel sided for a ship of ~580 tons', { noAudit: true }),
@@ -77,6 +90,14 @@ export const SPEC = {
 
   hull_tumblehome_ratio: { value: 0.055, source: 'RECONSTRUCTED §4 French corvette practice, less tumblehome than a British-built hull', noAudit: true },
 };
+
+export const SPEC = Object.freeze({ ...CORE, ...PART_SPECS });
+
+// A key defined twice means two modules disagree about the same dimension, which is
+// exactly the drift this spec exists to prevent.
+for (const key of Object.keys(PART_SPECS)) {
+  if (key in CORE) throw new Error(`spec key "${key}" is defined in both the core spec and a part spec`);
+}
 
 // ------------------------------------------------------------------- paint
 // Colours are sRGB hex as they should appear under neutral light. Roughness and
