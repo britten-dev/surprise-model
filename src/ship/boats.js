@@ -216,6 +216,7 @@ function makeBoat(P, cfg, mats) {
   const white = [];
   const timber = [];
   const cloth = [];
+  const gear = [];
 
   // ---------------------------------------------------------------- the shell
   const outer = shellSections(P, lines, ns, np, 0);
@@ -264,10 +265,12 @@ function makeBoat(P, cfg, mats) {
   }
 
   // ---------------------------------------------------------------- her gear
+  // The rudder is kept out of the shell so that the audit measures the boat's length on
+  // her own planking and not on her rudder head.
   if (P.rudder && !solid) {
     const rd = S('boat_rudder_depth'), rw = S('boat_rudder_width'), rt = S('boat_rudder_thickness');
     const head = lines.sheer(1);
-    white.push(boxAt(rt, rd, rw, 0, head - rd / 2, P.length / 2 + rw / 2));
+    gear.push(boxAt(rt, rd, rw, 0, head - rd / 2, P.length / 2 + rw / 2));
     const tl = S('boat_tiller_length');
     timber.push(boxAt(rt, rt, tl, 0, head + rt, P.length / 2 - tl / 2 + rw / 2));
   }
@@ -337,6 +340,7 @@ function makeBoat(P, cfg, mats) {
   };
   const shell = add(white, mats.white, 'shell');
   add(timber, mats.timber, 'inboard');
+  add(gear, mats.white, 'rudder');
   add(cloth, mats.sail, 'furled_sail');
   return { group, shell, lines };
 }
@@ -426,8 +430,8 @@ export function buildBoats(cfg, mats, model, ctx) {
   // ------------------------------------------------------------------ the jolly boat
   // §8.4: quarter davits enter the Royal Navy in the 1790s and are defensible for 1798,
   // while transom davits are marginal before 1800. So the boat the photograph carries
-  // aft is hung on the port quarter here rather than over the taffrail.
-  const side = -1;
+  // aft is hung on the quarter here rather than over the taffrail.
+  const side = 1;
   const zDavit = model.fromStem(S('davit_station'));
   const half = S('davit_spacing') / 2;
   const out = S('davit_outreach');

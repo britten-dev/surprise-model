@@ -64,6 +64,11 @@ const CONFIG = {
     boatPoints: 14,
     boatGear: true,
     anchorDetail: 'full',
+    // Ground tackle. The two catted bowers are always built; these say how much of the
+    // rest of the outfit is. `anchorSpares` is the sheet and the kedge stowed in the fore
+    // chains, `anchorCables` the hawse holes, their bolsters and the bower cables.
+    anchorSpares: 2,
+    anchorCables: true,
     // The colours. 'full' is ensign, masthead pendant and jack; 'principal' drops the
     // jack, which is only ever worn at anchor anyway; 'ensign' is the one flag that
     // still reads on a silhouette at the horizon.
@@ -120,6 +125,10 @@ const CONFIG = {
     boatPoints: 9,
     boatGear: false,
     anchorDetail: 'simple',
+    // The spares are only read from close alongside, so at gameplay range the two bowers
+    // and their cables carry the whole story of the bow.
+    anchorSpares: 0,
+    anchorCables: true,
     flags: 'principal',
     flagSegments: [12, 6],
     flagHalliards: true,
@@ -176,6 +185,8 @@ const CONFIG = {
     boatPoints: 5,
     boatGear: false,
     anchorDetail: 'none',
+    anchorSpares: 0,
+    anchorCables: false,
     flags: 'ensign',
     flagSegments: [4, 2],
     flagHalliards: false,

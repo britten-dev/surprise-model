@@ -41,8 +41,8 @@ export const BOATS_SPEC = {
   boat_entry_power: n(0.55, 'RECONSTRUCTED §8.5 fineness of the entry, as an exponent on the forward waterline', { noAudit: true }),
   boat_run_power: n(1.6, 'RECONSTRUCTED §8.5 fineness of the run aft to the transom', { noAudit: true }),
   boat_transom_width_frac: n(0.62, 'RECONSTRUCTED §8.5 transom breadth as a fraction of the extreme breadth', { noAudit: true }),
-  boat_sheer_rise_fwd: n(0.38, 'RECONSTRUCTED §8.5 rise of the gunwale at the stem, as a fraction of the depth amidships', { noAudit: true }),
-  boat_sheer_rise_aft: n(0.20, 'RECONSTRUCTED §8.5 rise of the gunwale at the transom', { noAudit: true }),
+  boat_sheer_rise_fwd: n(0.28, 'RECONSTRUCTED §8.5 rise of the gunwale at the stem, as a fraction of the depth amidships', { noAudit: true }),
+  boat_sheer_rise_aft: n(0.14, 'RECONSTRUCTED §8.5 rise of the gunwale at the transom', { noAudit: true }),
   boat_rocker_fwd: n(0.62, 'RECONSTRUCTED §8.5 rise of the keel into the forefoot, as a fraction of the depth', { noAudit: true }),
   boat_sheer_power: n(1.8, 'RECONSTRUCTED §8.5 the sheer of a boat runs flat amidships and lifts quickly at the ends; exponent on the rise', { noAudit: true }),
   boat_rocker_power: n(1.8, 'RECONSTRUCTED §8.5 the same rule applied to the rocker of the keel', { noAudit: true }),
@@ -79,7 +79,7 @@ export const BOATS_SPEC = {
   boat_chock_spread: n(0.62, 'RECONSTRUCTED §8.2 the chocks take the boat under her bilges, at 0.62 of the half breadth', { noAudit: true }),
   boat_chock_station: n(0.28, 'RECONSTRUCTED §8.2 the two chocks stand this fraction of the length either side of the boat\'s midlength', { noAudit: true }),
 
-  boat_stow_station: m(ft(57, 6), 'RECONSTRUCTED §8.2 midway along the four skid beams, which stand at X = 44, 53, 62 and 71 ft abaft the stem', { noAudit: true }),
+  boat_stow_station: m(ft(56, 0), 'RECONSTRUCTED §8.2 midway along the four skid beams; the furniture module lays them from X = 44 ft at 8 ft centres, so their middle is X = 56 ft', { noAudit: true }),
   launch_stow_offset: m(ft(3, 6), 'RECONSTRUCTED §8.2 launch stowed to starboard of the centreline so that the pinnace stows beside her inside the 24 ft clear of the waist', { noAudit: true }),
   pinnace_stow_offset: m(ft(3, 6), 'RECONSTRUCTED §8.2 pinnace to port, the mirror of the launch', { noAudit: true }),
   cutter_nest_rise: m(ft(1, 5), 'RECONSTRUCTED §8.2 "nested one atop the other"; the cutter rests on the launch\'s thwarts', { noAudit: true }),
@@ -89,7 +89,7 @@ export const BOATS_SPEC = {
   // §8.4: quarter davits enter the RN in the 1790s and are defensible for 1798, while
   // transom davits are marginal before 1800. The photograph's boat aft is therefore
   // hung on the port quarter rather than over the taffrail.
-  davit_station: m(ft(116, 0), 'RECONSTRUCTED §8.4 quarter davits stepped on the quarterdeck rail 10 ft forward of the sternpost', { noAudit: true }),
+  davit_station: m(ft(116, 0), 'RECONSTRUCTED §8.4 quarter davits stepped on the starboard quarterdeck rail 10 ft forward of the sternpost, where the photograph carries a boat aft', { noAudit: true }),
   davit_spacing: m(ft(9, 0), 'RECONSTRUCTED §8.4 the two davits set to take the jolly boat a little inside her stem and stern', { noAudit: true }),
   davit_height_above_rail: m(ft(4, 6), 'RECONSTRUCTED §8.4 davit head high enough to swing the boat clear of the rail', { noAudit: true }),
   davit_outreach: m(ft(3, 6), 'RECONSTRUCTED §8.4 davits project outboard about 3 ft 6 in; §8.4 gives 6 ft of projection for the longer transom davit', { noAudit: true }),

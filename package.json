@@ -9,9 +9,11 @@
     "audit": "node tools/audit.js",
     "trace": "node tools/trace.js",
     "render": "node tools/render.js",
-    "check": "node tools/trace.js && node tools/audit.js && node tools/build.js",
+    "check": "node tools/make-specs.js && node tools/trace.js && node tools/audit.js && node tools/build.js && node tools/verify-glb.js",
     "viewer": "node tools/serve.js",
-    "site": "node tools/build-site.js"
+    "site": "node tools/build-site.js",
+    "verify": "node tools/verify-glb.js",
+    "specs": "node tools/make-specs.js"
   },
   "dependencies": {
     "three": "^0.180.0"
