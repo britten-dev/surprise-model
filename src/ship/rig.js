@@ -471,29 +471,8 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
       }
 
       // Ratlines: horizontal, thirteen inches apart, from just below the futtock stave
-      // down to just above the deadeyes. The outermost shrouds are left out of the top
-      // six and the bottom six, exactly as Steel describes.
-      if (cfg.ratlines && shrouds.length > 1) {
-        const spacing = S('ratline_spacing') * cfg.ratlineEvery;
-        const topY = shrouds[0].top.y - 0.35;
-        const botY = a.shrouds[0].y + 0.55;
-        const count = Math.max(0, Math.floor((topY - botY) / spacing));
-        for (let k = 0; k < count; k++) {
-          const y = botY + k * spacing;
-          const fromTop = count - 1 - k;
-          const inset = (fromTop < 6 || k < 6) ? 1 : 0;
-          const first = inset, last = shrouds.length - 1 - inset;
-          if (last <= first) continue;
-          const pts = [];
-          for (let i = first; i <= last; i++) {
-            pts.push(pointOnRopeAtHeight(shrouds[i].top, shrouds[i].foot, y));
-          }
-          for (let i = 0; i < pts.length - 1; i++) {
-            const c = new THREE.CatmullRomCurve3([pts[i], pts[i + 1]]);
-            ratlineCurves.push(c);
-          }
-        }
-      }
+      // down to just above the deadeyes.
+      if (cfg.ratlines) rattle(shrouds, ratlineCurves, cfg, { inset: true });
 
       // Futtock shrouds: from the futtock stave on the lower shrouds up and outboard to
       // the rim of the top.
@@ -514,6 +493,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
 
       // Topmast shrouds, from the topmast head down to the rim of the top.
       const tmN = S(`${name}_topmast_shroud_pairs`);
+      const topmastShrouds = [];
       for (let i = 0; i < tmN; i++) {
         const t = tmN === 1 ? 0 : i / (tmN - 1);
         const top = m.along(m.topmastHoundsH + 0.2 + 0.3 * t);
@@ -525,7 +505,11 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
           rim.z + lerp(-m.topLength * 0.22, m.topLength * 0.34, t)
         );
         addRope(top, foot, 0.005, r * 0.66);
+        topmastShrouds.push({ top, foot });
       }
+      // "The topmast-shrouds are rattled in the same manner" — Steel. Without these the
+      // upper rigging is bare and a man could not go aloft past the top.
+      if (cfg.ratlines) rattle(topmastShrouds, ratlineCurves, cfg, { inset: false });
 
       // Standing backstays, from the topmast and topgallant heads down to the after end
       // of the same channel, each to its own deadeye.
@@ -562,6 +546,9 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   const sr = S('stay_diameter') / 2;
   const deckAt = (z) => model.featureYAt(z).deck + 0.25;
 
+  // Each lower mast has a stay and, beside it, a preventer stay: a second rope of nearly
+  // the same size, so that the loss of one in action does not bring the mast down. Steel
+  // lists both for the fore and the main.
   const foreStayFoot = geo.bowsprit.at(geo.bowsprit.length * 0.55);
   addRope(geo.fore.along(geo.fore.houndsH + 0.4), foreStayFoot, 0.012, sr);
   addRope(geo.fore.along(geo.fore.houndsH + 0.1), geo.bowsprit.at(geo.bowsprit.length * 0.35), 0.012, sr * 0.85);
@@ -571,11 +558,17 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
 
   const mainStayFoot = new THREE.Vector3(0, deckAt(geo.fore.z0 + 1.2), geo.fore.z0 + 1.2);
   addRope(geo.main.along(geo.main.houndsH + 0.4), mainStayFoot, 0.012, sr);
+  // The main preventer stay, set up a little abaft the main stay's collar.
+  addRope(geo.main.along(geo.main.houndsH + 0.05),
+    new THREE.Vector3(0, deckAt(geo.fore.z0 + 2.4) + 0.2, geo.fore.z0 + 2.4), 0.012, sr * 0.85);
   addRope(geo.main.along(geo.main.topmastHoundsH), geo.fore.along(geo.fore.houndsH + 0.6), 0.008, sr * 0.6);
   addRope(geo.main.along(geo.main.tgHeel + geo.main.tgLength * 0.7), geo.fore.along(geo.fore.topmastHoundsH), 0.006, sr * 0.45);
 
   addRope(geo.mizzen.along(geo.mizzen.houndsH + 0.3), geo.main.along(geo.main.above(0.30)), 0.010, sr * 0.75);
   addRope(geo.mizzen.along(geo.mizzen.topmastHoundsH), geo.main.along(geo.main.houndsH + 0.7), 0.008, sr * 0.55);
+  // Mizzen topgallant stay, forward to the main topmast head.
+  addRope(geo.mizzen.along(geo.mizzen.tgHeel + geo.mizzen.tgStop * 0.8),
+    geo.main.along(geo.main.topmastHoundsH), 0.006, sr * 0.4);
 
   // Bobstays and bowsprit shrouds, holding the bowsprit down and sideways against the
   // pull of every headsail and the fore topmast stay.
@@ -591,6 +584,56 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
     addRope(geo.bowsprit.at(geo.bowsprit.length * 0.72),
       new THREE.Vector3(side * model.halfBreadthAt(stemZ + 2.2, fy.wale_top), fy.wale_top, stemZ + 2.2),
       0.004, sr * 0.55);
+  }
+
+  // The dolphin striker: a short spar hanging straight down from the bowsprit cap, with
+  // the martingale stays led over its heel. It is what holds the jibboom down against the
+  // pull of the jib and the fore topgallant stay, and without it the whole head of the
+  // ship looks unsupported — it is clearly visible in the reference photograph.
+  const strikerTop = geo.bowsprit.cap.clone();
+  const strikerLen = S('dolphin_striker_length');
+  const strikerHeel = strikerTop.clone();
+  strikerHeel.y -= strikerLen * Math.cos(deg(S('dolphin_striker_rake_deg')));
+  strikerHeel.z += strikerLen * Math.sin(deg(S('dolphin_striker_rake_deg')));
+  const strikerSpar = new THREE.Mesh(
+    spar({
+      length: strikerLen,
+      radiusAt: (t) => (S('dolphin_striker_diameter') / 2) * (1 - 0.35 * t),
+      segments: Math.max(2, cfg.sparSegments - 4), radial: cfg.sparRadial,
+    }),
+    mats.mastBlack
+  );
+  strikerSpar.position.copy(strikerHeel);
+  strikerSpar.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    strikerTop.clone().sub(strikerHeel).normalize()
+  );
+  strikerSpar.name = 'dolphin_striker';
+  audit(strikerSpar, 'dolphin_striker_length', 'extent_diagonal');
+  group.add(strikerSpar);
+
+  // The martingale stay: from the jibboom end down to the striker's heel, and on to the
+  // bows on both sides.
+  addRope(geo.bowsprit.end, strikerHeel, 0.003, sr * 0.5);
+  for (const side of [1, -1]) {
+    const by = model.featureYAt(stemZ + 1.0);
+    addRope(strikerHeel, new THREE.Vector3(
+      side * model.halfBreadthAt(stemZ + 1.0, by.wale_top), by.wale_top, stemZ + 1.0
+    ), 0.003, sr * 0.45);
+  }
+
+  // The gammoning: the lashing that binds the bowsprit down to the stem head. Seven or
+  // eight turns through the gammoning slot and over the spar.
+  const turns = cfg.gammoning ? S('gammoning_turns') : 0;
+  const gStem = new THREE.Vector3(0, model.featureYAt(stemZ + 0.4).deck - 0.2, stemZ + 0.4);
+  for (let i = 0; i < turns; i++) {
+    const t = 0.10 + (i / Math.max(1, turns - 1)) * 0.10;
+    const onSpar = geo.bowsprit.at(geo.bowsprit.length * t);
+    for (const side of [1, -1]) {
+      const a2 = onSpar.clone(); a2.x += side * S('bowsprit_diameter') * 0.45;
+      const b2 = gStem.clone(); b2.x += side * 0.10; b2.z += i * 0.04;
+      addRope(a2, b2, 0.002, sr * 0.35);
+    }
   }
 
   if (tubes.length) {
@@ -613,6 +656,36 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   }
 
   return group;
+}
+
+/**
+ * Rattle a set of shrouds: horizontal ratlines across them at thirteen inches.
+ *
+ * Steel: "The fore and aftermost shroud are left out for the first six ratlings down from
+ * the futtock-staff; and likewise the six lower ratlines next the dead eyes." That is
+ * what `inset` does, and it is why a real ship's ratlines narrow at the top and bottom of
+ * the shrouds instead of running square across like a ladder.
+ */
+function rattle(shrouds, out, cfg, { inset = true } = {}) {
+  if (shrouds.length < 2) return;
+  const spacing = S('ratline_spacing') * cfg.ratlineEvery;
+  const topY = shrouds[0].top.y - 0.35;
+  const botY = shrouds[0].foot.y + 0.4;
+  const count = Math.max(0, Math.floor((topY - botY) / spacing));
+  for (let k = 0; k < count; k++) {
+    const y = botY + k * spacing;
+    const fromTop = count - 1 - k;
+    const skip = inset && (fromTop < 6 || k < 6) ? 1 : 0;
+    const first = skip, last = shrouds.length - 1 - skip;
+    if (last <= first) continue;
+    const pts = [];
+    for (let i = first; i <= last; i++) {
+      pts.push(pointOnRopeAtHeight(shrouds[i].top, shrouds[i].foot, y));
+    }
+    for (let i = 0; i < pts.length - 1; i++) {
+      out.push(new THREE.CatmullRomCurve3([pts[i], pts[i + 1]]));
+    }
+  }
 }
 
 /** Where a shroud, hanging between two points, crosses a given height. */

@@ -151,6 +151,15 @@ export const RIG_SPEC = {
   bobstay_pairs: n(2, `${S11}; cabled, set up with hearts`, { noAudit: true }),
   bowsprit_shroud_pairs: n(1, S11, { noAudit: true }),
 
+  // The dolphin striker, or martingale boom: the short spar under the bowsprit cap that
+  // holds the jibboom down. Steel's 1794 table does not list it — it was still a fairly
+  // new fitting in the 1790s — so it is taken from the proportion to the jibboom that the
+  // rigging literature gives, and it is clearly present in the reference photograph.
+  dolphin_striker_length: m(ft(9, 0), 'RECONSTRUCTED §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph'),
+  dolphin_striker_diameter: m(inch(7), 'RECONSTRUCTED §12 in proportion to its length', { noAudit: true }),
+  dolphin_striker_rake_deg: n(12, 'RECONSTRUCTED §12 raked slightly forward so the martingale leads fair to the jib boom end', { noAudit: true }),
+  gammoning_turns: n(8, 'SECONDARY §11.2 Steel lists the gammoning first on the standing-rigging plate; seven or eight turns is the period figure', { noAudit: true }),
+
   // "Each ratling is placed thirteen inches asunder." Not fourteen, not fifteen.
   ratline_spacing: m(inch(13), 'SECONDARY §11.4 Steel 1794 v1 pp.198-199, Progressive Method of Rigging Ships', { noAudit: true }),
   ratline_stiffener_spacing: m(ft(5, 0), 'SECONDARY §11.4 boat oars seized to the shrouds about five feet asunder for the men to stand on', { noAudit: true }),

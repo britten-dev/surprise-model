@@ -96,6 +96,13 @@
     "source": "RECONSTRUCTED §8.3 cutter 18-22 ft; the shortest taken so that she nests inside the 24 ft launch"
   },
   {
+    "key": "dolphin_striker_length",
+    "metric": "extent_diagonal",
+    "expected": 2.7432000000000003,
+    "actual": 2.8218254297752763,
+    "source": "RECONSTRUCTED §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph"
+  },
+  {
     "key": "ensign_peak_height",
     "metric": "origin_y",
     "expected": 15.15,

@@ -483,6 +483,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `figurehead_head_diameter` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_arm_diameter` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 | `figurehead_arm_length` | 0.5334 | 1 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `gammoning_turns` | 8 | — | SECONDARY | §11.2 Steel lists the gammoning first on the standing-rigging plate; seven or eight turns is the period figure |
 
 ### Deck furniture
 
@@ -896,6 +897,9 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `shank_painter_diameter` | 0.032 | 0 ft 1.3 in | SECONDARY | §13.3 Steel :40292 and :44589, stopper bolts 1¼ in — the shank painter chain is of that bar |
 | `shank_painter_bolt_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §13.3 "a chain bolted through the topside, abaft the cathead" (Steel :4552) |
 | `shank_painter_on_shank` | 0.78 | — | RECONSTRUCTED | §13.3 the painter takes the shank near the crown |
+| `dolphin_striker_length` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph |
+| `dolphin_striker_diameter` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §12 in proportion to its length |
+| `dolphin_striker_rake_deg` | 12 | — | RECONSTRUCTED | §12 raked slightly forward so the martingale leads fair to the jib boom end |
 
 ---
 
