@@ -7,7 +7,9 @@
   "scripts": {
     "build": "node tools/build.js",
     "audit": "node tools/audit.js",
+    "trace": "node tools/trace.js",
     "render": "node tools/render.js",
+    "check": "node tools/trace.js && node tools/audit.js && node tools/build.js",
     "viewer": "node tools/serve.js"
   },
   "dependencies": {

@@ -44,9 +44,18 @@ await fs.writeFile(path.join(ROOT, 'build', 'audit.json'), JSON.stringify(rows, 
 console.log('-'.repeat(96));
 console.log(`${rows.length} measurements: ${rows.length - bad - warn} ok, ${warn} warn, ${bad} fail`);
 
+if (measured.missing.length) {
+  console.log(`\n${measured.missing.length} broken audit tag(s):`);
+  measured.missing.forEach((m) => console.log('  ' + m));
+}
+if (measured.unchecked.length) {
+  console.log(`\n${measured.unchecked.length} spec row(s) nothing is measured against:`);
+  console.log('  ' + measured.unchecked.join(', '));
+}
+
 if (h.problems.length) {
   console.log('\npage problems:');
   h.problems.slice(0, 20).forEach((p) => console.log('  ' + p));
 }
 await h.close();
-process.exit(bad ? 1 : 0);
+process.exit(bad || measured.missing.length ? 1 : 0);
