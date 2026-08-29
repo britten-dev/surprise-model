@@ -14,9 +14,15 @@ import * as THREE from 'three';
  * @param {object} [opts]
  * @param {boolean} [opts.mirror] also emit the mirrored (port) half and weld the seam
  * @param {(u:number,v:number)=>[number,number]} [opts.uv] custom UV mapping
- * @param {(z:number,v0:number,v1:number)=>boolean} [opts.skipQuad] drop a quad from the
- *   surface. This is how the gunports are cut: the loft grid is regular, so a port is
- *   simply a rectangle in station and V, and the faces inside it are never emitted.
+ * @param {(zA:number,zB:number,v0:number,v1:number,sign:number)=>boolean} [opts.skipQuad]
+ *   drop a quad from the surface. This is how the gunports are cut: the loft grid is
+ *   regular, so a port is simply a rectangle in station and V, and the faces inside it
+ *   are never emitted.
+ *
+ *   It is handed the quad's two stations rather than its midpoint so that the caller can
+ *   know the size of the hole it is making. A hole cut out of a grid is quantised to that
+ *   grid and is not the size of the thing it represents — which does not matter while the
+ *   port is open and matters very much when a lid has to cover it.
  */
 export function loftSections(sections, { mirror = false, uv = null, skipQuad = null } = {}) {
   const ns = sections.length;
@@ -44,9 +50,9 @@ export function loftSections(sections, { mirror = false, uv = null, skipQuad = n
     }
     const idx = [];
     for (let i = 0; i < ns - 1; i++) {
-      const zMid = (sections[i].z + sections[i + 1].z) / 2;
+      const zA = sections[i].z, zB = sections[i + 1].z;
       for (let j = 0; j < np - 1; j++) {
-        if (skipQuad && skipQuad(zMid, j / (np - 1), (j + 1) / (np - 1), sign)) continue;
+        if (skipQuad && skipQuad(zA, zB, j / (np - 1), (j + 1) / (np - 1), sign)) continue;
         const a = i * np + j, b = a + 1, c = a + np, d = c + 1;
         // Winding flips with the mirror so that both halves face outward. On the
         // starboard half, j runs up the section and i runs aft, so (a, b, c) is the

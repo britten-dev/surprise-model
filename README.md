@@ -27,6 +27,17 @@ Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
 close-reefed main topsail) and `furled`.
 
+**The storm state shuts her gunports and houses her guns.** A gundeck port is a couple of
+feet above the deck and four above the water amidships, and a frigate running before a
+following sea with twenty-four of them open would fill her gundeck. So under a reefed
+foresail the lids are down and the battery is housed — drawn in until the muzzles are
+inside the planking, elevated to the ring bolts above the ports, breechings bowsed. The
+quarterdeck and forecastle guns are not: they fire over an open rail, there is nothing up
+there to shut, and in heavy weather they are simply secured where they stand.
+
+`buildShip({ ports: 'open' | 'shut' })` says so explicitly, for the cases where the canvas
+and the weather do not agree — a ship can be under her topsails with her ports already in.
+
 The watch on deck comes with her at the `hero` and `game` levels — thirteen figures, at
 the wheel, at the con, at the pumps, at the braces and two in the main top. They are not
 decoration. A ship with nobody on her has no scale at all: the eye has nothing it knows

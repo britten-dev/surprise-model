@@ -95,6 +95,12 @@ freely. Costs: no geometry is rebuilt, three flags of about 150 vertices each ar
 on the processor, and everything else is a vertex shader. The one thing to get right is the
 order — `update` last, after the hull has been moved, or the rig lags a frame behind her.
 
+**2b. Gunports.** `sails: 'storm'` shuts the gundeck ports and houses the battery; the
+other three states leave them open with the guns run out. A host that wants the two
+decoupled — ports in before the canvas comes off her, say — passes `ports: 'open'` or
+`ports: 'shut'` explicitly. It is a build-time state, not a runtime one: opening a ship's
+ports is a `buildShip` away, at the same cost as changing her canvas.
+
 **3. Sail state.** Building from source rather than loading a GLB is what makes this
 cheap: the materials are cached per level, so a second `buildShip` at a different sail
 state costs about 80 ms of geometry and no download at all. A ship can shorten sail in

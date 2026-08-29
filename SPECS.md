@@ -111,6 +111,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `gunport_sill_above_deck` | 0.5334 | 1 ft 9 in | MEASURED | §8 sills 20.4 ft above base, deck at side 18.65 ft |
 | `gunport_spacing` | 2.5908 | 8 ft 6 in | RECONSTRUCTED | §4 12 ports spread over the length available between the bow and the transom |
 | `gunport_lining_depth` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §4 thickness of the side at the ports, plank and timber |
+| `gunport_lid_overlap` | 0.05 | — | RECONSTRUCTED | §4 a port lid is larger than its opening and lands on a rabbet cut round it. It has to be here for a second reason as well: the opening is cut by dropping whole faces out of the loft grid, so its size is quantised to that grid and a lid cut exactly to the port leaves the lining showing along one edge |
+| `gunport_lid_closed_proud` | 0.008 | — | RECONSTRUCTED | §4 a shut lid lies against the outside of the planking, not flush in the opening, so it stands its own hinge straps proud of the side |
 | `gunport_lid_thickness` | 0.0762 | 0 ft 3 in | SECONDARY | §4 Steel, port-lid thickness |
 | `qd_port_width` | 0.7112 | 2 ft 4 in | SECONDARY | §4 Steel, quarterdeck port |
 | `qd_port_height` | 0.7112 | 2 ft 4 in | SECONDARY | §4 Steel, quarterdeck port |
@@ -749,6 +751,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `gun_tackle_diameter` | 0.0229 | 0 ft 0.9 in | RECONSTRUCTED | §9.6 the gun and train tackle falls are lighter than the breeching |
 | `gun_tackle_sag` | 0.05 | — | RECONSTRUCTED | §9.6 the falls are bowsed taut when the gun is run out, so there is very little bight in them |
 | `gun_train_tackle_length` | 1.2192 | 4 ft 0 in | SECONDARY | §9.6 the train tackle runs from the rear of the carriage to an eye bolt in the deck on the centreline side |
+| `gun_housed_muzzle_inboard` | 0.1016 | — | RECONSTRUCTED | §9.4 the muzzle comes inside the planking far enough for the lid to shut over it and be bowsed to; four inches is what the lashing and the lid between them need |
+| `gun_housed_elevation_deg` | 18 | — | RECONSTRUCTED | §9.4 the muzzle is lashed up to the ring bolt above the port, which stands about a foot over the port head; the elevation follows from the geometry of the two |
 | `gun_run_out_side_clearance` | 0.0508 | — | RECONSTRUCTED | §9.4 a gun run out has its fore trucks all but against the ship's side; this is what is left between the fore end of the cheeks and the inboard face of the side |
 | `gun_quarterdeck_first_from_stem` | 24.0792 | 79 ft 0 in | RECONSTRUCTED | §9.2 the foremost quarterdeck piece stands just abaft the break, which is 78 ft abaft the stem |
 | `gun_quarterdeck_spacing` | 1.9304 | 6 ft 4 in | RECONSTRUCTED | §9.2 six pieces a side on Steel's equal-spacing rule, closed up so that the aftermost stands forward of the quarter badge |

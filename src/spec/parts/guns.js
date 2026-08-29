@@ -119,6 +119,18 @@ export const GUNS_SPEC = {
   gun_train_tackle_length: m(ft(4, 0), 'SECONDARY §9.6 the train tackle runs from the rear of the carriage to an eye bolt in the deck on the centreline side', { noAudit: true }),
 
   // ------------------------------------------------------------ where they stand
+  // Housed: how a ship secures her battery when it is not going to be used and the
+  // weather is against her. The gun is run in, the breeching bowsed taut, and the muzzle
+  // lashed up to a ring bolt over the port so that the piece cannot take charge when she
+  // rolls. Two and a half tons of iron adrift on a wet deck will go through the side.
+  // A housed gun is placed by where her muzzle finishes, not by how far she was pulled:
+  // the muzzle has to come inside the planking or the shut lid cannot close over it, and
+  // how far that is depends on the length of the piece and on her elevation. So this is
+  // the clearance and the run-in is derived from it — which is also how it was done, the
+  // muzzle being lashed up to a ring bolt on the inside of the ship's side.
+  gun_housed_muzzle_inboard: m(ft(0, 4), 'RECONSTRUCTED §9.4 the muzzle comes inside the planking far enough for the lid to shut over it and be bowsed to; four inches is what the lashing and the lid between them need', { noAudit: true }),
+  gun_housed_elevation_deg: n(18, 'RECONSTRUCTED §9.4 the muzzle is lashed up to the ring bolt above the port, which stands about a foot over the port head; the elevation follows from the geometry of the two', { noAudit: true }),
+
   gun_run_out_side_clearance: m(ft(0, 2), 'RECONSTRUCTED §9.4 a gun run out has its fore trucks all but against the ship\'s side; this is what is left between the fore end of the cheeks and the inboard face of the side', { noAudit: true }),
   gun_quarterdeck_first_from_stem: m(ft(79, 0), 'RECONSTRUCTED §9.2 the foremost quarterdeck piece stands just abaft the break, which is 78 ft abaft the stem', { noAudit: true }),
   // Closed up from 7 ft. At 7 ft the aftermost of the six pieces stood at the quarter
