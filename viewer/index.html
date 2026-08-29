@@ -8,7 +8,11 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: #0b0e11; color: #d6d9dd;
          font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; overflow: hidden; }
-  #c { position: fixed; inset: 0; display: block; }
+  /* The width and height matter. `setSize(w, h, false)` deliberately does not touch the
+     canvas's style, so without these the canvas falls back to its intrinsic size — the
+     drawing buffer, which is twice the viewport on a retina screen — and the page shows
+     the top-left quarter of the render with the ship somewhere off the bottom right. */
+  #c { position: fixed; inset: 0; display: block; width: 100%; height: 100%; }
   .panel { position: fixed; background: #151a20e6; border: 1px solid #2b3440;
            border-radius: 8px; padding: 10px 12px; backdrop-filter: blur(8px); }
   #ui { top: 12px; left: 12px; width: 210px; }
@@ -217,4 +221,10 @@ paintSegs();
 resize();
 goToView('reference');
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+
+// So that automated checks can wait for the page rather than guess at a delay, and so
+// that the camera and the scene can be inspected from the console.
+window.VIEWER = { get camera() { return camera; }, get controls() { return controls; },
+  get scene() { return scene; }, get ship() { return ship; }, goToView };
+window.SHIP_READY = true;
 </script>

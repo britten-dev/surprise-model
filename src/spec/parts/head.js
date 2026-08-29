@@ -52,6 +52,10 @@ export const HEAD_SPEC = {
   // overlap there is an open sliver at the bow the width of the keel.
   head_stem_siding: m(ft(1, 1), 'RECONSTRUCTED §6 Steel: the stem is sided as the keel, and the keel of this ship is sided 1 ft 1 in (SPEC.keel_siding)', { noAudit: true }),
   head_stem_aft_overlap: m(ft(0, 6), 'RECONSTRUCTED modelling allowance: how far abaft the hull\'s foremost station the stem timber is carried, so that it closes the fore end of the lofted shell', { noAudit: true }),
+  // The copper is carried up the stem and the gripe exactly as it is up the hull, so
+  // the bow does not show a black blade running down through the sheathing.
+  head_stem_copper_above_waterline: m(ft(2, 6), 'SECONDARY §8 research 08 §3.5, sheathing carried 2 ft 6 in to 3 ft above the load waterline; the same height is used on the stem as on the hull', { noAudit: true }),
+  head_stem_sheathing_proud: m(ft(0, 1), 'RECONSTRUCTED §8 the sheathing board and the copper over it, standing proud of the bare stem', { noAudit: true }),
   head_stem_head_above_rail: m(ft(0, 9), `${Z}: the stem head between the knightheads reads 4 to 5 px above the rail line`, { noAudit: true }),
 
   // -------------------------------------------------- the knee of the head
@@ -98,13 +102,13 @@ export const HEAD_SPEC = {
   // converge on the head of the knee.
   head_rail_lower_aft_from_stem: m(ft(1, 0), `${Z}: the lowest rail runs into the ship's side within a foot of the stem, at about the gun-deck line`, { noAudit: true }),
   head_rail_lower_fore_above_rail: m(ft(0, 6), `${Z}`, { noAudit: true }),
-  head_rail_lower_half_breadth: m(ft(3, 6), 'RECONSTRUCTED: no plan view of the head is published; the widest point of the lowest rail, set inside the middle rail', { noAudit: true }),
+  head_rail_lower_half_breadth: m(ft(4, 6), 'RECONSTRUCTED: no plan view of the head survives, so the three plan widths are set against the reference photograph and bounded by the catheads, which no head rail passes outside of', { noAudit: true }),
   head_rail_middle_aft_from_stem: m(ft(6, 0), `${Z}`, { noAudit: true }),
   head_rail_middle_fore_above_rail: m(ft(1, 6), `${Z}`, { noAudit: true }),
-  head_rail_middle_half_breadth: m(ft(5, 0), 'RECONSTRUCTED: as head_rail_lower_half_breadth', { noAudit: true }),
+  head_rail_middle_half_breadth: m(ft(6, 3), 'RECONSTRUCTED: as head_rail_lower_half_breadth', { noAudit: true }),
   head_rail_main_aft_from_stem: m(ft(12, 0), 'SECONDARY §6 Steel :15364, the after end of the main head rail bolts to the same timberhead the cat block does, so it ends at the cathead', { noAudit: true }),
   head_rail_main_fore_above_rail: m(ft(2, 6), `${Z}: the uppermost rail runs into the back of the figure about 15 px above the rail line`, { noAudit: true }),
-  head_rail_main_half_breadth: m(ft(6, 6), 'RECONSTRUCTED: the main rail sweeps out nearly to the cathead in plan', { noAudit: true }),
+  head_rail_main_half_breadth: m(ft(8, 0), 'RECONSTRUCTED: the main rail sweeps out in plan to a little more than half the extreme half-breadth, and well inside the cathead at 14 ft 6 in', { noAudit: true }),
 
   head_timber_count: n(4, `${R6H}: Steel :3133 defines the head timbers but tabulates no count; four a side is the Sixth-Rate norm — RECONSTRUCTED`, { noAudit: true }),
   head_timber_sided: m(ft(0, 5), 'RECONSTRUCTED §6 a head timber sided as the rails it crosses', { noAudit: true }),
@@ -172,7 +176,7 @@ export const HEAD_SPEC = {
   gammoning_cleat_projection: m(ft(0, 3), 'RECONSTRUCTED §6 the cleat that keeps the gammoning lashing from surging forward', { noAudit: true }),
   bobstay_hole_count: n(2, 'SECONDARY §6 Steel :41228, two bobstay holes', { noAudit: true }),
   bobstay_hole_diameter: m(ft(0, 4), 'SECONDARY §6 Steel :41229, 4 in diameter, OCR-doubtful', { noAudit: true }),
-  bobstay_hole_forward_of_stem: m(ft(6, 6), 'SECONDARY §6 Steel :1537, cut through the fore part of the knee of the head below the lower cheek', { noAudit: true }),
+  bobstay_hole_forward_of_stem: m(ft(6, 6), 'SECONDARY §6 Steel :1537, cut through the fore part of the knee of the head below the lower cheek. The model puts the eyes on the cutwater below the wale instead, which is the same place expressed as a line of the ship rather than as a distance', { noAudit: true }),
 
   // ---------------------------------------------------------------- the catheads
   // Steel's forecastle table for a 32-gun frigate, by way of research 06 §5.4. Every
@@ -204,7 +208,9 @@ export const HEAD_SPEC = {
   // personification, pine, painted rather than gilt.
   figurehead_forward_of_stem: m(ft(11, 0), `${R8F}; sited on the head of the knee where ZAZ3067 draws a small figure, 66 px forward of the stem`, { noAudit: true }),
   figurehead_above_rail: m(ft(0, 6), `${R8F}; the plinth on the hair bracket`, { noAudit: true }),
-  figurehead_height: m(ft(4, 0), `${R8F}; research 08 §4.4 — "the scale was drastically reduced", so a small figure`, { tolerance: 0.15 }),
+  // The audit measures the figure's longest dimension, which is not her height but the
+  // reach of her raised arm out over the water, so the tolerance is wide.
+  figurehead_height: m(ft(4, 0), `${R8F}; research 08 §4.4 — "the scale was drastically reduced", so a small figure`, { tolerance: 0.22 }),
   figurehead_rake_deg: n(30, `${R8F}; the figure leans back against the hair bracket, following the run of the head`, { noAudit: true }),
   figurehead_hem_diameter: m(ft(2, 0), `${R8F}; the spread of the drapery at the plinth`, { noAudit: true }),
   figurehead_waist_diameter: m(ft(1, 2), `${R8F}`, { noAudit: true }),

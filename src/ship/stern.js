@@ -19,9 +19,11 @@
 // That last part is the sweep of the quarter pieces, and it is what gives the stern its
 // rise aft.
 //
-// The grid's V coordinate is the hull's own paint coordinate, so the copper, the black
-// and the ochre gunport strake run round the counter and across the transom without
-// anything here having to be told where they are.
+// The grid's V coordinate is the hull's own paint coordinate, so the copper line, the
+// boot top and the wale carry round the counter without anything here having to be told
+// where they are. Above the wing transom the V is overridden to black, because English
+// practice painted the whole stern black and kept the ochre for the carving; the gunport
+// strake therefore runs aft along the topside and stops at the quarter piece.
 import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 import { monotoneCubic } from '../util/interp.js';
@@ -84,6 +86,9 @@ function sternProfile(model) {
     SPEC.stern_round_aft_lower.value, SPEC.stern_round_aft_upper.value,
     clamp((y - yTuck) / (yTaff - yTuck), 0, 1),
   );
+  // Round-up is measured down from the centreline: the height a stern rail is quoted at
+  // is the height in the middle of the ship, and it is the ends of the rail that drop
+  // away below it.
   const roundUp = (y) => SPEC.stern_round_up_taffrail.value
     * clamp((y - yWing) / (yTaff - yWing), 0, 1) ** 2;
 
@@ -91,7 +96,7 @@ function sternProfile(model) {
   function surface(y, s, out = 0) {
     const p = new THREE.Vector3(
       halfBreadth(y) * s,
-      y + roundUp(y) * (1 - s * s),
+      y - roundUp(y) * s * s,
       zTuck + zAbaft(y) - roundAft(y) * s * s,
     );
     return out === 0 ? p : p.addScaledVector(surfaceNormal(y, s), out);
@@ -271,10 +276,11 @@ function closureRows(cfg, model, sp) {
       land = new THREE.Vector3(sec[j][0], sec[j][1], zAft);
     }
 
-    // The transom above the wing transom is painted black, not carried round with the
-    // ship's side: "Stern, Stern Galleries, Quarter Badges: black with yellow carvings".
-    // The ochre gunport strake therefore runs aft along the quarter and dies at the
-    // quarter piece, which is what both the reference photograph and the replica show.
+    // The transom and the quarters above the wing transom are painted black, not carried
+    // round with the ship's side: "Stern, Stern Galleries, Quarter Badges: black with
+    // yellow carvings". The ochre gunport strake runs aft along the topside and stops at
+    // the quarter piece, so the black holds all the way round the quarter and only gives
+    // way to the strake in the last few inches before the hull's own planking takes over.
     // `black` is how far that has taken hold at this height.
     const black = smoothstep(sp.yWing, sp.yWing + SPEC.stern_counter_rail_depth.value * 3, y);
     const vBlack = lerp(v, 1, black);
@@ -301,7 +307,7 @@ function closureRows(cfg, model, sp) {
             lerp(corner.y, land.y, q),
             lerp(corner.z, land.z, q),
           ),
-          v: lerp(vBlack, v, e),
+          v: lerp(vBlack, v, smoothstep(0.6, 1, q)),
         });
       }
     }
@@ -349,12 +355,14 @@ function sternLights(cfg, mats, sp, group, build = true) {
   const count = SPEC.stern_light_count.value;
   const ySill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
   const yHead = ySill + SPEC.stern_light_height.value;
-  if (!build) return { ySill, yHead };
+  // The row of lights fills the transom between the two quarter pieces. It is worked out
+  // before the early return, because the taffrail's carving is spaced off it and the two
+  // LOD switches — whether the lights are glazed and whether anything is carved — have to
+  // stay independent of each other.
+  const halfSpan = sp.halfBreadth((ySill + yHead) / 2) - SPEC.stern_quarter_piece_width.value;
+  if (!build) return { ySill, yHead, halfSpan };
   const bar = SPEC.stern_glazing_bar.value;
   const depth = SPEC.stern_light_frame_depth.value;
-
-  // The row of lights fills the transom between the two quarter pieces.
-  const halfSpan = sp.halfBreadth((ySill + yHead) / 2) - SPEC.stern_quarter_piece_width.value;
   const munions = (count - 1) * SPEC.stern_light_munion.value;
   const w = (2 * halfSpan - munions) / count;
   const pitch = w + SPEC.stern_light_munion.value;
@@ -575,7 +583,10 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
       const t = clamp((b.y - p.getY(i)) / drop, 0, 1);
-      p.setX(i, lerp(p.getX(i), model.halfBreadthAt(b.z, p.getY(i)) * side, t ** 1.4));
+      // The bracket dies onto the planking, not into it: without the margin it sinks
+      // inside the hull and all that survives is a gilt splinter on the topside.
+      const onSide = (model.halfBreadthAt(b.z, p.getY(i)) + 0.03) * side;
+      p.setX(i, lerp(p.getX(i), onSide, t ** 1.4));
       p.setZ(i, lerp(p.getZ(i), b.z, t * 0.5));
     }
     g.computeVertexNormals();
@@ -658,7 +669,7 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
         b.translate(0, y - w / 2, zc);
         irons.push(b);
       }
-      const pin = new THREE.CylinderGeometry(th * 1.7, th * 1.7, w * 1.9, 8);
+      const pin = new THREE.CylinderGeometry(th * 1.7, th * 1.7, w * 1.9, Math.max(5, Math.round(cfg.latheSegments / 2)));
       pin.translate(0, y - w / 2, z0);
       irons.push(pin);
     }
@@ -764,8 +775,10 @@ export function buildStern(cfg, mats, model, ctx) {
     ...top.slice(1).map((q) => q.p.clone()),
   ];
   const cw = SPEC.taffrail_cap_width.value / 2, ct = SPEC.taffrail_cap_thickness.value;
+  // The cap is let into the top of the stern timbers rather than laid on top of them, so
+  // that the taffrail's quoted height is the height of the rail itself.
   const cap = new THREE.Mesh(
-    sweep(new THREE.CatmullRomCurve3(topPts), [[-cw, 0], [cw, 0], [cw, ct], [-cw, ct]],
+    sweep(new THREE.CatmullRomCurve3(topPts), [[-cw, -ct], [cw, -ct], [cw, 0], [-cw, 0]],
       { steps: cfg.mouldingSweeps, closed: true }),
     mats.black,
   );
@@ -818,24 +831,28 @@ export function buildStern(cfg, mats, model, ctx) {
     const gilt = [];
     const relief = SPEC.stern_cartouche_relief.value;
     const on = (d) => (x, y) => sp.surfaceAtX(y, x, d);
+    // Carved work is cheap in triangles only if its roundness is bought at the LOD's own
+    // rate, so every oval here is subdivided against the same switch.
+    const fine = cfg.sternOrnament === 'carved';
+    const seg = (a, b) => (fine ? a : b);
 
     // The cartouche on the counter. ZAZ3067 is catalogued as showing "sternboard
     // decoration and name in a cartouche on stern counter", so the name goes on it.
     const yName = lerp(sp.yTuck, sp.yWing, 0.78);
     const cwid = SPEC.stern_cartouche_width.value, chgt = SPEC.stern_cartouche_height.value;
-    gilt.push(oval(on(relief * 0.35), 0, cwid / 2, yName, chgt / 2, 16, 6));
+    gilt.push(oval(on(relief * 0.35), 0, cwid / 2, yName, chgt / 2, seg(16, 8), seg(6, 4)));
 
     // The taffrail's central cartouche, "a centre of attention within all the
     // decoration", with scrollwork spreading either side of it and dying away toward
     // the quarters.
     const yOrn = lerp(lights.yHead + SPEC.stern_light_munion.value * 2, sp.yTaff, 0.42);
     const ow = SPEC.taffrail_ornament_width.value, oh = SPEC.taffrail_ornament_height.value;
-    gilt.push(oval(on(relief * 0.9), 0, ow / 2, yOrn, oh / 2, 16, 6));
+    gilt.push(oval(on(relief * 0.9), 0, ow / 2, yOrn, oh / 2, seg(16, 8), seg(6, 4)));
     for (const s of [1, -1]) {
       for (let i = 0; i < 3; i++) {
         const x = s * (ow / 2 + lights.halfSpan * lerp(0.14, 0.62, i / 2));
         const r = oh * lerp(0.34, 0.16, i / 2);
-        gilt.push(oval(on(relief * 0.6), x, r * 1.5, yOrn, r, 8, 4));
+        gilt.push(oval(on(relief * 0.6), x, r * 1.5, yOrn, r, seg(8, 5), seg(4, 3)));
       }
     }
 
@@ -845,7 +862,7 @@ export function buildStern(cfg, mats, model, ctx) {
       const y0 = lights.yHead + SPEC.stern_light_munion.value;
       const y1 = sp.yTaff - SPEC.taffrail_cap_thickness.value;
       const bAt = sp.halfBreadth((y0 + y1) / 2);
-      gilt.push(oval(on(relief * 0.7), (bAt - tw * 0.6) * s, tw / 2, (y0 + y1) / 2, (y1 - y0) / 2, 6, 8));
+      gilt.push(oval(on(relief * 0.7), (bAt - tw * 0.6) * s, tw / 2, (y0 + y1) / 2, (y1 - y0) / 2, seg(6, 4), seg(8, 5)));
     }
 
     const carving = new THREE.Mesh(mergeGeometries(gilt), mats.gilt);

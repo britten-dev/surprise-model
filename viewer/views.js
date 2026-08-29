@@ -107,6 +107,11 @@ export function applyView(camera, view, bounds, frame) {
  * rig included, sets the distance, because all of it has to be in frame.
  */
 export function framingFor(THREE, ship) {
+  // The framing is measured off world-space boxes, so the world matrices have to be
+  // current. They are not, if this is called before the first render — every child still
+  // carries an identity matrix, every box collapses onto the origin, and the camera ends
+  // up a couple of metres from the middle of the ship looking at the inside of a sail.
+  ship.updateWorldMatrix(true, true);
   const whole = new THREE.Box3().setFromObject(ship);
   const hullMesh = ship.getObjectByName('hull_shell') ?? ship;
   const hullBox = new THREE.Box3().setFromObject(hullMesh);

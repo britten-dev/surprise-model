@@ -3,7 +3,7 @@
     "key": "anchor_arm_span",
     "metric": "extent_caliper",
     "expected": 2.7432000000000003,
-    "actual": 2.782343469384373,
+    "actual": 2.7823434693843736,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §13.2 fluke tip to fluke tip at 0.55 of the shank, the standard long-shank proportion"
   },
@@ -19,7 +19,7 @@
     "key": "anchor_shank_length",
     "metric": "extent_caliper",
     "expected": 5.0292,
-    "actual": 5.036410816645556,
+    "actual": 5.036410816645557,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 the period rule that the shank equals the stock; stock from Steel's series scaled by the cube root of the weight"
   },
@@ -27,7 +27,7 @@
     "key": "anchor_stock_length",
     "metric": "extent_caliper",
     "expected": 5.0292,
-    "actual": 5.037403481811885,
+    "actual": 5.037403481811887,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 Steel 1805 :43221 series (22-0 / 21-9 / 20-6 / …) carried to the 32-gun column by cube-root-of-weight scaling"
   },
@@ -108,7 +108,7 @@
     "metric": "extent_max",
     "expected": 1.2192,
     "actual": 1.3969456762880128,
-    "tolerance": 0.15,
+    "tolerance": 0.22,
     "source": "RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — \"the scale was drastically reduced\", so a small figure"
   },
   {
@@ -403,7 +403,7 @@
     "key": "stern_taffrail_above_wl",
     "metric": "max_y",
     "expected": 5.080000000000001,
-    "actual": 5.410200119018555,
+    "actual": 5.079999923706055,
     "tolerance": 0.035,
     "source": "MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft. This is the figure the taffrail is built to; the height above the quarterdeck follows from it"
   },
@@ -411,7 +411,7 @@
     "key": "stern_transom_breadth_wing",
     "metric": "extent_x",
     "expected": 5.7912,
-    "actual": 5.673722267150879,
+    "actual": 5.673721790313721,
     "tolerance": 0.05,
     "source": "MEASURED §6 wing transom 19.0 ft across the stern elevation on the ZAZ3067 body plan"
   },

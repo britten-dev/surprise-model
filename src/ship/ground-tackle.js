@@ -305,13 +305,10 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
 
     if (side > 0) {
       // One bower carries the measurements for all four: the shank end to end, the arms
-      // fluke to fluke, the stock end to end.
-      // These are measured on the diagonal because a catted anchor hangs at an angle
-      // in all three axes: its stock is canted out over the rail and its arms are
-      // fished up to the channel, so no bounding-box side is the length of anything.
-      // Measured with the caliper, not the bounding box: a catted anchor hangs at an
-      // angle in all three axes, and the span across its arms is a chord through a V,
-      // which no box side and no box diagonal is.
+      // fluke to fluke, the stock end to end. All three are taken with the caliper rather
+      // than the bounding box, because a catted anchor hangs at an angle in all three
+      // axes — the stock canted out over the rail, the crown fished up to the channel —
+      // so no side of any box is the length of anything.
       audit(a.shank, 'anchor_shank_length', 'extent_caliper');
       audit(a.arms, 'anchor_arm_span', 'extent_caliper');
       audit(a.stock, 'anchor_stock_length', 'extent_caliper');

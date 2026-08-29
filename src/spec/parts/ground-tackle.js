@@ -70,7 +70,7 @@ export const GROUND_TACKLE_SPEC = {
   // turned on its shank until one fluke lies outboard and clear of the side and the other
   // shows above the rail; the reference photograph shows the stocks standing well up and
   // canted outboard over the rail.
-  anchor_stock_cant_deg: n(58, 'RECONSTRUCTED §PHOTO the stock canted outboard over the rail, read off the reference photograph', { noAudit: true }),
+  anchor_stock_cant_deg: n(66, 'RECONSTRUCTED §PHOTO the stock canted outboard over the rail, read off the reference photograph', { noAudit: true }),
 
   // ---------------------------------------------------- the spares on the forecastle
   // Steel's outfit is four large anchors and two small. The two bowers take the catheads

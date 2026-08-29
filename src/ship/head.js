@@ -316,6 +316,7 @@ export function buildHead(cfg, mats, model, ctx) {
   );
   const stemHalf = Math.max(S('head_stem_siding') / 2, hullHalfAtStem);
   const uAft = -S('head_stem_aft_overlap');
+  const cut = cutwaterAt(model);
   const stemSlab = prism([
     [uAft, f0.keel_bottom],
     [0, f0.keel_bottom],
@@ -329,66 +330,88 @@ export function buildHead(cfg, mats, model, ctx) {
   audit(stem, 'head_knee_length', 'extent_z');
   group.add(stem);
 
-  // The trailboard: the ochre moulding down the fore edge of the knee, which is what
-  // makes the cutwater read against the black in the reference photograph.
-  const cut = cutwaterAt(model);
-  const trailPts = [];
-  const nTrail = Math.max(6, Math.round(cfg.headStations / 2));
-  for (let i = 0; i <= nTrail; i++) {
-    const y = lerp(0, cut.yHead, i / nTrail);
-    trailPts.push(new THREE.Vector3(0, y, fwd(cut(y))));
+  // The sheathing. The stem and the gripe are coppered with the rest of the bottom, so
+  // the same piece is built again, clipped at the copper line and standing a board's
+  // thickness proud, in copper. Without it the bow shows a black blade running down
+  // through the sheathing to the forefoot.
+  const yCopper = S('head_stem_copper_above_waterline');
+  const nLow = Math.max(3, Math.round(cfg.headStations / 3));
+  const lowOutline = [[uAft, cut.yFoot], [0, cut.yFoot]];
+  for (let i = 1; i <= nLow; i++) {
+    const y = lerp(cut.yFoot, yCopper, i / nLow);
+    lowOutline.push([cut(y), y]);
   }
-  const trailCurve = new THREE.CatmullRomCurve3(trailPts);
-  const trailW = S('head_knee_siding') / 2 + S('head_rail_sided');
-  const trail = new THREE.Mesh(
-    sweep(trailCurve, [
-      [-trailW, -S('trailboard_depth') / 2], [trailW, -S('trailboard_depth') / 2],
-      [trailW, S('trailboard_depth') / 2], [-trailW, S('trailboard_depth') / 2],
-    ], { steps: Math.max(8, Math.round(cfg.mouldingSweeps / 4)), closed: true }),
-    mats.ochre
+  lowOutline.push([uAft, yCopper]);
+  const sheath = new THREE.Mesh(
+    prism(lowOutline, stemHalf + S('head_stem_sheathing_proud'), zStem),
+    mats.copper
   );
-  trail.name = 'trailboard';
-  group.add(trail);
+  sheath.name = 'stem_sheathing';
+  group.add(sheath);
 
-  // ---------------------------------------------------------------- the cheeks
-  // Knee'd brackets carrying the head back onto the bow under the hawse holes. They are
-  // swept along the hull's own feature lines, so they land on the ship's side wherever
-  // the offsets put it.
-  const cheeks = [];
-  for (const side of [1, -1]) {
-    // A cheek runs from a named line on the ship's side into the fore edge of the knee
-    // at the same height that line stands at the stem. Both ends of both cheeks are
-    // therefore lines of the ship, and the cutwater decides where they meet it.
-    for (const feature of ['wale_top', 'sheer_strake']) {
-      const yFore = f0[feature];
-      const uFore = cut(yFore);
-      const pts = [];
-      const nc = Math.max(4, Math.round(cfg.headStations / 4));
-      // The after half lies on the ship's own side, so the cheek takes the round of the
-      // bow with it; the fore half runs out to meet the cutwater.
-      for (let i = 0; i <= nc; i++) {
-        pts.push(model.pointAt(
-          model.fromStem(lerp(S('head_cheek_aft_from_stem'), 0, i / nc)), feature, side
-        ));
-      }
-      for (let i = 1; i <= nc; i++) {
-        const t = i / nc;
-        pts.push(new THREE.Vector3(
-          side * lerp(model.halfBreadthAt(zStem, yFore), S('head_knee_siding') / 2, t),
-          yFore, fwd(lerp(0, uFore, t))
-        ));
-      }
-      cheeks.push(sweep(new THREE.CatmullRomCurve3(pts), [
-        [-S('head_cheek_sided') / 2, -S('head_cheek_moulded') / 2],
-        [S('head_cheek_sided') / 2, -S('head_cheek_moulded') / 2],
-        [S('head_cheek_sided') / 2, S('head_cheek_moulded') / 2],
-        [-S('head_cheek_sided') / 2, S('head_cheek_moulded') / 2],
-      ], { steps: Math.max(6, Math.round(cfg.mouldingSweeps / 4)), closed: true }));
+  // The trailboard: the ochre moulding down the fore edge of the knee, which is what
+  // makes the cutwater read against the black in the reference photograph, and the
+  // cheeks that carry the head back onto the bow. Both are mouldings a few inches
+  // proud of a black timber, so on the horizon they are dropped and nothing is lost.
+  if (detail !== 'none') {
+    const trailPts = [];
+    const nTrail = Math.max(6, Math.round(cfg.headStations / 2));
+    for (let i = 0; i <= nTrail; i++) {
+      const y = lerp(0, cut.yHead, i / nTrail);
+      trailPts.push(new THREE.Vector3(0, y, fwd(cut(y))));
     }
+    const trailCurve = new THREE.CatmullRomCurve3(trailPts);
+    const trailW = S('head_knee_siding') / 2 + S('head_rail_sided');
+    const trail = new THREE.Mesh(
+      sweep(trailCurve, [
+        [-trailW, -S('trailboard_depth') / 2], [trailW, -S('trailboard_depth') / 2],
+        [trailW, S('trailboard_depth') / 2], [-trailW, S('trailboard_depth') / 2],
+      ], { steps: Math.max(8, Math.round(cfg.mouldingSweeps / 4)), closed: true }),
+      mats.ochre
+    );
+    trail.name = 'trailboard';
+    group.add(trail);
+
+    // ---------------------------------------------------------------- the cheeks
+    // Knee'd brackets carrying the head back onto the bow under the hawse holes. They are
+    // swept along the hull's own feature lines, so they land on the ship's side wherever
+    // the offsets put it.
+    const cheeks = [];
+    for (const side of [1, -1]) {
+      // A cheek runs from a named line on the ship's side into the fore edge of the knee
+      // at the same height that line stands at the stem. Both ends of both cheeks are
+      // therefore lines of the ship, and the cutwater decides where they meet it.
+      for (const feature of ['wale_top', 'sheer_strake']) {
+        const yFore = f0[feature];
+        const uFore = cut(yFore);
+        const pts = [];
+        const nc = Math.max(4, Math.round(cfg.headStations / 4));
+        // The after half lies on the ship's own side, so the cheek takes the round of the
+        // bow with it; the fore half runs out to meet the cutwater.
+        for (let i = 0; i <= nc; i++) {
+          pts.push(model.pointAt(
+            model.fromStem(lerp(S('head_cheek_aft_from_stem'), 0, i / nc)), feature, side
+          ));
+        }
+        for (let i = 1; i <= nc; i++) {
+          const t = i / nc;
+          pts.push(new THREE.Vector3(
+            side * lerp(model.halfBreadthAt(zStem, yFore), S('head_knee_siding') / 2, t),
+            yFore, fwd(lerp(0, uFore, t))
+          ));
+        }
+        cheeks.push(sweep(new THREE.CatmullRomCurve3(pts), [
+          [-S('head_cheek_sided') / 2, -S('head_cheek_moulded') / 2],
+          [S('head_cheek_sided') / 2, -S('head_cheek_moulded') / 2],
+          [S('head_cheek_sided') / 2, S('head_cheek_moulded') / 2],
+          [-S('head_cheek_sided') / 2, S('head_cheek_moulded') / 2],
+        ], { steps: Math.max(6, Math.round(cfg.mouldingSweeps / 4)), closed: true }));
+      }
+    }
+    const cheekMesh = new THREE.Mesh(mergeGeometries(cheeks), mats.ochre);
+    cheekMesh.name = 'head_cheeks';
+    group.add(cheekMesh);
   }
-  const cheekMesh = new THREE.Mesh(mergeGeometries(cheeks), mats.ochre);
-  cheekMesh.name = 'head_cheeks';
-  group.add(cheekMesh);
 
   // ---------------------------------------------------------------- the head rails
   const rails = { 1: railSet(model, cfg, 1), '-1': railSet(model, cfg, -1) };
@@ -545,8 +568,9 @@ export function buildHead(cfg, mats, model, ctx) {
       const t = (j / (nAcross - 1)) * 2 - 1;
       across.push(new THREE.Vector3(t * xMax, (yTop + yBot) / 2, planStation(t)));
     }
+    const plan = new THREE.CatmullRomCurve3(across);
     const wall = new THREE.Mesh(
-      sweep(new THREE.CatmullRomCurve3(across), [
+      sweep(plan, [
         [-th / 2, -(yTop - yBot) / 2], [th / 2, -(yTop - yBot) / 2],
         [th / 2, (yTop - yBot) / 2], [-th / 2, (yTop - yBot) / 2],
       ], { steps: nAcross * 2, closed: true }),
@@ -554,6 +578,20 @@ export function buildHead(cfg, mats, model, ctx) {
     );
     wall.name = 'beakhead_bulkhead';
     group.add(wall);
+
+    // The rough-tree rail over the head of the bulkhead, carried round the bow on the
+    // timberheads. Without it the bulkhead reads as a blank board.
+    const capW = th * 2;
+    const cap = new THREE.Mesh(
+      sweep(plan, [
+        [-capW / 2, (yTop - yBot) / 2], [capW / 2, (yTop - yBot) / 2],
+        [capW / 2, (yTop - yBot) / 2 + SPEC.rail_cap_thickness.value],
+        [-capW / 2, (yTop - yBot) / 2 + SPEC.rail_cap_thickness.value],
+      ], { steps: nAcross * 2, closed: true }),
+      mats.black
+    );
+    cap.name = 'beakhead_rail_cap';
+    group.add(cap);
 
     if (full) {
       const parts = [], dark = [];
@@ -635,10 +673,11 @@ export function buildHead(cfg, mats, model, ctx) {
     group.add(knightheads);
 
     if (full) {
+      // The bobstay pieces are cut through the fore part of the knee BELOW the lower
+      // cheek, so they are sited off the wale, which is where that cheek lands.
       const irons = [];
       for (let k = 0; k < S('bobstay_hole_count'); k++) {
-        const u = S('bobstay_hole_forward_of_stem') - k * S('bobstay_hole_diameter') * 2;
-        const y = cut.yHead - S('trailboard_depth') - k * S('bobstay_hole_diameter') * 3;
+        const y = f0.wale_top - S('trailboard_depth') - k * S('bobstay_hole_diameter') * 3;
         const r = S('bobstay_hole_diameter') / 2;
         const g = new THREE.TorusGeometry(r, r / 3, 4, Math.max(6, cfg.latheSegments));
         g.rotateY(Math.PI / 2);
