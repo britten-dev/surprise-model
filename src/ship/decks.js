@@ -34,7 +34,7 @@ function deckSurface(model, cfg, which, zFrom, zTo, rise) {
     const yEdge = f.deck + rise;
     const xEdge = which === 'gundeck'
       ? model.halfBreadthAt(z, f.deck)
-      : Math.max(0.05, model.halfBreadthAt(z, f.deck) - rise * SPEC.hull_tumblehome_ratio.value * 2.2);
+      : Math.max(0.05, model.halfBreadthAt(z, f.deck + rise));
     for (let j = 0; j < nx; j++) {
       const t = (j / (nx - 1)) * 2 - 1;           // -1 port, +1 starboard
       const x = t * xEdge;
@@ -74,10 +74,7 @@ function innerBulwark(model, cfg, zFrom, zTo) {
     const steps = 4;
     for (let k = 0; k <= steps; k++) {
       const y = lerp(f.deck - 0.05, f.rail, k / steps);
-      const xOuter = y <= f.deck
-        ? model.halfBreadthAt(z, y)
-        : model.halfBreadthAt(z, f.deck) - (y - f.deck) * SPEC.hull_tumblehome_ratio.value * 2.2;
-      points.push([Math.max(0.05, xOuter - thickness), y]);
+      points.push([Math.max(0.05, model.halfBreadthAt(z, y) - thickness), y]);
     }
     sections.push({ z, points });
   }
@@ -146,7 +143,7 @@ export function buildDecks(cfg, mats, model) {
       const f = model.featureYAt(z);
       const rise = lerp(SPEC.forecastle_above_gundeck.value, SPEC.quarterdeck_above_gundeck.value, i / (n - 1));
       const y = f.deck + rise;
-      const xOuter = model.halfBreadthAt(z, f.deck) - rise * SPEC.hull_tumblehome_ratio.value * 2.2 - SPEC.side_thickness.value;
+      const xOuter = model.halfBreadthAt(z, f.deck + rise) - SPEC.side_thickness.value;
       for (let j = 0; j < 2; j++) {
         const x = (xOuter - j * w) * side;
         pos.push(x, y, z);

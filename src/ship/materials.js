@@ -183,7 +183,7 @@ export function makeMaterials(cfg) {
   mats.hullSurface = hullSurfaceStrip(Math.min(512, cfg.textureSize));
 
   mats.hull = std({
-    map: combinePlankAndPaint(hullPlank, mats.hullPaint, cfg.textureSize),
+    map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, cfg.textureSize),
     roughnessMap: mats.hullSurface,
     metalnessMap: mats.hullSurface,
     roughness: 1, metalness: 1,
@@ -197,25 +197,61 @@ export function makeMaterials(cfg) {
 }
 
 /**
- * Bake the paint strip over the planking into one map. Doing it once at build time
- * costs a single canvas draw and saves a custom shader, which matters because the
- * export has to be plain glTF that any viewer can open.
+ * Bake one base-colour map for the hull.
+ *
+ * The paint decides the hue of every band; the planking or the copper sheathing decides
+ * only its light and shade. Doing it that way round matters: compositing the plank over
+ * the paint with a blend mode lifts the near-black topsides toward brown and the black
+ * strake between the wale and the ochre disappears into the ochre. So the plank is
+ * reduced to a luminance modulation about 1.0 and multiplied in, which keeps every band
+ * exactly the colour the spec says it is while still showing the boards.
+ *
+ * Below the copper line the shading comes from the sheathing instead, because the
+ * underwater body is sheets of copper, not planks.
  */
-function combinePlankAndPaint(plankTex, paintTex, size) {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const g = c.getContext('2d');
-  // The paint strip first, stretched over the whole map: it is the colour of the ship.
-  g.drawImage(paintTex.image, 0, 0, size, size);
-  // Then the planking on top, in a mode that keeps the paint's hue but takes the
-  // plank's light and shade — which is what paint on planking actually looks like.
-  g.globalCompositeOperation = 'overlay';
-  g.globalAlpha = 0.55;
-  g.drawImage(plankTex.image, 0, 0, size, size);
-  g.globalCompositeOperation = 'source-over';
-  g.globalAlpha = 1;
+function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
+  const read = (src) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    g.drawImage(src, 0, 0, size, size);
+    return g.getImageData(0, 0, size, size).data;
+  };
+  const plank = read(plankCanvas);
+  const copper = read(copperCanvas);
 
-  const tex = new THREE.CanvasTexture(c);
+  const out = document.createElement('canvas');
+  out.width = out.height = size;
+  const g = out.getContext('2d');
+  g.drawImage(paintTex.image, 0, 0, size, size);
+  const img = g.getImageData(0, 0, size, size);
+  const d = img.data;
+
+  // The row at which the copper gives way to the painted topsides. Canvas rows run
+  // downward and V runs upward, hence the inversion.
+  const copperTopV = V.waterline + PAINT.copper_line_above_wl_v.value;
+  const copperFirstRow = Math.round((1 - copperTopV) * size);
+
+  const lum = (a, i) => (a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114) / 255;
+
+  for (let y = 0; y < size; y++) {
+    const underwater = y >= copperFirstRow;
+    const src = underwater ? copper : plank;
+    // Copper is a metal and carries its own colour through the metalness map, so its
+    // pattern is allowed to modulate more strongly than paint on planking does.
+    const depth = underwater ? 0.42 : 0.26;
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      const k = 1 + (lum(src, i) - 0.5) * 2 * depth;
+      d[i] = Math.min(255, d[i] * k);
+      d[i + 1] = Math.min(255, d[i + 1] * k);
+      d[i + 2] = Math.min(255, d[i + 2] * k);
+      d[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+
+  const tex = new THREE.CanvasTexture(out);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;

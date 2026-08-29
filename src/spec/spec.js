@@ -37,7 +37,7 @@ const CORE = {
 
   // --------------------------------------------------------------- deck heights
   // Heights above the design load waterline, which is the model's y = 0.
-  gundeck_above_wl: m(ft(4, 6), 'RECONSTRUCTED §3 from draught less depth in hold and deck thickness', { noAudit: true }),
+  gundeck_above_wl: m(ft(5, 9.8), 'MEASURED §5 gun deck at side 18.65 ft above the moulded base line, LWL at 12.83 ft', { noAudit: true }),
   quarterdeck_above_gundeck: m(ft(6, 8), 'RECONSTRUCTED §3 Steel, height between decks for a sixth rate', { noAudit: true }),
   forecastle_above_gundeck: m(ft(6, 6), 'RECONSTRUCTED §3 Steel, height between decks forward', { noAudit: true }),
   deck_camber: m(ft(0, 5), 'RECONSTRUCTED §3 Steel, 5 in of round-up across the breadth', { noAudit: true }),
@@ -48,15 +48,15 @@ const CORE = {
   forecastle_break_u: { value: 33 / 126, source: 'RECONSTRUCTED §5 aft side of the forecastle 33 ft abaft the stem, from Steel\'s forecastle-length series', noAudit: true },
   quarterdeck_break_u: { value: 78 / 126, source: 'RECONSTRUCTED §5 fore side of the quarterdeck 7 ft abaft the mainmast', noAudit: true },
 
-  bulwark_height_waist: m(ft(4, 6), 'RECONSTRUCTED §5 period practice for a sixth rate', { noAudit: true }),
-  bulwark_height_quarterdeck: m(ft(4, 4), 'RECONSTRUCTED §5 period practice for a sixth rate', { noAudit: true }),
-  bulwark_height_forecastle: m(ft(4, 4), 'RECONSTRUCTED §5 period practice for a sixth rate', { noAudit: true }),
+  bulwark_height_waist: m(ft(5, 9), 'MEASURED §8 rail to the top of the channel-wale band, 24.4 ft above base', { noAudit: true }),
+  bulwark_height_quarterdeck: m(ft(4, 4), 'RECONSTRUCTED §5 period practice; the rail itself now comes from the offset table', { noAudit: true }),
+  bulwark_height_forecastle: m(ft(4, 4), 'RECONSTRUCTED §5 period practice; the rail itself now comes from the offset table', { noAudit: true }),
 
   // ----------------------------------------------------------------- gunports
   gunport_count_per_side: { value: 12, source: 'PRIMARY §2 threedecks, 24 x 9-pdr on the upper deck, June 1796', tolerance: 0.001 },
   gunport_width: m(ft(2, 6), 'RECONSTRUCTED §4 Steel, port width for a 9-pounder', { tolerance: 0.04 }),
-  gunport_height: m(ft(2, 4), 'RECONSTRUCTED §4 Steel, port height for a 9-pounder', { tolerance: 0.04 }),
-  gunport_sill_above_deck: m(ft(2, 0), 'RECONSTRUCTED §4 Steel, sill height above the deck', { noAudit: true }),
+  gunport_height: m(ft(2, 4.8), 'MEASURED §8 port sills at 20.4 ft and heads at 22.8 ft above the moulded base line', { tolerance: 0.04 }),
+  gunport_sill_above_deck: m(ft(1, 9), 'MEASURED §8 sills 20.4 ft above base, deck at side 18.65 ft', { noAudit: true }),
   gunport_spacing: m(ft(8, 6), 'RECONSTRUCTED §4 12 ports spread over the length available between the bow and the transom', { tolerance: 0.05 }),
   gunport_lining_depth: m(ft(0, 9), 'RECONSTRUCTED §4 thickness of the side at the ports, plank and timber', { noAudit: true }),
   gunport_lid_thickness: m(ft(0, 3), 'SECONDARY §4 Steel, port-lid thickness', { noAudit: true }),
@@ -73,11 +73,11 @@ const CORE = {
   fc_port_count_per_side: { value: 2, source: 'PRIMARY §2 threedecks, 2 x 4-pdr and 2 x 12-pdr carronades on the forecastle', noAudit: true },
 
   // -------------------------------------------------------------- hull surface
-  wale_top_below_deck: m(ft(2, 6), 'RECONSTRUCTED §4 traced from the ZAZ3067 profile', { noAudit: true }),
-  wale_depth: m(ft(1, 9), 'RECONSTRUCTED §4 traced from the ZAZ3067 profile', { noAudit: true }),
+  wale_top_below_deck: m(ft(1, 9), 'MEASURED §8 main wale upper edge 16.9 ft above base, deck at side 18.65 ft', { noAudit: true }),
+  wale_depth: m(ft(1, 8), 'MEASURED §8 main wale 15.2 to 16.9 ft above the moulded base line', { noAudit: true }),
   // Where the gundeck sits at the centreline amidships, which is the one deck height
   // the audit can measure directly off the built surface.
-  gundeck_above_wl_at_midships: m(ft(4, 6) + ft(0, 5) / 2, 'RECONSTRUCTED §3 deck at side plus half the camber', { tolerance: 0.12 }),
+  gundeck_above_wl_at_midships: m(ft(5, 9.8) + ft(0, 5) / 2, 'MEASURED §5 deck at side 5.82 ft above the LWL, plus half the camber', { tolerance: 0.12 }),
 
   side_thickness: m(ft(0, 9), 'RECONSTRUCTED §4 the ship\'s side at the ports: plank, timber and inboard plank', { noAudit: true }),
   rail_cap_thickness: m(ft(0, 4), 'RECONSTRUCTED §4 the capping over the top timbers', { noAudit: true }),
@@ -85,10 +85,10 @@ const CORE = {
 
   // The backbone. A keel of this scantling for a 578-ton ship, sided (its width) and
   // moulded (its depth below the rabbet).
-  keel_siding: m(ft(1, 1), 'RECONSTRUCTED §4 Steel 1805 scantling tables, keel sided for a ship of ~580 tons', { noAudit: true }),
-  keel_moulding: m(ft(1, 3), 'RECONSTRUCTED §4 Steel 1805 scantling tables, keel moulded plus the false keel', { noAudit: true }),
+  keel_siding: m(ft(1, 1), 'MEASURED §6 keel half-siding 0.54 ft off the body plan', { noAudit: true }),
+  keel_moulding: m(ft(1, 4), 'MEASURED §6 keel and false keel 1 ft 4 in below the moulded base line', { noAudit: true }),
 
-  hull_tumblehome_ratio: { value: 0.055, source: 'RECONSTRUCTED §4 French corvette practice, less tumblehome than a British-built hull', noAudit: true },
+  hull_tumblehome_deg: { value: 15.6, source: 'MEASURED §4 body-plan envelope above the maximum breadth: 0.279 ft of inset per foot of height, +/- 1.5 deg. Note this contradicts the common claim that a French hull tumbles home less than a British one.', noAudit: true },
 };
 
 export const SPEC = Object.freeze({ ...CORE, ...PART_SPECS });

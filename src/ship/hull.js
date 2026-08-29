@@ -53,7 +53,11 @@ export function hullModel() {
   // not bulge past its neighbours just to be smooth.
   const sectionX = stationZ.map((_, i) => {
     const yBottom = OFFSETS.rabbetY[i];
-    const yTop = OFFSETS.deckAtSideY[i];
+    // The section is carried right up to the rail, not stopped at the deck. The two
+    // highest waterlines on the draught are above the gun deck at side and describe the
+    // tumblehome of the topside, so truncating at the deck would throw away the only
+    // measured evidence there is for the shape of the bulwark.
+    const yTop = OFFSETS.railY[i];
     const ys = [yBottom], xs = [OFFSETS.rabbetX[i]];
     for (let j = 0; j < wlY.length; j++) {
       const x = OFFSETS.halfBreadth[i][j];
@@ -65,7 +69,7 @@ export function hullModel() {
       if (wlY[j] <= yBottom + 1e-4 || wlY[j] >= yTop - 1e-4) continue;
       ys.push(wlY[j]); xs.push(x);
     }
-    ys.push(yTop); xs.push(OFFSETS.deckAtSideX[i]);
+    ys.push(yTop); xs.push(OFFSETS.railX[i]);
     const f = monotoneCubic(ys, xs);
     // Outside its own range a station's interpolant means nothing, so clamp rather than
     // extrapolate. Without this, evaluating a forward station down at a waterline that
@@ -100,27 +104,20 @@ export function hullModel() {
     ));
   }
 
+  // The rail and the tumblehome both come off the draught now, one value per station,
+  // so they are interpolated the same way every other line of the ship is.
+  const railYAt = naturalCubic(stationZ, OFFSETS.railY);
+  const tumblehomeAt = naturalCubic(stationZ, OFFSETS.tumblehome);
+
   /** Height of the bulwark above the deck at side, which changes along the ship. */
   function bulwarkHeightAt(z) {
-    const L = SPEC.hull_length_gundeck.value ?? SPEC.hull_length_gundeck;
-    const u = (z - zFwd) / (zAft - zFwd);
-    const fc = SPEC.bulwark_height_forecastle.value;
-    const waist = SPEC.bulwark_height_waist.value;
-    const qd = SPEC.bulwark_height_quarterdeck.value;
-    // Forward of the forecastle break and aft of the quarterdeck break the rail stands
-    // higher; through the waist it is lower, which is what lets the waist read as open.
-    const fcBreak = SPEC.forecastle_break_u.value;
-    const qdBreak = SPEC.quarterdeck_break_u.value;
-    if (u < fcBreak) return lerp(fc, waist, clamp(u / fcBreak, 0, 1) ** 0.6);
-    if (u > qdBreak) return lerp(waist, qd, clamp((u - qdBreak) / (1 - qdBreak), 0, 1) ** 0.6);
-    return waist;
+    return railYAt(z) - sheerY(z);
   }
 
   /** The named feature heights at a station. The paint and the fittings both use these. */
   function featureYAt(z) {
     const deck = sheerY(z);
     const rab = rabbetY(z);
-    const bul = bulwarkHeightAt(z);
     const out = {
       keel_bottom: rab - SPEC.keel_moulding.value,
       keel_top: rab - SPEC.keel_moulding.value * 0.35,
@@ -131,7 +128,7 @@ export function hullModel() {
       deck,
       port_sill: deck + SPEC.gunport_sill_above_deck.value,
       port_head: deck + SPEC.gunport_sill_above_deck.value + SPEC.gunport_height.value,
-      rail: deck + bul,
+      rail: railYAt(z),
     };
     // The three shape-only stops sit proportionally between the rabbet and the wale.
     out.floor = lerp(rab, 0, 0.30);
@@ -148,7 +145,6 @@ export function hullModel() {
    */
   function sectionAt(z, points) {
     const f = featureYAt(z);
-    const tumble = SPEC.hull_tumblehome_ratio.value;
     const xAtDeck = halfBreadthAt(z, f.deck);
 
     // Build the control points: the hull proper from the offset table, then the
@@ -162,13 +158,9 @@ export function hullModel() {
       if (name === 'keel_bottom') x = 0;
       else if (name === 'keel_top') x = halfSiding;
       else if (name === 'rabbet') x = Math.max(halfSiding * 0.92, halfBreadthAt(z, y));
-      else if (y <= f.deck) x = Math.max(halfSiding * 0.9, halfBreadthAt(z, y));
-      else {
-        // Above the deck the section is the bulwark. It leans in by the tumblehome
-        // ratio per metre of height, which is what gives the ship her inward-leaning
-        // topsides seen end-on.
-        x = Math.max(0.02, xAtDeck - (y - f.deck) * tumble * 2.2);
-      }
+      // Above the deck the draught still has two waterlines, so the bulwark comes off
+      // the measured table like everything else rather than off a made-up rule.
+      else x = Math.max(halfSiding * 0.9, halfBreadthAt(z, y));
       return { v, x, y };
     });
 
@@ -199,6 +191,9 @@ export function hullModel() {
      * arrives in that form, and doing the conversion here means no other module has to
      * know where the midship station happens to fall.
      */
+    /** Tangent of the tumblehome angle at a station, from the draught. */
+    tumblehomeAt,
+    railYAt,
     fromStem: (metresAftOfStem) => zFwd + metresAftOfStem,
     toStem: (z) => z - zFwd,
     lengthOnDeck: zAft - zFwd,
@@ -207,10 +202,7 @@ export function hullModel() {
     pointAt(z, feature, side = 1) {
       const f = featureYAt(z);
       const y = f[feature];
-      const x = y <= f.deck
-        ? halfBreadthAt(z, y)
-        : Math.max(0.02, halfBreadthAt(z, f.deck) - (y - f.deck) * SPEC.hull_tumblehome_ratio.value * 2.2);
-      return new THREE.Vector3(x * side, y, z);
+      return new THREE.Vector3(halfBreadthAt(z, y) * side, y, z);
     },
     /** A curve following a named feature the length of the ship — a wale, the sheer. */
     featureCurve(feature, side = 1, samples = 80, from = null, to = null) {
