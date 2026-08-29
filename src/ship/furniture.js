@@ -209,10 +209,26 @@ export function buildFurniture(cfg, mats, model, ctx) {
       g.rotateX(-(i / nSpoke) * Math.PI * 2);
       spokes.push(g);
     }
-    const wheelMesh = new THREE.Mesh(mergeGeometries(spokes), mats.timber);
+    // A double wheel really does mean two wheels, one at each end of the barrel, so that
+    // two men can stand to it in a seaway. Building one in the middle of the barrel — as
+    // this did — is a single wheel with a long axle, which is not what wheel_count says.
+    const n = SPEC.wheel_count.value;
+    const spread = SPEC.wheel_barrel_length.value - SPEC.wheel_rim_thickness.value * 2;
+    const wheels = [];
+    for (let k = 0; k < n; k++) {
+      const x = n === 1 ? 0 : (k / (n - 1) - 0.5) * spread;
+      const g = mergeGeometries(spokes.map((sp) => sp.clone()));
+      g.translate(x, 0, 0);
+      wheels.push(g);
+    }
+    const wheelMesh = new THREE.Mesh(mergeGeometries(wheels), mats.timber);
     wheelMesh.name = 'ships_wheel';
     wheelMesh.position.set(0, axle, z);
-    audit(wheelMesh, 'wheel_swept_diameter', 'extent_y');
+    wheelMesh.userData.count = n;
+    audits(wheelMesh,
+      ['wheel_swept_diameter', 'extent_y'],
+      ['wheel_count', 'count', { tolerance: 0.001 }],
+    );
     group.add(wheelMesh);
   }
 

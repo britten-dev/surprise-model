@@ -59,7 +59,9 @@ export const FLAGS_SPEC = {
   // First reconstructed as the mizen top platform (15.342 m) plus the peaked gaff,
   // which put the ensign 6 m too high. The rig hangs its gaff jaws well down the lower
   // mast, as a gaff-headed spanker needs, so the peak is read off the built spar.
-  ensign_peak_height: m(15.15, 'RECONSTRUCTED §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG', { tolerance: 0.03 }),
+  // Reconciled: the flag is now hung from the peak the rig actually builds, so this row
+  // records where that is rather than guessing at it.
+  ensign_peak_height: m(15.20, 'SECONDARY §04-3.2 the peak of the mizzen gaff: throat at 8.93 m, where 0.52 of the run from the mizzen deck to its hounds falls, plus a 32 ft 6 in gaff peaked at 38 degrees, plus the flag head a hand above the peak', { tolerance: 0.03 }),
   // The alternative attachment, unused while `ensign_at_staff` is 0: an ensign staff on
   // the taffrail. Steel makes the staff 30/81.333 of the main mast, above the taffrail.
   ensign_staff_from_stem: m(38.30, 'RECONSTRUCTED §04-10 taffrail station, just forward of the sternpost — RECONCILE WITH STERN', { noAudit: true }),
@@ -78,7 +80,11 @@ export const FLAGS_SPEC = {
   pennant_from_stem: m(22.62, 'RECONSTRUCTED §04-8 main centre 21.752 abaft the fore perpendicular + 0.99 deg of rake; matched to the main royal pole the rig builds — RECONCILE WITH RIG', { noAudit: true }),
   // Research §04-9 reconstructs the main truck at 126 ft 8 1/2 in (38.618 m). The rig
   // carries a long royal pole and tops out at 41.15 m, so the pennant is bent there.
-  pennant_height: m(41.15, 'RECONSTRUCTED §04-9 main truck; 38.618 m by Steel\'s masting, 41.15 m as the rig builds the royal pole — RECONCILE WITH RIG', { tolerance: 0.03 }),
+  // Reconciled. The rig was building each topgallant a royal pole too tall, because
+  // Steel's tabulated topgallant length already includes the pole; that is fixed, the
+  // main truck now stands at Steel's own figure, and the pennant is hung from the rig's
+  // geometry rather than from a second opinion about it.
+  pennant_height: m(38.62, 'SECONDARY §04-9 main truck by Steel 1794 masting: keelson step, 81 ft 4 in lower mast, 48 ft 9 in topmast and 24 ft 4 in topgallant with their doublings', { tolerance: 0.03 }),
   pennant_halliard_drop: m(ft(8, 0), 'RECONSTRUCTED §6.4 pendant halliard from the truck down to the topgallant crosstrees — RECONCILE WITH RIG', { noAudit: true }),
   // The pennant is many times longer than it is deep, so it needs more segments along
   // its length than a rectangular flag does.

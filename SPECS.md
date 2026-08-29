@@ -901,7 +901,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `ensign_canton_hoist_frac` | 0.5 | — | RECONSTRUCTED | §6.3 standard British ensign construction, canton = 1/2 hoist |
 | `ensign_canton_fly_frac` | 0.4444 | — | RECONSTRUCTED | §6.3 standard British ensign construction, canton = 4/9 fly on a 5:9 ensign |
 | `ensign_peak_from_stem` | 41.13 | 134 ft 11.3 in | RECONSTRUCTED | §04-8/§04-3.2 mizen centre 32.903 + rake 0.43 + gaff 9.906 x cos 38 deg; agrees with the spanker gaff the rig now builds — RECONCILE WITH RIG |
-| `ensign_peak_height` | 15.15 | 49 ft 8.5 in | RECONSTRUCTED | §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG |
+| `ensign_peak_height` | 15.2 | 49 ft 10.4 in | SECONDARY | §04-3.2 the peak of the mizzen gaff: throat at 8.93 m, where 0.52 of the run from the mizzen deck to its hounds falls, plus a 32 ft 6 in gaff peaked at 38 degrees, plus the flag head a hand above the peak |
 | `ensign_staff_from_stem` | 38.3 | 125 ft 7.9 in | RECONSTRUCTED | §04-10 taffrail station, just forward of the sternpost — RECONCILE WITH STERN |
 | `flag_ensign_staff_height` | 9.144 | 30 ft 0 in | SECONDARY | §04-10 Steel, ensign staff 30 ft above the taffrail for a 28-gun ship |
 | `ensign_halliard_belay_from_stem` | 34.6 | 113 ft 6.2 in | RECONSTRUCTED | §6.4 peak halliard belayed at the mizen fife rail, a fathom abaft the mast |
@@ -910,7 +910,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `pennant_fly_width` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §6.3 4 in given for pendants over 6 yd; read here as the width of the tapered fly |
 | `pennant_george_frac` | 2 | — | RECONSTRUCTED | §6.4 pre-1801 pendant: St George at the hoist, squadron colour in the fly; hoist portion drawn twice the hoist depth |
 | `pennant_from_stem` | 22.62 | 74 ft 2.6 in | RECONSTRUCTED | §04-8 main centre 21.752 abaft the fore perpendicular + 0.99 deg of rake; matched to the main royal pole the rig builds — RECONCILE WITH RIG |
-| `pennant_height` | 41.15 | 135 ft 0.1 in | RECONSTRUCTED | §04-9 main truck; 38.618 m by Steel's masting, 41.15 m as the rig builds the royal pole — RECONCILE WITH RIG |
+| `pennant_height` | 38.62 | 126 ft 8.5 in | SECONDARY | §04-9 main truck by Steel 1794 masting: keelson step, 81 ft 4 in lower mast, 48 ft 9 in topmast and 24 ft 4 in topgallant with their doublings |
 | `pennant_halliard_drop` | 2.4384 | — | RECONSTRUCTED | §6.4 pendant halliard from the truck down to the topgallant crosstrees — RECONCILE WITH RIG |
 | `pennant_segment_multiple` | 2 | — | RECONSTRUCTED | §6.4 mesh resolution only, not a dimension of the ship |
 | `jack_hoist` | 0.9144 | — | RECONSTRUCTED | §6.3 4 breadths x 9 in, half the ensign, on the standard 1:2 Union proportion |
@@ -1070,7 +1070,7 @@ and the ochre strake follow the sheer.
 | `sea_surface_env_intensity` | 0.42 | — | — | RECONSTRUCTED §8 the water is held back from the environment so that warming the sky for the ship's sake does not bleach the sea |
 | `shadow_taps` | 3 | — | — | RECONSTRUCTED §8 three is the fewest that reads as a penumbra rather than as a double image, and each one costs a full shadow pass |
 | `shadow_spread_deg` | 2.6 | — | — | RECONSTRUCTED §8 five times the sun's true half-degree, which is what it takes for the penumbra to be visible at this scale; tuned on the ship's shadow on the sea in the beam view |
-| `shadow_map_size` | 3072 | — | — | RECONSTRUCTED §8 over a shadow camera 96 m across this is 31 mm to the texel, fine enough that a shroud casts a line and not a staircase |
+| `shadow_map_size` | 2048 | — | — | RECONSTRUCTED §8 over a shadow camera 96 m across this is 47 mm to the texel. Three of these are rendered every frame, one per tap, so the size is a third of what a single map could afford — and it can be, because the taps blend away the staircase a single map has to resolve out with resolution |
 | `shadow_extent` | 48 | — | — | RECONSTRUCTED §8 half-width of the shadow camera: a ship 59 m over all and 45 m to the trucks, plus the reach of her shadow on the water |
 | `shadow_bias` | -0.0004 | — | — | RECONSTRUCTED §8 with a normal bias as well, the depth bias only has to close the last of the acne, and a large one detaches a shadow from its caster |
 | `shadow_normal_bias` | 0.035 | — | — | RECONSTRUCTED §8 rather more than a texel of the shadow camera, which is what stops the jagged self-shadowing along the sails and the topsides |

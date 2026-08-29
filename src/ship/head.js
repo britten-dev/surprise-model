@@ -240,9 +240,14 @@ function figurehead(cfg, mats) {
   // carving seen from ahead: the drapery rolling under at the plinth, standing widest a
   // few inches up, drawing in through the hips to the waist, opening out again to the
   // shoulders, then the step in to the neck and the ball of the head above it.
+  // The simple profile keeps every step that the outline is read by — the waist, the
+  // shoulder, the step in to the neck and the ball of the head — and drops only the
+  // rounding between them. It costs about ninety triangles.
   const outline = simple
     ? [[plinth, 0], [hem, yHem], [waist, yWaist], [shoulder, yShoulder],
-       [neck, yNeck], [headR, yHead], [0.02 * h, h]]
+       [shoulder * 0.7, yShoulder + (yNeck - yShoulder) * 0.4], [neck, yNeck],
+       [headR * 0.85, yNeck + (yHead - yNeck) * 0.5], [headR, yHead],
+       [headR * 0.6, yHead + headR * 0.7], [0.02 * h, h]]
     : [
       [plinth, 0],
       [hem * 0.98, yHem * 0.5],

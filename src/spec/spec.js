@@ -267,7 +267,7 @@ export const PAINT = {
   // comes out soft, while a gun\'s shadow on the deck beside it stays sharp.
   shadow_taps: { value: 3, source: 'RECONSTRUCTED §8 three is the fewest that reads as a penumbra rather than as a double image, and each one costs a full shadow pass' },
   shadow_spread_deg: { value: 2.6, source: 'RECONSTRUCTED §8 five times the sun\'s true half-degree, which is what it takes for the penumbra to be visible at this scale; tuned on the ship\'s shadow on the sea in the beam view' },
-  shadow_map_size: { value: 3072, source: 'RECONSTRUCTED §8 over a shadow camera 96 m across this is 31 mm to the texel, fine enough that a shroud casts a line and not a staircase' },
+  shadow_map_size: { value: 2048, source: 'RECONSTRUCTED §8 over a shadow camera 96 m across this is 47 mm to the texel. Three of these are rendered every frame, one per tap, so the size is a third of what a single map could afford — and it can be, because the taps blend away the staircase a single map has to resolve out with resolution' },
   shadow_extent: { value: 48, source: 'RECONSTRUCTED §8 half-width of the shadow camera: a ship 59 m over all and 45 m to the trucks, plus the reach of her shadow on the water' },
   shadow_bias: { value: -0.0004, source: 'RECONSTRUCTED §8 with a normal bias as well, the depth bias only has to close the last of the acne, and a large one detaches a shadow from its caster' },
   shadow_normal_bias: { value: 0.035, source: 'RECONSTRUCTED §8 rather more than a texel of the shadow camera, which is what stops the jagged self-shadowing along the sails and the topsides' },

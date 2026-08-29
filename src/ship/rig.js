@@ -141,9 +141,12 @@ export function mastGeometry(model) {
   // The bowsprit. Its heel steps on the beam next before the foremast and it rises over
   // the stem head at its steeve; the jibboom runs out beyond it.
   const steeve = deg(S('bowsprit_steeve_deg'));
+  // The heel steps on the gun deck against the foremast, ON the planking, not under it.
+  // From there it rises at its steeve, passes up through the forecastle deck at the
+  // bowsprit partners, and goes out over the stem head.
   const bowspritHeel = new THREE.Vector3(
     0,
-    model.featureYAt(fore.z0).deck - 0.35,
+    model.featureYAt(fore.z0).deck + SPEC.deck_camber.value + 0.15,
     fore.z0 + 0.9
   );
   const bowspritDir = new THREE.Vector3(0, Math.sin(steeve), -Math.cos(steeve));

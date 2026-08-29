@@ -280,7 +280,14 @@ export function buildFlags(cfg, mats, model, ctx) {
     const zStaff = model.fromStem(S('ensign_staff_from_stem'));
     ensignHead = new THREE.Vector3(0, model.featureYAt(zStaff).rail + S('flag_ensign_staff_height'), zStaff);
   } else {
-    ensignHead = new THREE.Vector3(0, S('ensign_peak_height'), model.fromStem(S('ensign_peak_from_stem')));
+    // The ensign flies at the peak of the mizzen gaff — the outer, upper end of it. The
+    // rig builds that spar and hands its ends over in ctx.spanker, so the flag is hung
+    // from the actual peak rather than from a copy of where the peak was expected to be.
+    // Hanging it from a copy is what put the ensign inside the driver, showing through
+    // the canvas as a blue diamond.
+    ensignHead = ctx.spanker
+      ? ctx.spanker.gaffEnd.clone().add(new THREE.Vector3(0, 0.15, 0.10))
+      : new THREE.Vector3(0, S('ensign_peak_height'), model.fromStem(S('ensign_peak_from_stem')));
   }
 
   const ensign = new THREE.Mesh(
@@ -306,7 +313,12 @@ export function buildFlags(cfg, mats, model, ctx) {
   // The commissioning pennant at the main truck, flown day and night while she is in
   // commission. Long enough that it needs its own segment count along the fly.
   if (cfg.flags !== 'ensign') {
-    const truck = new THREE.Vector3(0, S('pennant_height'), model.fromStem(S('pennant_from_stem')));
+    // The commissioning pennant flies at the main truck — the very top of the main
+    // topgallant pole. Taken from the rig's own geometry, so that the two cannot
+    // disagree about how tall the mast is, which they did by 2.5 m.
+    const truck = ctx.rig
+      ? ctx.rig.main.along(ctx.rig.main.truckH).add(new THREE.Vector3(0, 0.25, 0))
+      : new THREE.Vector3(0, S('pennant_height'), model.fromStem(S('pennant_from_stem')));
     const pennant = new THREE.Mesh(
       flagGeometry({
         dir: stream,
@@ -319,6 +331,7 @@ export function buildFlags(cfg, mats, model, ctx) {
     pennant.name = 'pennant';
     pennant.position.copy(truck);
     audits(pennant, ['pennant_height', 'origin_y']);
+    pennant.userData.trucked = true;
     group.add(pennant);
 
     halliardTo(truck, new THREE.Vector3(truck.x, truck.y - S('pennant_halliard_drop'), truck.z));

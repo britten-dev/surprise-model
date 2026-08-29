@@ -105,10 +105,10 @@
   {
     "key": "ensign_peak_height",
     "metric": "origin_y",
-    "expected": 15.15,
-    "actual": 15.15,
+    "expected": 15.2,
+    "actual": 15.203672324230215,
     "tolerance": 0.03,
-    "source": "RECONSTRUCTED §04-3.2 gaff throat 8.86 m + gaff 9.906 x sin 38 deg; measured off the spanker gaff the rig builds — RECONCILE WITH RIG"
+    "source": "SECONDARY §04-3.2 the peak of the mizzen gaff: throat at 8.93 m, where 0.52 of the run from the mizzen deck to its hounds falls, plus a 32 ft 6 in gaff peaked at 38 degrees, plus the flag head a hand above the peak"
   },
   {
     "key": "figurehead_height",
@@ -345,10 +345,10 @@
   {
     "key": "pennant_height",
     "metric": "origin_y",
-    "expected": 41.15,
-    "actual": 41.15,
+    "expected": 38.62,
+    "actual": 38.70885991949712,
     "tolerance": 0.03,
-    "source": "RECONSTRUCTED §04-9 main truck; 38.618 m by Steel's masting, 41.15 m as the rig builds the royal pole — RECONCILE WITH RIG"
+    "source": "SECONDARY §04-9 main truck by Steel 1794 masting: keelson step, 81 ft 4 in lower mast, 48 ft 9 in topmast and 24 ft 4 in topgallant with their doublings"
   },
   {
     "key": "pinnace_length",
@@ -429,6 +429,14 @@
     "actual": 5.673907279968262,
     "tolerance": 0.05,
     "source": "MEASURED §6 wing transom 19.0 ft across the stern elevation on the ZAZ3067 body plan"
+  },
+  {
+    "key": "wheel_count",
+    "metric": "count",
+    "expected": 1,
+    "actual": 1,
+    "tolerance": 0.001,
+    "source": "RECONSTRUCTED §6 research 06 deck-layout §2.1, a 2 ft 3 in barrel will not take a wheel at each end and the rope turns between"
   },
   {
     "key": "wheel_swept_diameter",
