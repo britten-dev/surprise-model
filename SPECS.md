@@ -318,6 +318,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `channel_top_below_rail` | 0.254 | — | RECONSTRUCTED | §06 10 Steel puts the channel in line with the upper edge of the sheer rail, one strake below the cap |
 | `mizzen_channel_top_below_rail` | 0.1524 | — | RECONSTRUCTED | §06 10 Steel carries the mizzen channel 1 ft above the range of the main; four inches of that taken against a level rail line |
 | `channel_inboard_inset` | 0.0508 | — | RECONSTRUCTED | §06 10 the inner edge is let into the ship's side, not butted against the planking |
+| `mizzen_channel_aft_clearance` | 2.7432 | — | RECONSTRUCTED | §06 10 the after end of the mizzen channel kept clear of the quarter badge |
 | `channel_aft_clearance` | 0.6096 | — | RECONSTRUCTED | §06 10 the after end of a channel is kept off the run of the counter so that it lands on the side proper |
 | `channel_deadeye_end_margin` | 0.2286 | — | RECONSTRUCTED | §06 10 the outer deadeyes are set in from the ends so the channel is not split at the butt |
 | `fore_channel_taper_fraction` | 0.24 | — | RECONSTRUCTED | §06 10 Steel says the fore channel tapers at its after end to stow the anchor but does not give the length of the taper |
@@ -1005,7 +1006,7 @@ and the ochre strake follow the sheer.
 |---|---|---|---|---|
 | `topside_black` | #1C1613 | 0.5 | 0 | SECONDARY §8 lamp black in tar; warm brown-black, not pure black |
 | `wale` | #241A12 | 0.4 | 0 | SECONDARY §8 wales left bright in tar, glossier than the topside |
-| `ochre_trim` | #BC9046 | 0.55 | 0 | SECONDARY §8 yellow ochre in oil, the Victory ochre (NCS S 3020-Y40R), taken at pigment strength; renders inside the photograph's sampled #dba55d-#f8cf7d under both the sea and the studio rig |
+| `ochre_trim` | #CB9C55 | 0.55 | 0 | SECONDARY §8 yellow ochre in oil, the Victory ochre (NCS S 3020-Y40R), taken at pigment strength; renders inside the photograph's sampled #dba55d-#f8cf7d under both the sea and the studio rig |
 | `inboard_red` | #913832 | 0.65 | 0 | SECONDARY §8 red ochre for inboard works and port linings, not Venetian red |
 | `boot_top` | #2A2018 | 0.7 | 0 | SECONDARY §8 exposed plank above the sheathing, algae-stained |
 | `copper` | #A2603A | 0.44 | 0 | RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched. Roughness is the polish of a sheet that has been in the water a few months, not of one that has been painted |

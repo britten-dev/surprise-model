@@ -193,9 +193,10 @@ function channelPlan(model) {
     },
   ];
 
-  const zLimit = model.zAft - S('channel_aft_clearance');
-
   return specs.map((c) => {
+    const zLimit = model.zAft - S(
+      c.name === 'mizzen' ? 'mizzen_channel_aft_clearance' : 'channel_aft_clearance'
+    );
     const zMast = model.fromStem(S(c.mastKey));
     const z0 = zMast - S(c.foreEndKey);
     // The foremost end stays where the source puts it, hard against the mast, because

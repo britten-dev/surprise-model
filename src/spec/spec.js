@@ -135,7 +135,7 @@ export const PAINT = {
   // not a photographed one. The old value here was the photograph's own #dba55d-#eabc66
   // range entered as an albedo, which lights the paint twice: it rendered at #cbb0a0,
   // a pale pink cream, and the strake stopped reading as ochre at all.
-  ochre_trim: { hex: '#BC9046', roughness: 0.55, source: 'SECONDARY §8 yellow ochre in oil, the Victory ochre (NCS S 3020-Y40R), taken at pigment strength; renders inside the photograph\'s sampled #dba55d-#f8cf7d under both the sea and the studio rig' },
+  ochre_trim: { hex: '#CB9C55', roughness: 0.55, source: 'SECONDARY §8 yellow ochre in oil, the Victory ochre (NCS S 3020-Y40R), taken at pigment strength; renders inside the photograph\'s sampled #dba55d-#f8cf7d under both the sea and the studio rig' },
   inboard_red: { hex: '#913832', roughness: 0.65, source: 'SECONDARY §8 red ochre for inboard works and port linings, not Venetian red' },
   boot_top: { hex: '#2A2018', roughness: 0.70, source: 'SECONDARY §8 exposed plank above the sheathing, algae-stained' },
 

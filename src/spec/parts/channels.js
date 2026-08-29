@@ -106,6 +106,14 @@ export const CHANNELS_SPEC = {
   mizzen_channel_top_below_rail: m(ft(0, 6), 'RECONSTRUCTED §06 10 Steel carries the mizzen channel 1 ft above the range of the main; four inches of that taken against a level rail line', { noAudit: true }),
 
   channel_inboard_inset: m(ft(0, 2), 'RECONSTRUCTED §06 10 the inner edge is let into the ship\'s side, not butted against the planking', { noAudit: true }),
+  // The mizzen channel needs far more room aft than the other two. The quarter badge
+  // stands on the ship's side right there, and Steel's 14 ft channel run aft from the
+  // mizzen lands square across its glazing — two modules building in the same volume,
+  // which is exactly what happens when each knows only its own region. The channel is
+  // what gives way: a badge cannot move, and the spec note on mizzen_channel_length
+  // already anticipated the mizzen coming out short.
+  mizzen_channel_aft_clearance: m(ft(9, 0), 'RECONSTRUCTED §06 10 the after end of the mizzen channel kept clear of the quarter badge', { noAudit: true }),
+
   channel_aft_clearance: m(ft(2, 0), 'RECONSTRUCTED §06 10 the after end of a channel is kept off the run of the counter so that it lands on the side proper', { noAudit: true }),
   channel_deadeye_end_margin: m(ft(0, 9), 'RECONSTRUCTED §06 10 the outer deadeyes are set in from the ends so the channel is not split at the butt', { noAudit: true }),
 
