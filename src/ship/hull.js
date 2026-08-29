@@ -19,7 +19,13 @@ import { audits } from '../audit/measure.js';
 // The feature stops, bottom to top. The V values are arbitrary but fixed: they are the
 // contract between the hull surface and the paint.
 export const FEATURES = [
-  ['rabbet', 0.00],
+  // The section starts on the centreline at the underside of the keel, not at the
+  // rabbet, so that the two mirrored halves close the bottom of the ship between them.
+  // Without this the hull is an open trough and you can see straight through the
+  // garboard from any low angle.
+  ['keel_bottom', 0.00],
+  ['keel_top', 0.030],
+  ['rabbet', 0.055],
   ['floor', 0.16],
   ['bilge', 0.32],
   ['waterline', 0.50],
@@ -46,24 +52,26 @@ export function hullModel() {
   // because a section widens steadily from the keel to the maximum breadth and must
   // not bulge past its neighbours just to be smooth.
   const sectionX = stationZ.map((_, i) => {
-    const ys = [], xs = [];
+    const yBottom = OFFSETS.rabbetY[i];
+    const yTop = OFFSETS.deckAtSideY[i];
+    const ys = [yBottom], xs = [OFFSETS.rabbetX[i]];
     for (let j = 0; j < wlY.length; j++) {
       const x = OFFSETS.halfBreadth[i][j];
       if (x === null || x === undefined) continue;
+      // Toward the ends the rabbet rises above the lower waterlines, so those entries
+      // do not describe this station at all. Including them makes the height sequence
+      // non-monotonic and the interpolant folds back on itself, which shows up as
+      // spikes at the stem and the tuck.
+      if (wlY[j] <= yBottom + 1e-4 || wlY[j] >= yTop - 1e-4) continue;
       ys.push(wlY[j]); xs.push(x);
     }
-    // Pin the ends so the interpolant is defined right down to the rabbet and right up
-    // to the deck at side.
-    ys.unshift(OFFSETS.rabbetY[i]); xs.unshift(OFFSETS.rabbetX[i]);
-    ys.push(OFFSETS.deckAtSideY[i]); xs.push(OFFSETS.deckAtSideX[i]);
-    // Strictly increasing y, or the interpolant is undefined.
-    const seen = new Set(); const fy = [], fx = [];
-    for (let k = 0; k < ys.length; k++) {
-      const key = ys[k].toFixed(4);
-      if (seen.has(key)) continue;
-      seen.add(key); fy.push(ys[k]); fx.push(xs[k]);
-    }
-    return monotoneCubic(fy, fx);
+    ys.push(yTop); xs.push(OFFSETS.deckAtSideX[i]);
+    const f = monotoneCubic(ys, xs);
+    // Outside its own range a station's interpolant means nothing, so clamp rather than
+    // extrapolate. Without this, evaluating a forward station down at a waterline that
+    // only exists amidships sends the curve folding back on itself.
+    f.yMin = yBottom; f.yMax = yTop;
+    return f;
   });
 
   // Longitudinal curves, fair through the stations. These are the lines a draughtsman
@@ -84,7 +92,12 @@ export function hullModel() {
     let i = 0;
     while (i < stationZ.length - 2 && zc > stationZ[i + 1]) i++;
     const t = (zc - stationZ[i]) / (stationZ[i + 1] - stationZ[i]);
-    return Math.max(0, lerp(sectionX[i](y), sectionX[i + 1](y), clamp(t, 0, 1)));
+    const a = sectionX[i], b = sectionX[i + 1];
+    return Math.max(0, lerp(
+      a(clamp(y, a.yMin, a.yMax)),
+      b(clamp(y, b.yMin, b.yMax)),
+      clamp(t, 0, 1)
+    ));
   }
 
   /** Height of the bulwark above the deck at side, which changes along the ship. */
@@ -109,6 +122,8 @@ export function hullModel() {
     const rab = rabbetY(z);
     const bul = bulwarkHeightAt(z);
     const out = {
+      keel_bottom: rab - SPEC.keel_moulding.value,
+      keel_top: rab - SPEC.keel_moulding.value * 0.35,
       rabbet: rab,
       waterline: 0,
       wale_top: deck - SPEC.wale_top_below_deck.value,
@@ -121,6 +136,8 @@ export function hullModel() {
     // The three shape-only stops sit proportionally between the rabbet and the wale.
     out.floor = lerp(rab, 0, 0.30);
     out.bilge = lerp(rab, 0, 0.66);
+    if (out.floor <= rab) out.floor = rab + 0.01;
+    if (out.bilge <= out.floor) out.bilge = out.floor + 0.01;
     out.sheer_strake = lerp(out.wale_top, deck, 0.55);
     return out;
   }
@@ -136,10 +153,16 @@ export function hullModel() {
 
     // Build the control points: the hull proper from the offset table, then the
     // bulwark above the deck, which tumbles home faster than the topsides do.
+    const halfSiding = SPEC.keel_siding.value / 2;
     const control = FEATURES.map(([name, v]) => {
       const y = f[name];
       let x;
-      if (y <= f.deck) x = halfBreadthAt(z, y);
+      // The keel: the section runs from the centreline out to the keel's side, then up
+      // to the rabbet where the garboard strake lands on it.
+      if (name === 'keel_bottom') x = 0;
+      else if (name === 'keel_top') x = halfSiding;
+      else if (name === 'rabbet') x = Math.max(halfSiding * 0.92, halfBreadthAt(z, y));
+      else if (y <= f.deck) x = Math.max(halfSiding * 0.9, halfBreadthAt(z, y));
       else {
         // Above the deck the section is the bulwark. It leans in by the tumblehome
         // ratio per metre of height, which is what gives the ship her inward-leaning
