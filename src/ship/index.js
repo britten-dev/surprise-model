@@ -1,14 +1,23 @@
 // The ship. Assembles every region in the order a shipwright would: hull, then decks,
 // then the fittings that stand on them, then the masts, then what hangs from the masts.
 //
-// Each module is handed the LOD configuration and the materials and returns a Group. No
-// module invents a dimension; all of them read the spec.
+// Each module is handed the LOD configuration, the materials and the hull model, and
+// returns a Group. No module invents a dimension; all of them read the spec.
 import * as THREE from 'three';
 import { lodConfig, LODS } from './lod.js';
 import { makeMaterials } from './materials.js';
 import { buildHull, hullModel } from './hull.js';
 import { portLayout, makePortCutter, buildPorts } from './ports.js';
 import { buildDecks } from './decks.js';
+import { buildStern } from './stern.js';
+import { buildHead } from './head.js';
+import { buildChannels } from './channels.js';
+import { buildFurniture } from './furniture.js';
+import { buildGuns } from './guns.js';
+import { buildBoats } from './boats.js';
+import { buildGroundTackle } from './ground-tackle.js';
+import { buildFlags } from './flags.js';
+import { buildRig } from './rig.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
@@ -19,21 +28,37 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   }
   const cfg = lodConfig(lod);
   const mats = makeMaterials(cfg);
+  const model = hullModel();
 
   const ship = new THREE.Group();
   ship.name = `surprise_${lod}_${sails}`;
   ship.userData.lod = lod;
   ship.userData.sails = sails;
 
-  const model = hullModel();
-  const ctx = { cfg, mats, model, sails, lod };
-
+  // The hull first, with the gunports cut out of the loft grid as it is built.
   const ports = portLayout(model);
   const hull = buildHull(cfg, mats, model, { skipQuad: makePortCutter(model, ports) });
   ship.add(hull.group);
+
   const decks = buildDecks(cfg, mats, model);
   ship.add(decks.group);
+
+  const ctx = {
+    cfg, mats, model, sails, lod, ports,
+    zFcBreak: decks.zFcBreak,
+    zQdBreak: decks.zQdBreak,
+  };
+
   ship.add(buildPorts(cfg, mats, model, ports));
+  ship.add(buildStern(cfg, mats, model, ctx));
+  ship.add(buildHead(cfg, mats, model, ctx));
+  ship.add(buildChannels(cfg, mats, model, ctx));
+  ship.add(buildFurniture(cfg, mats, model, ctx));
+  ship.add(buildGuns(cfg, mats, model, ctx));
+  ship.add(buildBoats(cfg, mats, model, ctx));
+  ship.add(buildGroundTackle(cfg, mats, model, ctx));
+  ship.add(buildRig(cfg, mats, model, ctx));
+  ship.add(buildFlags(cfg, mats, model, ctx));
 
   return ship;
 }
