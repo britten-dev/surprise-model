@@ -22,7 +22,7 @@ import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { ropeTube } from '../util/solids.js';
-import { clamp } from '../util/math.js';
+import { clamp, deg } from '../util/math.js';
 import { audit } from '../audit/measure.js';
 
 const HALF = 0.5;
@@ -394,6 +394,28 @@ function deckSlopeAt(model, z, x, rise) {
 }
 
 /**
+ * Where a gun **housed** stands.
+ *
+ * A housed gun is not sited the way a gun run out is. She is placed by where her muzzle
+ * finishes: it has to come inside the planking or the port lid cannot shut over it — and
+ * how far the carriage must come in for that depends on the length of the piece and on
+ * how far she is elevated, because elevating a barrel about its trunnions draws the
+ * muzzle in as well as up.
+ *
+ * That is worth deriving rather than guessing. The first attempt at this pulled her back
+ * a foot and a half, which is a plausible-sounding number, and left nine inches of muzzle
+ * standing through a closed lid on every port in the ship.
+ */
+function siteHoused(model, z, axisAbove, barrelLength, trunnionFromBreech, elevation) {
+  const at = siteRunOut(model, z, 0, axisAbove, 0);
+  // How far the muzzle stands out beyond the trunnion axis once she is elevated.
+  const overhang = (barrelLength - trunnionFromBreech) * Math.cos(elevation);
+  const inner = model.halfBreadthAt(z, at.y + axisAbove) - SPEC.side_thickness.value;
+  at.x = inner - SPEC.gun_housed_muzzle_inboard.value - overhang;
+  return at;
+}
+
+/**
  * Where a gun run out stands. Its fore trucks are all but against the ship's side, so
  * the anchor is the inboard face of the side at the height of the bore — which needs
  * the deck height, which needs the position. Two passes settle it.
@@ -478,6 +500,16 @@ export function buildGuns(cfg, mats, model, ctx) {
       at: [],
     },
   };
+  // A housed gun is elevated: her muzzle is lashed up to the ring bolt over the port, so
+  // the piece lies with her breech down and her muzzle against the ship's side. The
+  // elevation is put into the barrel geometry rather than into the instance matrix
+  // because the barrel and the carriage share that matrix, and it is only the barrel
+  // that turns — it turns on its trunnions, which is where this geometry's origin is.
+  //
+  // It survives the mirroring to port: a rotation of pi about the vertical takes the
+  // muzzle from +X to -X and leaves its height alone, so both broadsides come out
+  // elevated rather than one of them depressed.
+  if (ctx.portsShut) natures.nine.barrel.rotateZ(deg(SPEC.gun_housed_elevation_deg.value));
   natures.nine.barrel.translate(0, axis9, 0);
   natures.four.barrel.translate(0, axis4, 0);
 
@@ -490,16 +522,29 @@ export function buildGuns(cfg, mats, model, ctx) {
   };
   carronade.barrel.translate(SPEC.carronade_muzzle_beyond_pivot.value, axisC, 0);
 
-  // ---- The upper-deck battery: a long 9-pounder behind every port, both sides, run
-  // out, which is how the reference photograph shows her.
+  // ---- The upper-deck battery: a long 9-pounder behind every port, both sides.
+  //
+  // Run out, as the reference photograph shows her — unless her ports are shut, in which
+  // case they are housed: drawn in until the muzzle is inside the planking, elevated to
+  // the ring bolt above the port, breechings bowsed and the muzzle lashed. It is the same
+  // battery either way; what changes is where she stands and how she lies.
+  const housedEl = deg(SPEC.gun_housed_elevation_deg.value);
+  const tb9 = SPEC.gun_trunnion_from_breech_u.value * L9;
   for (const p of ctx.ports) {
     if (p.kind !== 'gundeck') continue;
-    const at = siteRunOut(model, p.z, 0, axis9, trunnionFromFore);
+    const at = ctx.portsShut
+      ? siteHoused(model, p.z, axis9, L9, tb9, housedEl)
+      : siteRunOut(model, p.z, 0, axis9, trunnionFromFore);
     for (const side of [1, -1]) natures.nine.at.push({ ...at, z: p.z, side, rise: 0 });
   }
 
   // ---- The quarterdeck: six stations a side, the two foremost taken by carronades and
   // the four abaft them by long 4-pounders.
+  //
+  // These are not housed when the gundeck battery is. There are no ports up here to shut
+  // — the quarterdeck and forecastle guns fire over an open rail — so in heavy weather
+  // they are secured where they stand, with their tackles bowsed and their muzzles
+  // plugged, and they go on looking exactly like guns run out.
   const qdFirst = SPEC.gun_quarterdeck_first_from_stem.value;
   const qdStep = SPEC.gun_quarterdeck_spacing.value;
   const qdCarronades = SPEC.gun_quarterdeck_carronades_forward.value;

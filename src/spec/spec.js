@@ -76,6 +76,8 @@ const CORE = {
   gunport_sill_above_deck: m(ft(1, 9), 'MEASURED §8 sills 20.4 ft above base, deck at side 18.65 ft', { noAudit: true }),
   gunport_spacing: m(ft(8, 6), 'RECONSTRUCTED §4 12 ports spread over the length available between the bow and the transom', { tolerance: 0.05 }),
   gunport_lining_depth: m(ft(0, 9), 'RECONSTRUCTED §4 thickness of the side at the ports, plank and timber', { noAudit: true }),
+  gunport_lid_overlap: m(0.05, 'RECONSTRUCTED §4 a port lid is larger than its opening and lands on a rabbet cut round it. It has to be here for a second reason as well: the opening is cut by dropping whole faces out of the loft grid, so its size is quantised to that grid and a lid cut exactly to the port leaves the lining showing along one edge', { noAudit: true }),
+  gunport_lid_closed_proud: m(0.008, 'RECONSTRUCTED §4 a shut lid lies against the outside of the planking, not flush in the opening, so it stands its own hinge straps proud of the side', { noAudit: true }),
   gunport_lid_thickness: m(ft(0, 3), 'SECONDARY §4 Steel, port-lid thickness', { noAudit: true }),
 
   qd_port_width: m(ft(2, 4), 'SECONDARY §4 Steel, quarterdeck port', { noAudit: true }),

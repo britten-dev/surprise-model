@@ -30,9 +30,24 @@ export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
 // import for the whole package.
 export { createMotion } from './motion.js';
 
-export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
+/**
+ * @param {object} [opts]
+ * @param {string} [opts.lod]   'hero' | 'game' | 'distant'
+ * @param {string} [opts.sails] 'full' | 'topsails' | 'storm' | 'furled'
+ * @param {string} [opts.ports] 'open' | 'shut'. Defaults to shut in the storm state and
+ *   open in the other three, because a sail state on this ship is really a state of the
+ *   weather: a frigate under a reefed foresail has her gunports shut and her guns housed,
+ *   and one carrying twenty-four open ports in a following sea would fill her gundeck.
+ *   It is a separate option because the two are not the same claim — a ship can be under
+ *   her topsails in a rising sea with her ports already in — and a host may say so.
+ */
+export function buildShip({ lod = 'hero', sails = 'full', ports: portState } = {}) {
   if (!SAIL_STATES.includes(sails)) {
     throw new Error(`unknown sail state "${sails}" — expected one of ${SAIL_STATES.join(', ')}`);
+  }
+  const portsShut = portState === undefined ? sails === 'storm' : portState === 'shut';
+  if (portState !== undefined && !['open', 'shut'].includes(portState)) {
+    throw new Error(`unknown port state "${portState}" — expected "open" or "shut"`);
   }
   const cfg = lodConfig(lod);
   const mats = makeMaterials(cfg);
@@ -42,6 +57,7 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   ship.name = `surprise_${lod}_${sails}`;
   ship.userData.lod = lod;
   ship.userData.sails = sails;
+  ship.userData.ports = portsShut ? 'shut' : 'open';
 
   // The hull first, with the gunports cut out of the loft grid as it is built.
   const ports = portLayout(model);
@@ -52,12 +68,12 @@ export function buildShip({ lod = 'hero', sails = 'full' } = {}) {
   ship.add(decks.group);
 
   const ctx = {
-    cfg, mats, model, sails, lod, ports,
+    cfg, mats, model, sails, lod, ports, portsShut,
     zFcBreak: decks.zFcBreak,
     zQdBreak: decks.zQdBreak,
   };
 
-  ship.add(buildPorts(cfg, mats, model, ports));
+  ship.add(buildPorts(cfg, mats, model, ports, ctx));
   ship.add(buildStern(cfg, mats, model, ctx));
   ship.add(buildHead(cfg, mats, model, ctx));
   ship.add(buildChannels(cfg, mats, model, ctx));
