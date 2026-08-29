@@ -108,7 +108,27 @@ function hullSurfaceStrip(size = 512) {
   return tex;
 }
 
+// Materials are immutable and depend only on the level of detail, but building them
+// means drawing and compositing several canvases — which is the great majority of the
+// cost of building the ship, roughly 800 ms against 60 ms for all the geometry. Caching
+// them per level makes a second build nearly free, which is what lets a host switch her
+// canvas at runtime: shortening sail becomes a rebuild of the geometry alone.
+//
+// The consequence is that every ship built at a given level shares one set of materials.
+// That is what you want for a fleet, and it means a caller who mutates a material
+// changes every ship. `makeMaterials.uncached()` is there for a caller who needs a set
+// of their own.
+const materialCache = new Map();
+
 export function makeMaterials(cfg) {
+  const key = cfg.textureSize + ':' + cfg.copperNails + ':' + cfg.mouldingSweeps;
+  if (!materialCache.has(key)) materialCache.set(key, buildMaterials(cfg));
+  return materialCache.get(key);
+}
+
+makeMaterials.uncached = buildMaterials;
+
+function buildMaterials(cfg) {
   const N = cfg.textureSize;
 
   const hullPlank = asTexture(
