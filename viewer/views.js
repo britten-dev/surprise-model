@@ -61,7 +61,12 @@ export function applyView(camera, view, bounds, frame) {
   // the camera at distance D sees it at depth D - r, so it stays in frame when
   // D >= r + |p| / tan(halfHorizontal) and D >= r + |q| / tan(halfVertical).
   const vHalf = Math.tan((fov * Math.PI) / 360);
-  const hHalf = vHalf * camera.aspect;
+  // A camera whose aspect is not a finite number — which happens if the page is framed
+  // while its container still has zero height — makes every distance below NaN, and the
+  // camera then sits at NaN for the rest of the session with nothing on screen and no
+  // error anywhere. Fall back to a sane frame rather than propagating it.
+  const aspect = Number.isFinite(camera.aspect) && camera.aspect > 0 ? camera.aspect : 16 / 9;
+  const hHalf = vHalf * aspect;
 
   const dir = [
     Math.sin(a) * Math.cos(e),
