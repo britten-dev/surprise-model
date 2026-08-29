@@ -22,19 +22,31 @@ Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
 close-reefed main topsail) and `furled`.
 
+Live at **[hms-surprise-model.netlify.app](https://hms-surprise-model.netlify.app)** — the
+viewer builds the ship in your browser from this source, in about 400 ms, and the exported
+glTF files can be downloaded from the same page.
+
 ## Commands
 
 ```bash
 npm install
-npm run build     # export every GLB to build/
-npm run audit     # measure the built model and diff it against the spec
-npm run trace     # prove every generator dimension traces to a sourced SPECS.md row
-npm run render    # verification renders to renders/
 npm run viewer    # inspect interactively at http://127.0.0.1:8099/viewer/
+npm run build     # export every GLB to build/
+npm run render    # verification renders to renders/
+npm run check     # the gate: specs, trace, audit, build, verify
 ```
 
-`npm run check` runs trace, audit and build in order, and is the gate a change has to
-pass.
+`npm run check` runs, in order:
+
+| step | what it proves |
+| --- | --- |
+| `make-specs` | SPECS.md is regenerated from the spec, so it cannot drift from the code |
+| `trace` | every dimension in the generator has a sourced row in SPECS.md |
+| `audit` | the geometry that was actually built matches those numbers — 54 measurements |
+| `build` | all ten GLB files export inside their triangle budgets |
+| `verify` | all ten load back through a glTF loader and are the right size and the right way up |
+
+A change that breaks any of them fails the build.
 
 ## How it is organised
 
@@ -57,6 +69,26 @@ carries a `source`. `npm run trace` fails the build if a generator dimension has
 in `SPECS.md` or if a row has no source. `npm run audit` then measures the geometry that
 was actually produced and diffs it against those numbers, so a change that quietly
 moves a mast is caught rather than admired.
+
+## How she was researched
+
+Eight researchers worked in parallel on the sources, and between them they found something
+better than the secondary literature: **her own draught**. RMG plan ZAZ3067, "Lines &
+Profile", signed by John Marshall at Plymouth Yard in February 1798 and titled *SURPRISE
+late L'UNITE*, is the only surviving lines plan of this ship. The museum's own scan was
+measured at 6.0 pixels to the foot, and the hull in this model is lofted from it.
+
+They also found that the RMG catalogue links four plans to her that belong to a different
+ship — HMS *Unite*, ex-*Gracieuse*, a 32-gun fifth rate half again her size. The title
+cartouche settles it. See `SPECS.md` §2.
+
+The rig comes from David Steel's *Elements and Practice of Rigging and Seamanship* (1794),
+from the column headed "28 GUNS. 594 Tons." — which is *her own* establishment column, not
+an interpolation, so the rig is the best-evidenced part of the whole model.
+
+The hull was then checked rather than admired: integrating the offsets gives a
+displacement of 656 tons against the 657 recorded, with a midship coefficient of 0.777, a
+prismatic of 0.614 and a block of 0.477 — all inside the band for a frigate.
 
 ## Where the evidence is thin
 
