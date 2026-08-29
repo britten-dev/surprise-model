@@ -33,6 +33,16 @@ await copyDir(path.join(ROOT, 'reference'), path.join(DIST, 'reference'),
 // know it is being deployed. The whole build directory goes, not just three.module.js:
 // that file re-exports from three.core.js beside it, and shipping one without the other
 // gives a page that loads every module successfully and then does nothing.
+const threeSrc = path.join(ROOT, 'node_modules/three/build');
+try {
+  await fs.access(threeSrc);
+} catch {
+  throw new Error(
+    'node_modules/three is missing, so the viewer would load nothing.\n' +
+    'three is a peer dependency of this package, which means `npm install --omit=dev`\n' +
+    'does not install it. Install the dev dependencies for a site build.'
+  );
+}
 const three = path.join(DIST, 'node_modules/three');
 await copyDir(
   path.join(ROOT, 'node_modules/three/build'),

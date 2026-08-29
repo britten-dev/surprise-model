@@ -7,10 +7,12 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # Playwright is only needed to export the GLB files and take the verification
-  # renders, neither of which the site does. Skipping the dev dependencies keeps the
-  # deploy from downloading a browser it will never open.
-  NPM_FLAGS = "--omit=dev"
+  # three is a PEER dependency of this package — the host provides it, so that a consumer
+  # never ends up with two copies of the library on one page. That means it is not
+  # installed by `--omit=dev`, and the site build needs it: the viewer imports it. So the
+  # dev dependencies are installed, and Playwright is told not to fetch a browser it will
+  # never open here, which is what `--omit=dev` was really for.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
 
 [[headers]]
   for = "/*"
