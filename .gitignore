@@ -6,3 +6,6 @@ renders/*.png
 !build/.gitkeep
 !renders/.gitkeep
 dist/
+
+# Scratch files. Anything named this way is a working file, not part of the project.
+_scratch*
