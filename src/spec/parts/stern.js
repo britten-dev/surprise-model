@@ -36,14 +36,22 @@ export const STERN_SPEC = {
   // the taffrail BELOW the quarterdeck's own bulwark and the wheel stands over the stern
   // in plain sight. Taking the greater of the two heights keeps the measured figure as a
   // floor and lets the deck arrangement lift it where the rail line cannot be trusted.
-  stern_taffrail_above_quarterdeck: m(ft(4, 2), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, quarterdeck at side 25.3 ft', { noAudit: true }),
-  stern_taffrail_above_wl: m(ft(16, 8), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft; a floor, not the built height — see stern_taffrail_above_quarterdeck', { noAudit: true }),
+  stern_taffrail_above_quarterdeck: m(ft(1, 11), 'MEASURED §5/§6 taffrail 29.5 ft above the moulded base line; gun deck at side at the after perpendicular 20.90 ft, quarterdeck 6 ft 8 in above that at 27.57 ft', { noAudit: true }),
+  stern_taffrail_above_wl: m(ft(16, 8), 'MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft. This is the figure the taffrail is built to; the height above the quarterdeck follows from it'),
 
   // How far abaft the tuck each of those heights lies. This is the rake of the counter
-  // and of the transom above it.
-  stern_wing_transom_abaft_tuck: m(ft(2, 2), 'MEASURED §6 stern profile 128.7 ft aft of the FP at 20.3 ft above base, tuck at 126.5 ft', { noAudit: true }),
-  stern_upper_counter_abaft_tuck: m(ft(4, 6), 'MEASURED §6 stern profile 131.0 ft aft of the FP at 25.0 ft above base', { noAudit: true }),
-  stern_taffrail_abaft_tuck: m(ft(5, 0), 'MEASURED §6 stern profile 131.5 ft aft of the FP at 30.3 ft above base', { noAudit: true }),
+  // and of the transom above it, and 05 §6 gives two irreconcilable answers. Its measured
+  // profile points put the wing transom 2.2 ft abaft the tuck and the taffrail 5.0 ft;
+  // its summary bullets put the counter 7.7 ft abaft the sternpost and the taffrail
+  // 10.5 ft. The first pair is too little: with only 2.2 ft of overhang the counter does
+  // not carry over the rudder head, and the rudder stands out abaft the counter in plain
+  // sight, which no ship's stern does. The second pair is more than the drawn points can
+  // support. The model takes values between the two, set by the hard requirement that the
+  // counter clear the rudder, and grades them RECONSTRUCTED rather than pretending either
+  // reading was followed.
+  stern_wing_transom_abaft_tuck: m(ft(4, 6), 'RECONSTRUCTED §6 between the 2.2 ft of the measured profile points and the 7.7 ft of the counter-overhang bullet; least that carries the counter clear of the rudder head', { noAudit: true }),
+  stern_upper_counter_abaft_tuck: m(ft(6, 6), 'RECONSTRUCTED §6 between the measured 4.5 ft and the summary bullets, on a fair curve between the wing transom and the taffrail', { noAudit: true }),
+  stern_taffrail_abaft_tuck: m(ft(7, 6), 'RECONSTRUCTED §6 between the measured 5.0 ft and the 10.5 ft of the taffrail-overhang bullet', { noAudit: true }),
 
   // Half-breadths of the stern, measured off the same elevation. The hull's traced
   // after body is a little narrower than these at the window band, which is what gives
@@ -52,6 +60,9 @@ export const STERN_SPEC = {
   stern_half_breadth_wing_transom: m(ft(9, 6), 'MEASURED §6 wing transom half-breadth 9.5 ft, 0.61 of the moulded breadth', { noAudit: true }),
   stern_half_breadth_at_lights: m(ft(10, 0), 'MEASURED §6 stern at the window band, 10.0 ft half-breadth, 0.65 of the moulded breadth', { noAudit: true }),
   stern_half_breadth_at_taffrail: m(ft(7, 0), 'RECONSTRUCTED §6 taffrail half-breadth 7.0 ft, 0.45 of the moulded breadth, read off the same elevation', { noAudit: true }),
+  // The same wing-transom figure as a breadth, which is what the counter rails span and
+  // therefore the one dimension of the stern the audit can measure off the built surface.
+  stern_transom_breadth_wing: m(ft(19, 0), 'MEASURED §6 wing transom 19.0 ft across the stern elevation on the ZAZ3067 body plan', { tolerance: 0.05 }),
 
   // Steel: every stern rail must have "a handsome round-up and round-aft … each rail
   // continuing to have more round-up in proceeding upwards". Round-aft is how much
@@ -79,7 +90,6 @@ export const STERN_SPEC = {
   stern_light_count: n(7, 'MEASURED §6 the stern elevation on the ZAZ3067 body plan shows a single row of seven lights; 06 §12.2 and 08 §5.2 reconstruct five from a breadth rule whose stated range is 5 to 7', { tolerance: 0.001 }),
   stern_light_height: m(ft(3, 0), 'RECONSTRUCTED §12.2 lights 3 ft 0 in deep for a Sixth Rate great cabin', { noAudit: true }),
   stern_light_sill_above_deck: m(ft(2, 6), 'RECONSTRUCTED §12.2 sill height of a great-cabin light above the gun deck at side', { noAudit: true }),
-  stern_light_row_breadth: m(ft(18, 0), 'MEASURED §6 the 20 ft transom at the window band less a 1 ft quarter piece each side', { tolerance: 0.06 }),
   stern_light_munion: m(ft(0, 6), 'RECONSTRUCTED §12.2 munions 6 in wide between the lights', { noAudit: true }),
   stern_quarter_piece_width: m(ft(1, 0), 'RECONSTRUCTED §12.2 the quarter piece bounding the row of lights each side', { noAudit: true }),
   stern_light_frame_depth: m(ft(0, 4), 'RECONSTRUCTED §5.2 the sash frame stands proud of the transom planking', { noAudit: true }),

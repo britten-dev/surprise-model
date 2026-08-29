@@ -97,13 +97,20 @@ function cutwaterAt(model) {
   return fn;
 }
 
-/** The closed outline of the knee of the head, in `[forward-of-stem, height]`. */
+/**
+ * The closed outline of the knee of the head, in `[forward-of-stem, height]`.
+ *
+ * The knee is not the whole triangle between the stem and the cutwater. It is a solid
+ * mass from the forefoot up to the wale, and above that a curved arm sweeping up and
+ * forward to the hair bracket, with open air between it and the head rails. Drawing it
+ * as the full triangle is what makes a modelled bow look like a wedge of cheese, so the
+ * upper boundary here runs from the ship's side at the wale to the head of the knee.
+ */
 function kneeOutline(model, cfg) {
   const zStem = model.zFwd;
   const f = model.featureYAt(zStem);
   const cut = cutwaterAt(model);
   const uAft = -S('head_stem_aft_overlap');
-  const yTopAft = f.rail + S('head_stem_head_above_rail');
 
   const n = Math.max(4, Math.round(cfg.headStations));
   const pts = [[uAft, cut.yFoot], [0, cut.yFoot]];
@@ -112,9 +119,12 @@ function kneeOutline(model, cfg) {
     const y = lerp(cut.yFoot, cut.yHead, i / n);
     pts.push([cut(y), y]);
   }
-  // Back along the top of the knee to the head of the stem, which stands a little
-  // higher than the knee does because the bowsprit rides between the knightheads on it.
-  pts.push([uAft, yTopAft]);
+  // Back and down along the upper edge of the knee to the ship's side at the wale,
+  // where the upper cheek picks the thrust up.
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    pts.push([lerp(S('head_knee_projection'), uAft, t), lerp(cut.yHead, f.wale_top, Math.pow(t, S('head_knee_upper_exponent')))]);
+  }
   return pts;
 }
 
@@ -235,14 +245,6 @@ function figurehead(cfg, mats) {
   g.add(head);
 
   if (!simple) {
-    // A neck, so the head is not a ball balanced on a barrel.
-    const neck = new THREE.Mesh(
-      new THREE.CylinderGeometry(headR / 2, headR / 2, h - headR * 2 - yShoulder, radial),
-      mats.white
-    );
-    neck.geometry.translate(0, (h - headR * 2 + yShoulder) / 2, 0);
-    g.add(neck);
-
     // Two arms: the near one down along the drapery, the far one raised forward, which
     // is what gives the figure its gesture at any distance.
     const arms = [];
@@ -265,8 +267,10 @@ function figurehead(cfg, mats) {
 
     // The cloak falling behind her, which is what carries the blue up the figure and
     // ties her back into the hair bracket.
+    // Half a cone, opening aft, so it reads as cloth falling behind her rather than
+    // as a shell over her face.
     const cloak = new THREE.Mesh(
-      new THREE.CylinderGeometry(shoulder, hem, yShoulder, radial, 1, true, Math.PI / 2, Math.PI),
+      new THREE.CylinderGeometry(shoulder, hem, yShoulder, radial, 1, true, -Math.PI / 2, Math.PI),
       mats.bunting('ensign_blue')
     );
     cloak.geometry.translate(0, yShoulder / 2, 0);
@@ -335,7 +339,7 @@ export function buildHead(cfg, mats, model, ctx) {
     trailPts.push(new THREE.Vector3(0, y, fwd(cut(y))));
   }
   const trailCurve = new THREE.CatmullRomCurve3(trailPts);
-  const trailW = S('head_knee_siding') / 2 + S('head_rail_sided') / 2;
+  const trailW = S('head_knee_siding') / 2 + S('head_rail_sided');
   const trail = new THREE.Mesh(
     sweep(trailCurve, [
       [-trailW, -S('trailboard_depth') / 2], [trailW, -S('trailboard_depth') / 2],
@@ -358,16 +362,21 @@ export function buildHead(cfg, mats, model, ctx) {
     for (const feature of ['wale_top', 'sheer_strake']) {
       const yFore = f0[feature];
       const uFore = cut(yFore);
-      const aftPt = model.pointAt(model.fromStem(S('head_cheek_aft_from_stem')), feature, side);
       const pts = [];
       const nc = Math.max(4, Math.round(cfg.headStations / 4));
+      // The after half lies on the ship's own side, so the cheek takes the round of the
+      // bow with it; the fore half runs out to meet the cutwater.
       for (let i = 0; i <= nc; i++) {
+        pts.push(model.pointAt(
+          model.fromStem(lerp(S('head_cheek_aft_from_stem'), 0, i / nc)), feature, side
+        ));
+      }
+      for (let i = 1; i <= nc; i++) {
         const t = i / nc;
-        const y = lerp(aftPt.y, yFore, t);
-        const u = lerp(-S('head_cheek_aft_from_stem'), uFore, t);
-        const xHull = model.halfBreadthAt(clamp(fwd(u), model.zFwd, model.zAft), y);
-        const x = lerp(Math.abs(aftPt.x), Math.max(S('head_knee_siding') / 2, xHull), t);
-        pts.push(new THREE.Vector3(side * x, y, fwd(u)));
+        pts.push(new THREE.Vector3(
+          side * lerp(model.halfBreadthAt(zStem, yFore), S('head_knee_siding') / 2, t),
+          yFore, fwd(lerp(0, uFore, t))
+        ));
       }
       cheeks.push(sweep(new THREE.CatmullRomCurve3(pts), [
         [-S('head_cheek_sided') / 2, -S('head_cheek_moulded') / 2],
@@ -402,18 +411,14 @@ export function buildHead(cfg, mats, model, ctx) {
     group.add(railMesh);
 
     // The hair bracket: the moulding that gathers the fore ends of the rails and runs
-    // into the back of the figure.
-    const hair = [];
-    for (const side of [1, -1]) {
-      const a = rails[side][0].getPoint(1);
-      const b = rails[side][2].getPoint(1);
-      hair.push(beam(
-        new THREE.Vector3(a.x, a.y, a.z),
-        new THREE.Vector3(b.x, b.y, fwd(S('head_knee_projection'))),
-        S('hair_bracket_sided'), S('hair_bracket_sided')
-      ));
-    }
-    const hairMesh = new THREE.Mesh(mergeGeometries(hair), mats.gilt);
+    // up the head of the knee into the back of the figure. It is a centreline piece,
+    // and it is the one place on the head that is gilt.
+    const uHair = S('head_knee_projection') - S('hair_bracket_length') / 2;
+    const hairMesh = new THREE.Mesh(beam(
+      new THREE.Vector3(0, cut.yHead, fwd(uHair)),
+      new THREE.Vector3(0, yRail + S('figurehead_above_rail'), fwd(S('head_knee_projection'))),
+      S('head_knee_siding'), S('hair_bracket_sided')
+    ), mats.gilt);
     hairMesh.name = 'hair_bracket';
     group.add(hairMesh);
 
@@ -707,7 +712,9 @@ export function buildHead(cfg, mats, model, ctx) {
   if (cfg.figurehead && cfg.figurehead !== 'none') {
     const fig = figurehead(cfg, mats);
     fig.position.set(0, yRail + S('figurehead_above_rail'), fwd(S('figurehead_forward_of_stem')));
-    fig.rotation.x = deg(S('figurehead_rake_deg'));
+    // Forward, over the water, following the rake of the head — a figure leaning back
+    // reads as falling into the ship.
+    fig.rotation.x = -deg(S('figurehead_rake_deg'));
     audit(fig, 'figurehead_height', 'extent_max');
     group.add(fig);
   }

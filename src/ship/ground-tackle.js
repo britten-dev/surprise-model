@@ -153,6 +153,9 @@ function anchorGeometry(cfg, scale) {
   const stockSqE = q('anchor_stock_square_ends');
   const stockY = shankLen - q('anchor_stock_below_head') - stockSqM / 2;
 
+  // The hoops travel with the stock, shipped or unshipped, so they are kept apart from the
+  // rest of the ironwork and placed by the stock's own matrix.
+  const hoops = [];
   if (full) {
     const nut = q('anchor_nut_length');
     for (const s of [1, -1]) {
@@ -167,11 +170,15 @@ function anchorGeometry(cfg, scale) {
       const k = i % perSide;
       const u = (i < perSide ? -1 : 1) * lerp(0.28, 0.76, perSide === 1 ? 0 : k / (perSide - 1));
       const square = lerp(stockSqM, stockSqE, Math.abs(u));
-      const h = hoop((u * stockLen) / 2, square,
-        q('anchor_stock_hoop_breadth'), q('anchor_stock_hoop_thickness'));
-      h.translate(0, stockY, 0);
-      fittings.push(h);
+      hoops.push(hoop((u * stockLen) / 2, square,
+        q('anchor_stock_hoop_breadth'), q('anchor_stock_hoop_thickness')));
     }
+  }
+  const stockHoops = hoops.length ? mergeGeometries(hoops) : null;
+  if (stockHoops) {
+    const shipped = stockHoops.clone();
+    shipped.translate(0, stockY, 0);
+    fittings.push(shipped);
   }
   const ironwork = mergeGeometries(fittings);
   ironwork.computeVertexNormals();
@@ -186,11 +193,12 @@ function anchorGeometry(cfg, scale) {
     }
     halves.push(h);
   }
-  const stock = mergeGeometries(halves);
+  const loose = mergeGeometries(halves);
+  loose.computeVertexNormals();
+  const stock = loose.clone();
   stock.translate(0, stockY, 0);
-  stock.computeVertexNormals();
 
-  return { shank, arms, ironwork, ring: ringOnly, stock, shankLen, armLen, stockY };
+  return { shank, arms, ironwork, ring: ringOnly, stock, loose, stockHoops, shankLen, armLen };
 }
 
 /**
@@ -301,9 +309,12 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
       // These are measured on the diagonal because a catted anchor hangs at an angle
       // in all three axes: its stock is canted out over the rail and its arms are
       // fished up to the channel, so no bounding-box side is the length of anything.
-      audit(a.shank, 'anchor_shank_length', 'extent_diagonal');
-      audit(a.arms, 'anchor_arm_span', 'extent_diagonal');
-      audit(a.stock, 'anchor_stock_length', 'extent_diagonal');
+      // Measured with the caliper, not the bounding box: a catted anchor hangs at an
+      // angle in all three axes, and the span across its arms is a chord through a V,
+      // which no box side and no box diagonal is.
+      audit(a.shank, 'anchor_shank_length', 'extent_caliper');
+      audit(a.arms, 'anchor_arm_span', 'extent_caliper');
+      audit(a.stock, 'anchor_stock_length', 'extent_caliper');
     }
 
     const crown = ring.clone().addScaledVector(toCrown.clone().normalize(), bowerGeom.shankLen);
@@ -398,10 +409,9 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     const frame = anchorFrame(ring, toCrown, 90, spare.side, geom.shankLen);
     group.add(makeAnchor(mats, spare.name, geom, frame, false).group);
 
-    // The unshipped stock, lying fore and aft on the deck outboard of its anchor.
-    const stockGeom = geom.stock.clone();
-    stockGeom.translate(0, -geom.stockY, 0);
-    stockGeom.applyMatrix4(new THREE.Matrix4().makeBasis(
+    // The unshipped stock, lying fore and aft on the deck alongside its own anchor, with
+    // its four iron hoops still on it.
+    const lay = new THREE.Matrix4().makeBasis(
       new THREE.Vector3(spare.side, 0, 0),
       new THREE.Vector3(0, 1, 0),
       new THREE.Vector3(0, 0, 1)
@@ -409,10 +419,20 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
       xShank + spare.side * S('stowed_stock_beside_shank'),
       yDeck + S('anchor_stock_square_middle') * spare.scale / 2,
       zMid
-    ));
-    const loose = new THREE.Mesh(stockGeom, mats.timber);
-    loose.name = `${spare.name}_stock`;
-    group.add(loose);
+    );
+    const bare = geom.loose.clone();
+    bare.applyMatrix4(lay);
+    const looseStock = new THREE.Mesh(bare, mats.timber);
+    looseStock.name = `${spare.name}_stock`;
+    group.add(looseStock);
+
+    if (geom.stockHoops) {
+      const bands = geom.stockHoops.clone();
+      bands.applyMatrix4(lay);
+      const banded = new THREE.Mesh(bands, mats.iron);
+      banded.name = `${spare.name}_stock_hoops`;
+      group.add(banded);
+    }
   }
 
   // --------------------------------------------------- the hawse holes and the cable

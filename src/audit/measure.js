@@ -44,6 +44,23 @@ const MEASURES = {
   // long and thin the box diagonal is its length; for anything else this measurement is
   // meaningless, so use it only on rods and spars.
   extent_diagonal: ({ size }) => Math.hypot(size.x, size.y, size.z),
+
+  // The true caliper span: the greatest distance between any two points on the part,
+  // whatever its orientation. This is what a shipwright's rule would give for a span
+  // across a shape that is not a box — the fluke-to-fluke span of an anchor's arms, the
+  // length of a stock canted in three axes. Both of those read several per cent wrong
+  // from a bounding box, in opposite directions, which is worse than not measuring them.
+  extent_caliper: ({ obj }) => {
+    const pts = worldPoints(obj);
+    let best = 0;
+    for (let i = 0; i < pts.length; i += 3) {
+      for (let j = i + 3; j < pts.length; j += 3) {
+        const d = (pts[i] - pts[j]) ** 2 + (pts[i + 1] - pts[j + 1]) ** 2 + (pts[i + 2] - pts[j + 2]) ** 2;
+        if (d > best) best = d;
+      }
+    }
+    return Math.sqrt(best);
+  },
   min_y: ({ box }) => box.min.y,
   max_y: ({ box }) => box.max.y,
   min_z: ({ box }) => box.min.z,
@@ -73,6 +90,27 @@ const MEASURES = {
   count: ({ obj }) =>
     obj.userData.count ?? (obj.isInstancedMesh ? obj.count : obj.children.length),
 };
+
+/**
+ * Every vertex of an object in world space, thinned so that the caliper measurement stays
+ * cheap. Thinning is safe here because the extremes of a spar or an anchor arm are many
+ * vertices wide — a tapered cylinder has a whole ring of them at each end.
+ */
+function worldPoints(obj, limit = 900) {
+  const out = [];
+  const v = new THREE.Vector3();
+  obj.updateWorldMatrix(true, false);
+  obj.traverse((o) => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position;
+    const step = Math.max(1, Math.ceil(pos.count / limit));
+    for (let i = 0; i < pos.count; i += step) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      out.push(v.x, v.y, v.z);
+    }
+  });
+  return out;
+}
 
 /**
  * Walk a built ship and produce the audit table.

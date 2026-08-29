@@ -64,6 +64,11 @@ export const HEAD_SPEC = {
   head_knee_top_above_rail: m(ft(0, 0), `${Z}: the top of the knee under the hair bracket runs out level with the rail`, { noAudit: true }),
   head_knee_forward_at_deck: m(ft(9, 6), `${Z}: the cutwater's fore edge crossing the gun-deck line`, { noAudit: true }),
   head_knee_forward_at_waterline: m(ft(4, 0), 'RECONSTRUCTED: the cutwater at the load waterline. The draught shows the stem raking aft below the water, which the traced offset table does not carry, so the fore edge is kept plumb over the hull\'s own forefoot here rather than crossing behind it', { noAudit: true }),
+  // The upper edge of the knee, from the ship's side at the wale up to the hair
+  // bracket: the fraction of its rise made at a fraction t of its run is t raised to
+  // this power, so a figure below 1 is an edge that lifts away from the bow quickly and
+  // flattens as it runs into the figure, which is how ZAZ3067 draws it.
+  head_knee_upper_exponent: n(0.8, `${Z}: read off the upper edge of the knee`, { noAudit: true }),
   head_knee_length: m(ft(12, 6), `${Z}: the knee and stem together, from the aft face of the stem timber to the hair bracket — the fore-and-aft extent of the built piece`, { tolerance: 0.05 }),
 
   // The cheeks: the knee'd brackets that carry the knee of the head back onto the bow

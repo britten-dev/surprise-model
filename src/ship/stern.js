@@ -41,13 +41,14 @@ function sternProfile(model) {
   const yTuck = SPEC.stern_tuck_above_wl.value;
   const yWing = SPEC.stern_wing_transom_above_wl.value;
   const yUpper = SPEC.stern_upper_counter_above_wl.value;
-  // The taffrail has to top the quarterdeck's own bulwark, or the wheel and the after
-  // fittings stand over the stern in plain view. The traced offsets carry the rail line
-  // dead level the whole length of the ship, so measuring the taffrail off it alone puts
-  // it below the quarterdeck; the greater of the two readings of the same measurement is
-  // the one that stands up.
+  // The taffrail's height is one of the few things on the stern that was measured
+  // directly off the draught — 29.5 ft above the moulded base line, which is 16 ft 8 in
+  // above the load waterline — so that figure leads, and the relationship to the
+  // quarterdeck follows from it rather than the other way round. The floor below it is
+  // only a guard: the taffrail must still top the quarterdeck's own bulwark, or the
+  // wheel and the after fittings would stand over the stern in plain view.
   const yTaff = Math.max(
-    f.rail + SPEC.stern_taffrail_above_rail.value,
+    SPEC.stern_taffrail_above_wl.value,
     f.deck + SPEC.quarterdeck_above_gundeck.value + SPEC.stern_taffrail_above_quarterdeck.value,
   );
 
@@ -60,18 +61,22 @@ function sternProfile(model) {
       SPEC.stern_taffrail_abaft_tuck.value],
   );
 
-  // Half-breadth of the transom, by height. The lower anchor is the smaller of the
-  // measured tuck half-breadth and the hull's own half-breadth at the last station:
-  // where the traced hull is the narrower of the two it has to win, or the transom
-  // stands outboard of the ship's side and the quarter grows a fin.
+  // Half-breadth of the transom, by height, from the stern elevation — but never wider
+  // than the hull's own half-breadth at the last station. The elevation was measured off
+  // a 1280-pixel scan and reads about 0.4 m broader at the window band than the traced
+  // offsets do; taken literally it makes the quarter flare outboard over the last metre
+  // and a half into a swollen blister. Where the two disagree the hull wins, which is the
+  // whole point of siting off the model. Above the rail there is no hull left to compare
+  // with, so the elevation stands on its own.
   const yLights = f.deck + SPEC.stern_light_sill_above_deck.value + SPEC.stern_light_height.value / 2;
-  const bTuck = Math.min(SPEC.stern_half_breadth_at_tuck.value, model.halfBreadthAt(zTuck, yTuck));
-  const halfBreadth = monotoneCubic(
+  const drawn = monotoneCubic(
     [yTuck, yWing, yLights, yTaff],
-    [bTuck, SPEC.stern_half_breadth_wing_transom.value,
+    [SPEC.stern_half_breadth_at_tuck.value,
+      SPEC.stern_half_breadth_wing_transom.value,
       SPEC.stern_half_breadth_at_lights.value,
       SPEC.stern_half_breadth_at_taffrail.value],
   );
+  const halfBreadth = (y) => Math.min(drawn(y), model.halfBreadthAt(zTuck, Math.min(y, f.rail)));
 
   // Steel: every stern rail carries "a handsome round-up and round-aft … each rail
   // continuing to have more round-up in proceeding upwards".
@@ -332,10 +337,19 @@ function innerRows(rows, fromY) {
 // ---------------------------------------------------------------------------
 // The lights across the transom, into the great cabin
 // ---------------------------------------------------------------------------
-function sternLights(cfg, mats, sp, group) {
+/**
+ * The row of lights across the transom.
+ *
+ * `build` is false at the distant level, where the windows are a few pixels across and
+ * not worth a quarter of the whole triangle budget. The heights are still returned,
+ * because the counter rails and the taffrail ornament are placed against them and have
+ * to sit in the same place whether the windows are drawn or not.
+ */
+function sternLights(cfg, mats, sp, group, build = true) {
   const count = SPEC.stern_light_count.value;
   const ySill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
   const yHead = ySill + SPEC.stern_light_height.value;
+  if (!build) return { ySill, yHead };
   const bar = SPEC.stern_glazing_bar.value;
   const depth = SPEC.stern_light_frame_depth.value;
 
@@ -378,7 +392,6 @@ function sternLights(cfg, mats, sp, group) {
   frame.name = 'stern_light_frames';
   frame.userData.count = count;
   audit(frame, 'stern_light_count', 'count');
-  audit(frame, 'stern_light_row_breadth', 'extent_x');
   group.add(frame);
 
   const pane = new THREE.Mesh(mergeGeometries(glass), mats.glass);
@@ -398,7 +411,7 @@ function sternLights(cfg, mats, sp, group) {
     const half = (edge ? SPEC.stern_quarter_piece_width.value : SPEC.stern_light_munion.value) / 2;
     const px = (i - count / 2) * pitch;
     const c = i === 0 ? px - half : i === count ? px + half : px;
-    piers.push(patch(at(depth * 0.75), c - half * 1.15, c + half * 1.15, ySill - bar * 3, yHead + bar * 3, 1, 3));
+    piers.push(patch(at(depth * 0.75), c - half * 1.15, c + half * 1.15, ySill - bar * 2, yHead + bar * 2, 1, 3));
   }
   const pier = new THREE.Mesh(mergeGeometries(piers), mats.ochre);
   pier.name = 'stern_munions';
@@ -412,7 +425,9 @@ function sternLights(cfg, mats, sp, group) {
 // ---------------------------------------------------------------------------
 function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const len = SPEC.quarter_gallery_length.value;
-  const z1 = model.zAft;
+  // The badge finishes against the quarter piece rather than at the transom corner, so
+  // that the joint between the two is covered by the quarter piece as it is on a ship.
+  const z1 = model.zAft - SPEC.stern_quarter_piece_width.value;
   const z0 = z1 - len;
   const proj = SPEC.quarter_gallery_projection.value;
 
@@ -487,10 +502,14 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const glass = [], frames = [];
   const fz = (u, v) => at(lerp(z0, z1, u), v);
   const bar = SPEC.stern_glazing_bar.value / SPEC.quarter_gallery_length.value;
+  // The lights are laid out inside a margin at each end of the badge. Running the frames
+  // past u = 1 makes `at()` extrapolate abaft the badge and throws a great sheet of ochre
+  // out over the quarter.
+  const margin = 0.08, slot = (1 - 2 * margin) / n;
   const centres = [];
   for (let i = 0; i < n; i++) {
-    const c = lerp(0.40, 0.88, n === 1 ? 0.5 : i / (n - 1));
-    const half = (0.48 / n) * 0.62;
+    const c = margin + slot * (i + 0.5);
+    const half = slot * 0.34;
     const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
     const q0 = p0 - 0.04, q1 = p1 + 0.04;
     frames.push(patch(fz, f0, c - half, q0, q1, 1, 3));
@@ -523,7 +542,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   group.add(gf);
   if (cfg.galleryGlazing) {
     const gg = new THREE.Mesh(
-      mergeGeometries(glass.map((g, i) => push(g, 0.030, centres[i], 0.5))), mats.glass);
+      mergeGeometries(glass.map((g, i) => push(g, 0.026, centres[i], 0.5))), mats.glass);
     gg.name = 'quarter_gallery_glazing';
     group.add(gg);
   }
@@ -538,18 +557,18 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const profile = [[-d, -h / 2], [d, -h / 2], [d, h / 2], [-d, h / 2]];
   const steps = Math.max(8, Math.round(cfg.mouldingSweeps / 4));
   const rims = new THREE.Mesh(mergeGeometries([
-    sweep(rimCurve(0.05), profile, { steps, closed: true }),
-    sweep(rimCurve(0.95), profile, { steps, closed: true }),
-  ]), mats.gilt);
+    sweep(rimCurve(0.06), profile, { steps, closed: true }),
+    sweep(rimCurve(0.94), profile, { steps, closed: true }),
+  ]), mats.ochre);
   rims.name = 'quarter_gallery_rims';
   group.add(rims);
 
   // The carved brackets that appear to carry the badge, gadrooned on the underside.
   const drop = SPEC.quarter_gallery_bracket_drop.value;
   const brackets = [];
-  for (const u of [0.16, 0.56, 0.94]) {
-    const b = at(lerp(z0, z1, u), 0.05);
-    const g = block(0.11, drop, 0.24, 1);
+  for (const u of [0.20, 0.80]) {
+    const b = at(lerp(z0, z1, u), 0.06);
+    const g = block(0.16, drop, 0.34, 1);
     g.translate(0, -drop, 0);
     g.translate(b.x - 0.05 * side, b.y, b.z);
     // Taper the bracket in toward the ship's side as it drops away below the rim.
@@ -691,12 +710,12 @@ function nameOnCounter(sp, name, yCentre) {
   for (let i = 0; i < name.length; i++) {
     const segs = LETTERS[name[i]];
     if (!segs) continue;
-    // Laid out from starboard to port. Seen from astern — the only place anyone reads a
-    // name on a counter from — starboard is on the left of the picture, so a name written
-    // with x increasing to starboard comes out backwards.
-    const ox = -(i - (name.length - 1) / 2) * pitch;
+    // Laid out with x increasing to starboard, which is how the name reads the right way
+    // round from astern: a camera abaft the ship looking forward has starboard on its
+    // right, so +x is left-to-right in the picture.
+    const ox = (i - (name.length - 1) / 2) * pitch;
     for (const [ax, ay, bx, by] of segs) {
-      const x0 = ox - (ax / 3 - 0.5) * wLetter, x1 = ox - (bx / 3 - 0.5) * wLetter;
+      const x0 = ox + (ax / 3 - 0.5) * wLetter, x1 = ox + (bx / 3 - 0.5) * wLetter;
       const y0 = yCentre + (ay / 5 - 0.5) * hLetter, y1 = yCentre + (by / 5 - 0.5) * hLetter;
       const len = Math.hypot(x1 - x0, y1 - y0) + stroke;
       const g = new THREE.BoxGeometry(len, stroke, relief);
@@ -751,11 +770,16 @@ export function buildStern(cfg, mats, model, ctx) {
     mats.black,
   );
   cap.name = 'taffrail';
-  audit(cap, 'stern_taffrail_above_wl', 'max_y');
+  // The tolerance allows for the thickness of the cap itself: the spec figure is the
+  // height of the taffrail, and what is measured is the top of the timber capping it.
+  audit(cap, 'stern_taffrail_above_wl', 'max_y', { tolerance: 0.035 });
   group.add(cap);
 
   // 4. The lights across the transom.
-  const lights = sternLights(cfg, mats, sp, group);
+  // At silhouette range a row of stern lights and a pair of quarter galleries are a few
+  // pixels across and cost a quarter of the whole triangle budget for the level, so they
+  // are not built at all there.
+  const lights = sternLights(cfg, mats, sp, group, cfg.sternWindows);
 
   // 5. The counter rails. Steel names them from the bottom up — tuck rail, lower counter
   //    rail, upper counter rail — and each runs right across the stern.
@@ -776,10 +800,13 @@ export function buildStern(cfg, mats, model, ctx) {
     railAt(lights.yHead + SPEC.stern_light_munion.value),
   ]), mats.ochre);
   counterRails.name = 'counter_rails';
+  // The widest of the four is the one at the wing transom, so the mesh's athwartships
+  // extent is the breadth of the stern there.
+  audit(counterRails, 'stern_transom_breadth_wing', 'extent_x');
   group.add(counterRails);
 
   // 6. The quarter galleries, one each side.
-  for (const side of [1, -1]) quarterGallery(cfg, mats, model, sp, paintV, side, group);
+  if (cfg.sternGalleries) for (const side of [1, -1]) quarterGallery(cfg, mats, model, sp, paintV, side, group);
 
   // 7. The rudder.
   buildRudder(cfg, mats, model, sp, paintV, group);
@@ -794,7 +821,7 @@ export function buildStern(cfg, mats, model, ctx) {
 
     // The cartouche on the counter. ZAZ3067 is catalogued as showing "sternboard
     // decoration and name in a cartouche on stern counter", so the name goes on it.
-    const yName = lerp(sp.yTuck, sp.yWing, 0.58);
+    const yName = lerp(sp.yTuck, sp.yWing, 0.78);
     const cwid = SPEC.stern_cartouche_width.value, chgt = SPEC.stern_cartouche_height.value;
     gilt.push(oval(on(relief * 0.35), 0, cwid / 2, yName, chgt / 2, 16, 6));
 

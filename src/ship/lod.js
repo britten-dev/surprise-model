@@ -54,6 +54,8 @@ const CONFIG = {
     // transom are lofted through, whether the carved and gilded work exists, and
     // whether the rudder gets its pintles and gudgeons.
     sternStations: 16,
+    sternWindows: true,
+    sternGalleries: true,
     sternOrnament: 'carved',
     rudderIrons: true,
     figurehead: 'carved',
@@ -125,6 +127,8 @@ const CONFIG = {
     belayingPins: false,
     galleryGlazing: true,
     sternStations: 9,
+    sternWindows: true,
+    sternGalleries: true,
     sternOrnament: 'simple',
     rudderIrons: true,
     figurehead: 'simple',
@@ -151,13 +155,18 @@ const CONFIG = {
   },
 
   distant: {
-    hullStations: 25,
+    // At silhouette range the ship is a few hundred pixels tall, so the whole level has
+    // to fit inside five thousand triangles. That is not much for a three-masted ship,
+    // and the way it is spent matters: the hull and the spars carry the silhouette, and
+    // everything else — ornament, ironwork, the fine work at the head and stern — is
+    // invisible and must go.
+    hullStations: 19,
     hullPoints: 16,
     sparSegments: 2,
-    sparRadial: 4,
+    sparRadial: 3,
     ropeRadial: 3,
     ropeSegments: 2,
-    latheSegments: 6,
+    latheSegments: 5,
 
     // At this range the rig is a smudge. Only the stays and the lower shrouds are
     // drawn, as lines, because without them the masts look like bare poles.
@@ -186,13 +195,15 @@ const CONFIG = {
     // At this range the stern is a shape, not a piece of joinery: the counter and the
     // transom still have to close the hull, but nothing is carved and the rudder is a
     // plain blade.
-    sternStations: 5,
+    sternStations: 3,
+    sternWindows: false,
+    sternGalleries: false,
     sternOrnament: 'none',
     rudderIrons: false,
     figurehead: 'none',
     headRails: false,
     headDetail: 'none',
-    headStations: 7,
+    headStations: 5,
     boats: 'block',
     boatStations: 7,
     boatPoints: 5,
@@ -205,7 +216,7 @@ const CONFIG = {
     flagHalliards: false,
     copperNails: false,
     sailSegments: [3, 2],
-    mouldingSweeps: 16,
+    mouldingSweeps: 12,
 
     textureSize: 256,
   },

@@ -143,7 +143,9 @@ function furledBundle(yard, cfg) {
     length: len,
     // Fat in the middle where the bulk of the canvas gathers, tapering to the arms.
     radiusAt: (t) => (d / 2) * (0.35 + 0.65 * Math.sin(Math.PI * clamp(t, 0, 1)) ** 0.6),
-    segments: Math.max(5, cfg.sparSegments), radial: Math.max(5, cfg.sparRadial - 2),
+    // A furled sail is a lumpy sausage, and at silhouette range it only has to be a
+    // thicker line along the yard, so it scales with the level like every other spar.
+    segments: Math.max(3, cfg.sparSegments + 1), radial: Math.max(3, cfg.sparRadial - 1),
   });
   g.translate(0, -len / 2, 0);
   g.rotateZ(Math.PI / 2);

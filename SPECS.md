@@ -333,14 +333,16 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `stern_wing_transom_above_wl` | 2.0574 | 6 ft 9 in | MEASURED | §6 wing transom at about 19.6 ft above the moulded base line |
 | `stern_upper_counter_above_wl` | 3.7084 | — | MEASURED | §6 stern profile point at 25.0 ft above the moulded base line |
 | `stern_taffrail_above_rail` | 1.5494 | — | MEASURED | §6 taffrail 29.5 ft above the moulded base line, rail line 24.4 ft |
-| `stern_taffrail_above_wl` | 5.08 | 16 ft 8 in | MEASURED | §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft |
-| `stern_wing_transom_abaft_tuck` | 0.6604 | — | MEASURED | §6 stern profile 128.7 ft aft of the FP at 20.3 ft above base, tuck at 126.5 ft |
-| `stern_upper_counter_abaft_tuck` | 1.3716 | — | MEASURED | §6 stern profile 131.0 ft aft of the FP at 25.0 ft above base |
-| `stern_taffrail_abaft_tuck` | 1.524 | — | MEASURED | §6 stern profile 131.5 ft aft of the FP at 30.3 ft above base |
+| `stern_taffrail_above_quarterdeck` | 0.5842 | — | MEASURED | §5/§6 taffrail 29.5 ft above the moulded base line; gun deck at side at the after perpendicular 20.90 ft, quarterdeck 6 ft 8 in above that at 27.57 ft |
+| `stern_taffrail_above_wl` | 5.08 | 16 ft 8 in | MEASURED | §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft. This is the figure the taffrail is built to; the height above the quarterdeck follows from it |
+| `stern_wing_transom_abaft_tuck` | 1.3716 | — | RECONSTRUCTED | §6 between the 2.2 ft of the measured profile points and the 7.7 ft of the counter-overhang bullet; least that carries the counter clear of the rudder head |
+| `stern_upper_counter_abaft_tuck` | 1.9812 | — | RECONSTRUCTED | §6 between the measured 4.5 ft and the summary bullets, on a fair curve between the wing transom and the taffrail |
+| `stern_taffrail_abaft_tuck` | 2.286 | — | RECONSTRUCTED | §6 between the measured 5.0 ft and the 10.5 ft of the taffrail-overhang bullet |
 | `stern_half_breadth_at_tuck` | 0.9144 | — | MEASURED | §6 tuck / lower counter at the post, 3.0 ft half-breadth |
 | `stern_half_breadth_wing_transom` | 2.8956 | — | MEASURED | §6 wing transom half-breadth 9.5 ft, 0.61 of the moulded breadth |
 | `stern_half_breadth_at_lights` | 3.048 | — | MEASURED | §6 stern at the window band, 10.0 ft half-breadth, 0.65 of the moulded breadth |
 | `stern_half_breadth_at_taffrail` | 2.1336 | — | RECONSTRUCTED | §6 taffrail half-breadth 7.0 ft, 0.45 of the moulded breadth, read off the same elevation |
+| `stern_transom_breadth_wing` | 5.7912 | — | MEASURED | §6 wing transom 19.0 ft across the stern elevation on the ZAZ3067 body plan |
 | `stern_round_aft_lower` | 0.1016 | — | RECONSTRUCTED | §12.2 Steel, round-aft of the lower counter rail; least at the bottom |
 | `stern_round_aft_upper` | 0.254 | — | RECONSTRUCTED | §12.2 Steel, round-aft increasing in proceeding upwards |
 | `stern_round_up_taffrail` | 0.2032 | — | RECONSTRUCTED | §12.2 Steel, the taffrail carries the most round-up of any stern rail |
@@ -397,6 +399,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `head_knee_top_above_rail` | 0 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the top of the knee under the hair bracket runs out level with the rail |
 | `head_knee_forward_at_deck` | 2.8956 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the cutwater's fore edge crossing the gun-deck line |
 | `head_knee_forward_at_waterline` | 1.2192 | — | RECONSTRUCTED | : the cutwater at the load waterline. The draught shows the stem raking aft below the water, which the traced offset table does not carry, so the fore edge is kept plumb over the hull's own forefoot here rather than crossing behind it |
+| `head_knee_upper_exponent` | 0.8 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: read off the upper edge of the knee |
 | `head_knee_length` | 3.81 | 12 ft 6 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the knee and stem together, from the aft face of the stem timber to the hair bracket — the fore-and-aft extent of the built piece |
 | `head_cheek_count` | 2 | — | SECONDARY | §6 Steel :1985, an upper and a lower cheek each side |
 | `head_cheek_sided` | 0.1524 | — | RECONSTRUCTED | §6 a cheek rather lighter than the knee it is bolted to |
@@ -405,6 +408,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `head_rail_count` | 3 | — | SECONDARY | §8 the reference photograph shows three rails curving up to the figurehead; Steel :4172 names four (lower, middle, main, upper) plus a false rail, so this is the photograph's reading of a four-rail arrangement |
 | `head_rail_sided` | 0.127 | — | SECONDARY | §6 Steel :41199, the false rail sided 5 in for a small ship |
 | `head_rail_moulded` | 0.1778 | — | RECONSTRUCTED | §6 a rail rather deeper than it is broad, as the draught draws them |
+| `head_rail_profile_exponent` | 1.25 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: fitted to four points on the lowest rail |
 | `head_rail_lower_aft_from_stem` | 0.3048 | 1 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the lowest rail runs into the ship's side within a foot of the stem, at about the gun-deck line |
 | `head_rail_lower_fore_above_rail` | 0.1524 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
 | `head_rail_lower_half_breadth` | 1.0668 | 3 ft 6 in | RECONSTRUCTED | : no plan view of the head is published; the widest point of the lowest rail, set inside the middle rail |
@@ -594,9 +598,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `skid_beam_moulded` | 0.1524 | — | RECONSTRUCTED | §6 research 06 deck-layout §8.2 |
 | `skid_beam_top_above_deck` | 1.9812 | 6 ft 6 in | RECONSTRUCTED | §6 from the reference photograph, in which the boats stand with their keels level with the gangways; research 06 §8.2 offers an unsourced 5 ft 0 in |
 | `skid_stanchion_square` | 0.127 | — | RECONSTRUCTED | §6 research 06 deck-layout §8.2, a stanchion under each end of each skid |
-| `hammock_crane_spacing` | 0.9144 | 3 ft 0 in | RECONSTRUCTED | §6 from the reference photograph, cranes about 3 ft apart along the rail |
+| `hammock_crane_spacing` | 0.6096 | 2 ft 0 in | RECONSTRUCTED | §6 counted off the reference photograph, in which the cranes stand close — nearer 2 ft apart than the 2 ft 6 in to 3 ft usually quoted |
 | `hammock_crane_height` | 0.6096 | 2 ft 0 in | RECONSTRUCTED | §6 from the reference photograph, standing about 2 ft above the cap rail |
-| `hammock_crane_diameter` | 0.0318 | 0 ft 1.3 in | RECONSTRUCTED | §6 wrought-iron crane |
+| `hammock_crane_diameter` | 0.0381 | 0 ft 1.5 in | RECONSTRUCTED | §6 the crane is drawn bright rather than blacked, because that is how the reference photograph shows it |
+| `hammock_rail_diameter` | 0.0508 | 0 ft 2 in | RECONSTRUCTED | §6 the rail run through the heads of the cranes, which the photograph shows as a light line along the top of them |
 | `hammock_crane_spread` | 0.3556 | — | RECONSTRUCTED | §6 the fork at the head of the crane, which carries the netting outboard of the rail |
 | `hammock_crane_run_from_stem` | 3.6576 | 12 ft 0 in | RECONSTRUCTED | §6 the cranes begin where the rail leaves the head |
 | `hammock_crane_run_short_of_stern` | 0.762 | — | RECONSTRUCTED | §6 the after run stops short of the taffrail |
@@ -799,15 +804,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `anchor_stock_hoop_count` | 4 | — | SECONDARY | §13.2 Steel :43226 — four iron hoops to each stock |
 | `anchor_stock_hoop_breadth` | 0.076 | 0 ft 3 in | SECONDARY | §13.2 Steel :43227, hoops 3 in broad |
 | `anchor_stock_hoop_thickness` | 0.016 | 0 ft 0.6 in | SECONDARY | §13.2 Steel :43228, hoops 5/8 in thick |
-| `anchor_cathead_from_stem` | 2.4384 | 8 ft 0 in | RECONSTRUCTED | §5.4/§13.3 research 06, cathead outer end (sheave centre) 8 ft abaft the stem |
-| `anchor_cathead_root_from_stem` | 3.6576 | 12 ft 0 in | RECONSTRUCTED | §5.4 research 06, cathead root at the cat beam, 12 ft abaft the stem |
-| `anchor_cathead_outboard_of_side` | 1.8288 | — | SECONDARY | §5.4 Steel :40065, length outboard, "sufficient to fit the anchor clear of the bow" |
-| `anchor_cathead_end_above_forecastle` | 0.762 | — | RECONSTRUCTED | §5.4 research 06, from 22.6 degrees of stive carried over 6 ft of cathead |
-| `anchor_cathead_moulded` | 0.3302 | — | SECONDARY | §5.4 Steel :40061, cathead moulded up and down |
 | `anchor_ring_below_cathead` | 0.6096 | — | RECONSTRUCTED | §13.3 the depth of a three-sheave cat block and its strop, hung under the cathead |
 | `anchor_crown_from_stem` | 7.3152 | 24 ft 0 in | RECONSTRUCTED | §13.3 research 06, crown and flukes bedded on the fore channel 24 ft abaft the stem |
-| `anchor_channel_above_port_head` | 0.1016 | — | RECONSTRUCTED | §13.3 the fore channel fitted just clear of the gunport heads — to be reconciled with the channels module |
-| `anchor_crown_outboard_of_side` | 0.4572 | — | RECONSTRUCTED | §13.3 the crown bedded a foot and a half outboard of the ship's side on the channel |
+| `anchor_crown_above_channel` | 0.1016 | — | RECONSTRUCTED | §13.3 the arm bearing on the channel, not sunk into it |
+| `anchor_crown_outboard_of_side` | 0.4572 | — | RECONSTRUCTED | §13.3 the crown bedded a foot and a half outboard of the ship's side, inside the channel's outer edge |
 | `anchor_stock_cant_deg` | 58 | — | RECONSTRUCTED | §PHOTO the stock canted outboard over the rail, read off the reference photograph |
 | `hawse_hole_count_per_side` | 2 | — | RECONSTRUCTED | §12 two hawse holes a side, the working hawse and the spare, as on every frigate of the rate |
 | `hawse_hole_first_from_stem` | 1.2192 | 4 ft 0 in | RECONSTRUCTED | §12 as far forward as the hawse pieces allow |
