@@ -16,7 +16,7 @@ const memo = (key, make) => {
 function canvas(size) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
-  return { c, g: c.getContext('2d') };
+  return { c, g: c.getContext('2d', { willReadFrequently: true }) };
 }
 
 function finish(c, { repeat = [1, 1], srgb = true, aniso = 8 } = {}) {
@@ -209,7 +209,7 @@ export function ropeTexture({ base = '#6b5a44', dark = '#4a3d2c', size = 128, se
  */
 export function normalFrom(sourceCanvas, strength = 1.6) {
   const size = sourceCanvas.width;
-  const src = sourceCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+  const src = sourceCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, size, size).data;
   const { c, g } = canvas(size);
   const out = g.createImageData(size, size);
   const lum = (x, y) => {

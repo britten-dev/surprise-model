@@ -1,47 +1,137 @@
-// The named camera stations used for verification renders. Angles are in degrees.
+// The named camera stations used for verification renders.
+//
 // `azimuth` is measured from dead ahead of the ship, turning to port; `elevation` is
-// above the waterline plane; `distance` is a multiple of the sparred length so the
-// framing survives a change to the ship's size.
+// above the waterline plane. `fill` is how much of the frame the ship takes up: 1.0
+// fits her bounding sphere exactly inside the field of view, so a close study is a
+// number well below 1 and a whole-ship view is a little above it. Framing that way
+// means a view keeps working when the ship changes size, and that the same view of the
+// full suit and of the furled state is shot from the same place.
 export const VIEWS = {
   // Matched to reference/surprise-reference.jpg: a museum model photographed from the
   // port bow, a little above deck level, the whole rig in frame.
-  reference: { azimuth: 148, elevation: 12, distance: 1.32, fov: 32, target: [0, 0.42, 0] },
+  reference: { azimuth: 148, elevation: 12, fill: 1.06, fov: 32, aim: [0, 0.46, 0] },
 
-  bow: { azimuth: 178, elevation: 8, distance: 1.15, fov: 34, target: [0, 0.40, 0] },
-  beam: { azimuth: 90, elevation: 6, distance: 1.20, fov: 32, target: [0, 0.45, 0] },
-  quarter: { azimuth: 42, elevation: 14, distance: 1.15, fov: 34, target: [0, 0.42, 0] },
-  stern: { azimuth: 2, elevation: 9, distance: 1.02, fov: 34, target: [0, 0.34, 0] },
-  masthead: { azimuth: 120, elevation: 46, distance: 0.78, fov: 40, target: [0, 0.70, 0] },
-  deck: { azimuth: 6, elevation: 3, distance: 0.30, fov: 55, target: [0, 0.30, -0.06] },
+  bow: { azimuth: 176, elevation: 9, fill: 1.04, fov: 34, aim: [0, 0.44, 0] },
+  beam: { azimuth: 90, elevation: 7, fill: 1.02, fov: 32, aim: [0, 0.48, 0] },
+  quarter: { azimuth: 42, elevation: 14, fill: 1.05, fov: 34, aim: [0, 0.46, 0] },
+  stern: { azimuth: 3, elevation: 10, fill: 1.02, fov: 34, aim: [0, 0.42, 0] },
+  masthead: { azimuth: 122, elevation: 44, fill: 0.80, fov: 40, aim: [0, 0.62, 0] },
+  deck: { azimuth: 8, elevation: 4, fill: 0.28, fov: 58, aim: [0, 0.24, -0.10] },
 
-  // Close studies, used when iterating on a specific area.
-  head: { azimuth: 158, elevation: 4, distance: 0.42, fov: 36, target: [0, 0.26, -0.34] },
-  gallery: { azimuth: 34, elevation: 5, distance: 0.36, fov: 36, target: [0, 0.26, 0.36] },
-  channels: { azimuth: 84, elevation: 4, distance: 0.40, fov: 36, target: [0, 0.30, 0] },
-  underwater: { azimuth: 118, elevation: -16, distance: 1.05, fov: 34, target: [0, -0.05, 0] },
+  // Close studies, used when iterating on one region.
+  head: { azimuth: 156, elevation: 5, fill: 0.30, fov: 36, aim: [0, 0.16, -0.40] },
+  gallery: { azimuth: 34, elevation: 6, fill: 0.26, fov: 36, aim: [0, 0.15, 0.42] },
+  channels: { azimuth: 84, elevation: 5, fill: 0.30, fov: 36, aim: [0, 0.17, 0] },
+  underwater: { azimuth: 118, elevation: -14, fill: 0.72, fov: 34, aim: [0, 0.02, 0] },
+  waist: { azimuth: 62, elevation: 26, fill: 0.42, fov: 40, aim: [0, 0.26, 0] },
 };
 
 /**
- * Place a camera at a named view. `size` is the model's bounding box so that the
- * distances above stay relative and no view needs retuning when the ship changes.
+ * Place a camera at a named view.
+ *
+ * @param camera
+ * @param view    one of VIEWS
+ * @param bounds  `{ radius, centre }` of the whole ship, which sets the distance
+ * @param frame   `{ length, height }` of the ship, which the aim point is a fraction of
  */
-export function applyView(camera, view, size, center = { x: 0, y: 0, z: 0 }) {
-  const span = Math.max(size.x, size.y, size.z);
+export function applyView(camera, view, bounds, frame) {
   const a = (view.azimuth * Math.PI) / 180;
   const e = (view.elevation * Math.PI) / 180;
-  const d = view.distance * span;
-  // The aim point is a fraction of the ship's own height, not of the longest span, so
-  // that a hull on its own and a fully rigged ship are both framed sensibly.
-  const tx = center.x + view.target[0] * span;
-  const ty = view.target[1] * size.y;
-  const tz = center.z + view.target[2] * span;
+  const fov = view.fov;
+
+  const tx = view.aim[0] * frame.length;
+  const ty = view.aim[1] * frame.height;
+  const tz = bounds.centre.z + view.aim[2] * frame.length;
+
+  // The exact distance at which every corner of the ship's bounding box is still inside
+  // the frame. A bounding sphere would do, but a square-rigged ship is long, thin and
+  // tall, so her sphere is far bigger than she is and framing on it leaves her a speck
+  // in the middle of the picture.
+  //
+  // For a corner at offset (right, up, toward-camera) = (p, q, r) from the aim point,
+  // the camera at distance D sees it at depth D - r, so it stays in frame when
+  // D >= r + |p| / tan(halfHorizontal) and D >= r + |q| / tan(halfVertical).
+  const vHalf = Math.tan((fov * Math.PI) / 360);
+  const hHalf = vHalf * camera.aspect;
+
+  const dir = [
+    Math.sin(a) * Math.cos(e),
+    Math.sin(e),
+    -Math.cos(a) * Math.cos(e),
+  ];
+  // Camera right and up, from the view direction and world up.
+  const rt = [dir[2], 0, -dir[0]];
+  const rl = Math.hypot(rt[0], rt[2]) || 1;
+  rt[0] /= rl; rt[2] /= rl;
+  const up = [
+    rt[1] * dir[2] - rt[2] * dir[1],
+    rt[2] * dir[0] - rt[0] * dir[2],
+    rt[0] * dir[1] - rt[1] * dir[0],
+  ];
+
+  let d = 0;
+  for (const c of bounds.corners) {
+    const o = [c.x - tx, c.y - ty, c.z - tz];
+    const p = o[0] * rt[0] + o[1] * rt[1] + o[2] * rt[2];
+    const q = o[0] * up[0] + o[1] * up[1] + o[2] * up[2];
+    const r = o[0] * dir[0] + o[1] * dir[1] + o[2] * dir[2];
+    d = Math.max(d, r + Math.abs(p) / hHalf, r + Math.abs(q) / vHalf);
+  }
+  d *= view.fill;
+
   camera.position.set(
     tx + Math.sin(a) * Math.cos(e) * d,
     ty + Math.sin(e) * d,
     tz - Math.cos(a) * Math.cos(e) * d
   );
-  camera.fov = view.fov;
+  camera.fov = fov;
+  camera.near = Math.max(0.05, d / 400);
+  camera.far = d * 12;
   camera.updateProjectionMatrix();
   camera.lookAt(tx, ty, tz);
   return { target: [tx, ty, tz] };
+}
+
+/**
+ * Work out the framing inputs from a built ship. The hull sets the aim point and the
+ * fore-and-aft centre, because a spanker boom or a braced yard sticking out would
+ * otherwise swing the camera about between one sail state and the next; the whole ship,
+ * rig included, sets the distance, because all of it has to be in frame.
+ */
+export function framingFor(THREE, ship) {
+  const whole = new THREE.Box3().setFromObject(ship);
+  const hullMesh = ship.getObjectByName('hull_shell') ?? ship;
+  const hullBox = new THREE.Box3().setFromObject(hullMesh);
+  const hullSize = hullBox.getSize(new THREE.Vector3());
+  const wholeSize = whole.getSize(new THREE.Vector3());
+  const centre = hullBox.getCenter(new THREE.Vector3());
+
+  // The points the framing is fitted to: the corners of every part's own bounding box,
+  // rather than of one box round the whole ship. The difference matters. A single box
+  // has a corner out at (widest, highest, furthest aft) which is empty air — the yards
+  // are wide but low, the masts are high but narrow — and fitting to it leaves the ship
+  // a third of the size she should be in frame.
+  const corners = [];
+  ship.traverse((o) => {
+    if (!o.isMesh && !o.isLineSegments) return;
+    const b = new THREE.Box3().setFromObject(o);
+    if (!isFinite(b.min.x) || b.isEmpty()) return;
+    for (const x of [b.min.x, b.max.x]) {
+      for (const y of [b.min.y, b.max.y]) {
+        for (const z of [b.min.z, b.max.z]) corners.push(new THREE.Vector3(x, y, z));
+      }
+    }
+  });
+  if (!corners.length) {
+    for (const x of [whole.min.x, whole.max.x]) {
+      for (const y of [whole.min.y, whole.max.y]) {
+        for (const z of [whole.min.z, whole.max.z]) corners.push(new THREE.Vector3(x, y, z));
+      }
+    }
+  }
+
+  return {
+    bounds: { corners, centre },
+    frame: { length: hullSize.z, height: wholeSize.y },
+  };
 }

@@ -6,7 +6,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { buildShip } from '/src/ship/index.js';
-import { VIEWS, applyView } from '/viewer/views.js';
+import { VIEWS, applyView, framingFor } from '/viewer/views.js';
 import { makeEnvironment, makeSea } from '/viewer/scene.js';
 
 const W = 1600, H = 1100;
@@ -52,11 +52,10 @@ window.setup = ({ lod = 'hero', sails = 'full', studio = false, sea = true } = {
 window.shoot = (viewName, overrides = {}) => {
   const view = { ...VIEWS[viewName], ...overrides };
   if (!view.azimuth && view.azimuth !== 0) throw new Error(`unknown view "${viewName}"`);
-  const box = new THREE.Box3().setFromObject(current);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  applyView(camera, view, size, { x: 0, y: 0, z: center.z });
+  const { bounds, frame } = framingFor(THREE, current);
+  applyView(camera, view, bounds, frame);
   renderer.render(window.SCENE, camera);
+  const size = new THREE.Box3().setFromObject(current).getSize(new THREE.Vector3());
   return { size: { x: size.x, y: size.y, z: size.z } };
 };
 

@@ -23,7 +23,7 @@ function hullPaintStrip(size = 1024, cfg) {
   const c = document.createElement('canvas');
   c.width = 8;
   c.height = size;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d', { willReadFrequently: true });
 
   // The bands, bottom (keel, V = 0) to top (rail, V = 1).
   const bands = [
@@ -58,7 +58,7 @@ function hullPaintStrip(size = 1024, cfg) {
   // decal; a real paint line has a brush edge.
   const soft = document.createElement('canvas');
   soft.width = 8; soft.height = size;
-  const sg = soft.getContext('2d');
+  const sg = soft.getContext('2d', { willReadFrequently: true });
   sg.filter = `blur(${Math.max(1, size / 900).toFixed(2)}px)`;
   sg.drawImage(c, 0, 0);
 
@@ -77,7 +77,7 @@ function hullPaintStrip(size = 1024, cfg) {
 function hullSurfaceStrip(size = 512) {
   const c = document.createElement('canvas');
   c.width = 8; c.height = size;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d', { willReadFrequently: true });
   const copperTop = V.waterline + PAINT.copper_line_above_wl_v.value;
   // glTF packs roughness in green and metalness in blue.
   const write = (a, b, rough, metal) => {
@@ -151,9 +151,12 @@ export function makeMaterials(cfg) {
       roughness: PAINT.sail.roughness,
       metalness: 0,
       side: THREE.DoubleSide,
+      // A little transmission gives a sail the glow it has with the sun behind it. Only
+      // a little: sails overlap three deep on this rig, and transmission is applied per
+      // surface, so a value that looks right on one sail turns the whole suit to gauze.
       transmission: cfg.textureSize > 256 ? PAINT.sail_transmission.value : 0,
-      thickness: 0.02,
-      ior: 1.1,
+      thickness: 0.06,
+      ior: 1.05,
     }),
 
     standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness, metalness: 0 }),
@@ -213,7 +216,7 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
   const read = (src) => {
     const c = document.createElement('canvas');
     c.width = c.height = size;
-    const g = c.getContext('2d');
+    const g = c.getContext('2d', { willReadFrequently: true });
     g.drawImage(src, 0, 0, size, size);
     return g.getImageData(0, 0, size, size).data;
   };
@@ -222,7 +225,7 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
 
   const out = document.createElement('canvas');
   out.width = out.height = size;
-  const g = out.getContext('2d');
+  const g = out.getContext('2d', { willReadFrequently: true });
   g.drawImage(paintTex.image, 0, 0, size, size);
   const img = g.getImageData(0, 0, size, size);
   const d = img.data;

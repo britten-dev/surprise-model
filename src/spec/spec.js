@@ -115,8 +115,8 @@ export const PAINT = {
   copper_dark: { hex: '#3E2418', roughness: 0.75, source: 'SECONDARY §8 cupric oxide in the sheet laps' },
   copper_line_above_wl_v: { value: 0.055, source: 'RECONSTRUCTED §8 sheathing carried 2 ft 6 in to 3 ft above the load waterline, expressed in the hull V coordinate' },
 
-  ochre_strake_below_sill_v: { value: 0.028, source: 'RECONSTRUCTED photo analysis; the ochre strake starts below the port sills' },
-  ochre_strake_above_head_v: { value: 0.012, source: 'RECONSTRUCTED photo analysis; the strake finishes just above the port heads' },
+  ochre_strake_below_sill_v: { value: 0.008, source: 'MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads' },
+  ochre_strake_above_head_v: { value: 0.008, source: 'MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base' },
 
   deck: { hex: '#C9BCA4', roughness: 0.72, source: 'SECONDARY §8 holystoned deck planking' },
   deck_seam: { hex: '#3A332A', roughness: 0.8, source: 'SECONDARY §8 pitched caulking' },
@@ -132,7 +132,11 @@ export const PAINT = {
 
   sail: { hex: '#D6CDB6', roughness: 0.85, source: 'SECONDARY §8 weathered flax; the photo samples #ddd6c4 lit and #a89880 shaded' },
   sail_seam: { hex: '#C6BDA7', roughness: 0.88, source: 'SECONDARY §8 seams between cloths' },
-  sail_transmission: { value: 0.34, source: 'SECONDARY §8 thin flax canvas is markedly translucent with the sun behind it' },
+  // Canvas is translucent with the sun behind it, but only just: at 0.34 the whole rig
+  // turns to gauze and you can read the far side of the ship through three sails. The
+  // value here is what makes a sail glow when backlit while still hiding what is behind
+  // it, which is what the reference photograph shows.
+  sail_transmission: { value: 0.06, source: 'RECONSTRUCTED §8 flax canvas is translucent backlit; tuned against the reference photograph, in which the sails are opaque' },
 
   rigging_tarred: { hex: '#2A211A', roughness: 0.85, source: 'SECONDARY §8 standing rigging, tarred hemp' },
   rigging_hemp: { hex: '#A89574', roughness: 0.90, source: 'SECONDARY §8 running rigging, untarred hemp' },

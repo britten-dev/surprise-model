@@ -52,7 +52,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildShip, LODS, SAIL_STATES } from '/src/ship/index.js';
-import { VIEWS, applyView } from '/viewer/views.js';
+import { VIEWS, applyView, framingFor } from '/viewer/views.js';
 import { makeEnvironment, makeSea } from '/viewer/scene.js';
 
 const canvas = document.getElementById('c');
@@ -166,10 +166,8 @@ function showStats(key) {
 }
 
 function goToView(name) {
-  const box = new THREE.Box3().setFromObject(ship);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const { target } = applyView(camera, VIEWS[name], size, { x: 0, y: 0, z: center.z });
+  const { bounds, frame } = framingFor(THREE, ship);
+  const { target } = applyView(camera, VIEWS[name], bounds, frame);
   controls.target.set(...target);
   controls.update();
 }
