@@ -88,6 +88,22 @@
     "source": "SECONDARY §6 research 06-deck-layout §5.4, catheads: twice cathead_outer_half_breadth, the athwartships span over the two outer ends"
   },
   {
+    "key": "crew_count",
+    "metric": "count",
+    "expected": 13,
+    "actual": 13,
+    "tolerance": 0.34,
+    "source": "RECONSTRUCTED §9 the watch on deck of a frigate with a company of about two hundred, in weather that has driven everyone else below: two at the wheel, two officers, seven of the watch and two in the main top"
+  },
+  {
+    "key": "crew_figure_height",
+    "metric": "extent_y",
+    "expected": 1.6764000000000001,
+    "actual": 1.6887251728597494,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §9 the average height of a British seaman in the 1790s, from the surviving Marine and Navy muster descriptions. This is the number that gives the ship her scale"
+  },
+  {
     "key": "cutter_length",
     "metric": "extent_z",
     "expected": 5.486400000000001,

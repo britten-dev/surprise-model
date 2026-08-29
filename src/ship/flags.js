@@ -194,7 +194,53 @@ function buntingMaterial(mats, fieldKey, canvasEl) {
  * cannot move: the sag of the fly under the weight of wet wool, the long wave running
  * down the cloth, and the shortening that the wave itself takes up.
  */
-function flagGeometry({ dir, fly, hoist, tipHoist, segsU, segsV, phase }) {
+function flagGeometry(params) {
+  const g = new THREE.BufferGeometry();
+  // The parameters travel with the geometry, because a flag is the one part of this ship
+  // that is rebuilt after it is built: `poseFlag` re-evaluates this same surface at a
+  // later phase every frame, and it needs to know what the flag is.
+  g.userData.flag = { ...params };
+  const { segsU, segsV } = params;
+  const pos = new Float32Array((segsU + 1) * (segsV + 1) * 3);
+  const uvs = new Float32Array((segsU + 1) * (segsV + 1) * 2);
+  const idx = [];
+  const w = segsV + 1;
+  for (let i = 0; i < segsU; i++) {
+    for (let j = 0; j < segsV; j++) {
+      const a = i * w + j, b = a + 1, c = a + w, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+  }
+  for (let i = 0; i <= segsU; i++) {
+    for (let j = 0; j <= segsV; j++) {
+      const k = i * w + j;
+      // The canvas is drawn hoist-left, head-up; canvas V runs the other way from UV V.
+      uvs[k * 2] = i / segsU;
+      uvs[k * 2 + 1] = 1 - j / segsV;
+    }
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  g.setIndex(idx);
+  poseFlag(g, params.phase);
+  return g;
+}
+
+/**
+ * Write the flag's surface into its own position attribute at a given phase of the wave.
+ *
+ * This is the whole of a flying flag. The wave that used to be frozen into the geometry
+ * at build time is the same wave; all that changes at runtime is the phase, and running
+ * the phase forward is what makes the ensign fly instead of standing out to leeward like
+ * a piece of sheet metal.
+ *
+ * It is done on the processor and not in a shader on purpose. A flag is a hundred and
+ * fifty vertices, three of them fly on this ship, and the exact surface is worth more
+ * than the microsecond: a shader approximation of this would have to guess at the sag and
+ * the shortening, and both of them are what make a flag read as cloth.
+ */
+export function poseFlag(geometry, phase) {
+  const { dir, fly, hoist, tipHoist, segsU, segsV } = geometry.userData.flag;
   const ef = dir.clone().setY(0).normalize();
   const eh = new THREE.Vector3(0, -1, 0);
   const en = new THREE.Vector3().crossVectors(ef, eh).normalize();
@@ -207,7 +253,9 @@ function flagGeometry({ dir, fly, hoist, tipHoist, segsU, segsV, phase }) {
   const grow = S('flag_wave_growth_exponent');
   const harm = S('flag_wave_harmonic');
 
-  const pos = [], uvs = [], idx = [];
+  const pos = geometry.attributes.position;
+  const w = segsV + 1;
+  const p = new THREE.Vector3();
   for (let i = 0; i <= segsU; i++) {
     const u = i / segsU;
     const along = u * fly * (1 - slack * u);
@@ -222,28 +270,16 @@ function flagGeometry({ dir, fly, hoist, tipHoist, segsU, segsV, phase }) {
         Math.sin(k * along + skew * v * Math.PI * 2 + phase)
         + harm * Math.sin(2 * k * along + phase)
       );
-      const p = new THREE.Vector3()
+      p.set(0, 0, 0)
         .addScaledVector(ef, along)
         .addScaledVector(eh, across)
         .addScaledVector(en, wave);
-      pos.push(p.x, p.y, p.z);
-      // The canvas is drawn hoist-left, head-up; canvas V runs the other way from UV V.
-      uvs.push(u, 1 - v);
+      pos.setXYZ(i * w + j, p.x, p.y, p.z);
     }
   }
-  const w = segsV + 1;
-  for (let i = 0; i < segsU; i++) {
-    for (let j = 0; j < segsV; j++) {
-      const a = i * w + j, b = a + 1, c = a + w, d = c + 1;
-      idx.push(a, c, b, b, c, d);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 // -------------------------------------------------------------------- the build

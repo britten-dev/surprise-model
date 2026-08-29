@@ -50,6 +50,7 @@
   <label>Detail</label><div class="seg" id="lod"></div>
   <label>Canvas</label><div class="seg" id="sails"></div>
   <label>Display</label><div class="seg" id="disp"></div>
+  <label>Weather</label><div class="seg" id="weather"></div>
   <label>Download</label><div class="seg" id="dl"></div>
   <div class="sub" style="margin:6px 0 0;font-size:10px;line-height:1.45">
     The ship is generated in your browser from the source in this page. The files below
@@ -65,7 +66,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildShip, LODS, SAIL_STATES } from '/src/ship/index.js';
 import { VIEWS, applyView, framingFor } from '/viewer/views.js';
-import { makeEnvironment, makeSea } from '/viewer/scene.js';
+import { makeEnvironment, makeSea, makeStormSea } from '/viewer/scene.js';
+import { createMotion } from '/src/ship/motion.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -76,9 +78,14 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-const { scene } = makeEnvironment(renderer, { studio: false });
-const sea = makeSea();
-scene.add(sea);
+// Two scenes, not one: the fine-weather rig this viewer has always had, and the gale the
+// ship is actually built for. They are separate THREE.Scenes because the light rigs are
+// different objects, and swapping a light rig in place is a way of ending up with both.
+const envs = { fair: makeEnvironment(renderer, { studio: false }), storm: makeEnvironment(renderer, { storm: true }) };
+const seas = { fair: Object.assign(makeSea(), { name: 'sea' }), storm: makeStormSea() };
+envs.fair.scene.add(seas.fair);
+envs.storm.scene.add(seas.storm);
+let scene = envs.fair.scene;
 
 const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 3000);
 const controls = new OrbitControls(camera, canvas);
@@ -86,9 +93,14 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.maxDistance = 400;
 
-const state = { lod: 'hero', sails: 'full', wire: false, grid: false, ref: false };
+const state = { lod: 'hero', sails: 'full', wire: false, grid: false, ref: false, weather: false };
 const cache = new Map();
 let ship = null;
+let motion = null;
+// The helm, worked by hand from the keyboard, because the one thing that proves the
+// motion layer is wired to something is being able to put the wheel over and watch two
+// men and a rudder follow it.
+let helm = 0, helmWanted = 0;
 
 function seg(id, items, get, set) {
   const el = document.getElementById(id);
@@ -103,7 +115,7 @@ function seg(id, items, get, set) {
   el._get = get;
 }
 function paintSegs() {
-  for (const id of ['lod', 'sails', 'disp']) {
+  for (const id of ['lod', 'sails', 'disp', 'weather']) {
     const el = document.getElementById(id);
     for (const b of el.children) b.setAttribute('aria-pressed', String(el._get(b.dataset.value)));
   }
@@ -114,6 +126,9 @@ seg('sails', SAIL_STATES.map((v) => ({ label: v, value: v })), (v) => state.sail
 const DISPLAY_TOGGLES = [
   { label: 'wire', value: 'wire' }, { label: 'grid', value: 'grid' }, { label: 'photo', value: 'ref' },
 ];
+seg('weather', [{ label: 'fine', value: false }, { label: 'gale', value: true }],
+  (v) => state.weather === (v === 'true'),
+  (v) => { state.weather = v === true || v === 'true'; setWeather(); });
 // The photo overlay only exists for whoever has put their own copy of the reference
 // photograph in reference/. Ask for it once; if it is not there, drop the button.
 fetch('/reference/surprise-reference.jpg', { method: 'HEAD' })
@@ -168,17 +183,32 @@ for (const name of Object.keys(VIEWS)) {
 const grid = new THREE.GridHelper(120, 120, 0x35506a, 0x1e2c3a);
 grid.visible = false;
 grid.position.y = 0.001;
-scene.add(grid);
+envs.fair.scene.add(grid);
+
+/**
+ * Swap between the fine day and the gale.
+ *
+ * The ship is moved between the two scenes rather than duplicated, and her motion layer
+ * is thrown away and rebuilt with her, because the layer patches her materials and a
+ * ship that is not in the weather should be wearing the materials she was built with.
+ */
+function setWeather() {
+  scene = state.weather ? envs.storm.scene : envs.fair.scene;
+  grid.parent?.remove(grid);
+  scene.add(grid);
+  rebuild(true);
+}
 
 function applyWire() {
   if (!ship) return;
   ship.traverse((o) => { if (o.isMesh) o.material.wireframe = state.wire; });
 }
 
-function rebuild() {
+function rebuild(moved = false) {
   try {
     const key = `${state.lod}/${state.sails}`;
-    if (ship) scene.remove(ship);
+    if (ship) ship.parent?.remove(ship);
+    if (motion) { motion.dispose(); motion = null; }
     if (!cache.has(key)) {
       const t0 = performance.now();
       const g = buildShip({ lod: state.lod, sails: state.sails });
@@ -186,7 +216,13 @@ function rebuild() {
       cache.set(key, { g, ms: performance.now() - t0 });
     }
     ship = cache.get(key).g;
+    ship.position.set(0, 0, 0);
+    ship.rotation.set(0, 0, 0);
     scene.add(ship);
+    if (state.weather) {
+      ship.rotation.order = 'YXZ';
+      motion = createMotion(ship);
+    }
     applyWire();
     showStats(key);
   } catch (e) {
@@ -240,7 +276,44 @@ rebuild();
 paintSegs();
 resize();
 goToView('reference');
-renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+// Her own motion in the water. It belongs to the host in a game — this model has none of
+// its own and says so — but the viewer has to float her on something to judge her, and a
+// ship standing on a flat plane cannot be judged at all.
+addEventListener('keydown', (e) => {
+  if (e.key === 'a' || e.key === 'ArrowLeft') helmWanted = -1;
+  if (e.key === 'd' || e.key === 'ArrowRight') helmWanted = 1;
+  if (e.key === ' ') helmWanted = 0;
+});
+
+const clock = new THREE.Clock();
+let t = 0;
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(0.05, clock.getDelta());
+  t += dt;
+  controls.update();
+  if (state.weather && ship) {
+    const seaMesh = seas.storm;
+    seaMesh.userData.uniforms.uTime.value = t;
+    // Sampled at the bow, the quarter and each beam, exactly as a host would: the ship
+    // takes her trim from the water under her, not from a clock.
+    const h = seaMesh.userData.heightAt;
+    const L = 13, B = 4.6;
+    const fwd = h(0, -L, t), aft = h(0, L, t), port = h(-B, 0, t), stbd = h(B, 0, t);
+    ship.position.y = (fwd + aft + port + stbd) / 4;
+    ship.rotation.x = Math.atan2(aft - fwd, 2 * L);
+    ship.rotation.z = Math.atan2(stbd - port, 2 * B) * 1.35;
+    seaMesh.userData.followShip(ship);
+    helm += (helmWanted - helm) * Math.min(1, dt * 2.2);
+    motion?.update(t, {
+      windSpeed: 24, windDeg: 155,
+      heel: ship.rotation.z, pitch: ship.rotation.x,
+      helm,
+      // A sea comes aboard when she buries her bow, and she dries out afterwards.
+      spray: fwd < -1.6 ? 1 : 0,
+    });
+  }
+  renderer.render(scene, camera);
+});
 
 // So that automated checks can wait for the page rather than guess at a delay, and so
 // that the camera and the scene can be inspected from the console.

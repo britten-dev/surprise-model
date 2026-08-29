@@ -10,7 +10,7 @@
 // strake exactly where they belong at every station, and it means any other part of the
 // generator can ask "where is the wale at this station" and get an answer.
 import * as THREE from 'three';
-import { SPEC, OFFSETS } from '../spec/spec.js';
+import { SPEC, PAINT, OFFSETS } from '../spec/spec.js';
 
 const KEEL_HALF_SIDING = 0.168;
 import { monotoneCubic, naturalCubic } from '../util/interp.js';
@@ -340,7 +340,7 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
   const geom = loftSections(sections, {
     mirror: true,
     skipQuad,
-    uv: (u, v) => [u * SPEC.hull_length_gundeck.value / 3.0, v],
+    uv: (u, v) => [u * SPEC.hull_length_gundeck.value / PAINT.hull_map_metres.value, v],
   });
   const hull = new THREE.Mesh(geom, mats.hull);
   hull.name = 'hull_shell';

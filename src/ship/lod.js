@@ -89,7 +89,17 @@ const CONFIG = {
     flags: 'full',
     flagSegments: [20, 10],
     flagHalliards: true,
+    // The watch on deck. 'full' is the whole watch including the two hands in the main
+    // top; 'principal' keeps the men on deck, where the eye is, and leaves the top
+    // empty; false is an empty ship. What they are for is scale — see src/ship/crew.js —
+    // so the level at which they are dropped is the level at which nothing is close
+    // enough to need scaling.
+    crew: 'full',
     copperNails: true,
+    // Whether the hull has a normal map at all. The sheathing's laps and the plank seams
+    // are the only relief on a surface that is otherwise perfectly smooth, and a hull
+    // with none of it is the flattest thing in the scene.
+    hullRelief: true,
     sailSegments: [14, 10],
     mouldingSweeps: 96,
 
@@ -151,7 +161,11 @@ const CONFIG = {
     flags: 'principal',
     flagSegments: [12, 6],
     flagHalliards: true,
+    crew: 'principal',
     copperNails: false,
+    // The plank seams still catch the light at gameplay range; the copper's nails do not,
+    // and they cost a second full pass of the sheathing generator.
+    hullRelief: true,
     sailSegments: [8, 6],
     mouldingSweeps: 48,
 
@@ -219,7 +233,9 @@ const CONFIG = {
     flags: 'ensign',
     flagSegments: [4, 2],
     flagHalliards: false,
+    crew: false,
     copperNails: false,
+    hullRelief: false,
     sailSegments: [3, 2],
     mouldingSweeps: 12,
 
@@ -233,8 +249,17 @@ export function lodConfig(lod) {
   return c;
 }
 
+// The budget, and the one place it is written. tools/build.js imports it rather than
+// keeping a copy, because two copies of a budget is one budget and one lie.
+//
+// The game level was raised from 60 k to 80 k when the watch came aboard. That is a real
+// cost to a host that also carries a wave field, spume and cloud, and it was taken
+// deliberately: thirteen figures are about four thousand triangles and they are what give
+// the ship her scale, which no amount of ornament does. A host that cannot afford it has
+// the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
+// 'none' — in that order.
 export const TRI_BUDGET = {
   hero: [200000, 500000],
-  game: [30000, 60000],
+  game: [30000, 80000],
   distant: [1500, 5000],
 };

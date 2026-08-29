@@ -7,7 +7,8 @@
 import * as THREE from 'three';
 import { buildShip } from '/src/ship/index.js';
 import { VIEWS, applyView, framingFor } from '/viewer/views.js';
-import { makeEnvironment, makeSea } from '/viewer/scene.js';
+import { makeEnvironment, makeSea, makeStormSea } from '/viewer/scene.js';
+import { createMotion } from '/src/ship/motion.js';
 
 // Four by three, the same shape as the reference photograph, so that the verification
 // render and the photograph can be laid side by side without either being letterboxed.
@@ -29,24 +30,52 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const camera = new THREE.PerspectiveCamera(35, W / H, 0.05, 2000);
 
-let current = null, currentKey = null, env = null, envStudio = null;
+let current = null, currentKey = null, motion = null;
+const envs = {};
 
-function ensureEnv(studio) {
-  if (studio) return (envStudio ??= makeEnvironment(renderer, { studio: true }));
-  return (env ??= makeEnvironment(renderer, { studio: false }));
+function ensureEnv(kind) {
+  return (envs[kind] ??= makeEnvironment(renderer, { studio: kind === 'studio', storm: kind === 'storm' }));
 }
 
-window.setup = ({ lod = 'hero', sails = 'full', studio = false, sea = true } = {}) => {
-  const key = JSON.stringify({ lod, sails, studio, sea });
+window.setup = ({ lod = 'hero', sails = 'full', studio = false, storm = false, sea = true,
+                 time = 12.5, state = {} } = {}) => {
+  const kind = storm ? 'storm' : studio ? 'studio' : 'sea';
+  const key = JSON.stringify({ lod, sails, kind, sea, time, state });
   if (key === currentKey) return;
-  const { scene } = ensureEnv(studio);
+  const { scene } = ensureEnv(kind);
   if (current) scene.remove(current);
+  if (motion) { motion.dispose(); motion = null; }
   current = buildShip({ lod, sails });
   current.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(current);
+
   const seaMesh = scene.getObjectByName('sea');
-  if (sea && !seaMesh) { const m = makeSea(); m.name = 'sea'; scene.add(m); }
-  if (!sea && seaMesh) scene.remove(seaMesh);
+  if (seaMesh) scene.remove(seaMesh);
+  if (sea) scene.add(storm ? makeStormSea() : Object.assign(makeSea(), { name: 'sea' }));
+
+  // A still frame of a moving ship. The verification renders have to be repeatable, so
+  // the clock is not started — it is set once, to a stated instant, and everything that
+  // moves is asked where it is at that instant. Change `time` and you get a different
+  // frame of the same motion; leave it and two runs give the same picture.
+  if (storm) {
+    const sea3 = scene.getObjectByName('sea');
+    if (sea3?.userData.uniforms) sea3.userData.uniforms.uTime.value = time;
+    const attitude = { heel: -0.16, pitch: 0.05, windSpeed: 24, windDeg: 155, helm: -0.35, spray: 0.6, ...state };
+    // She sits in the sea rather than on it: her own trim comes from the water under her
+    // bow and her quarter, which is the whole difference between a ship and a model of
+    // one standing on a mirror.
+    if (sea3?.userData.heightAt) {
+      const h = sea3.userData.heightAt(0, 0, time);
+      current.position.y = h;
+    }
+    current.rotation.order = 'YXZ';
+    current.rotation.z = attitude.heel;
+    current.rotation.x = attitude.pitch;
+    motion = createMotion(current);
+    motion.update(time, attitude);
+    current.updateMatrixWorld(true);
+    sea3?.userData.followShip?.(current);
+  }
   currentKey = key;
   window.SCENE = scene;
 };

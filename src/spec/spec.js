@@ -168,6 +168,8 @@ export const PAINT = {
   // they decide whether the sheathing has relief or is a printed pattern.
   copper_lap_relief: { value: 0.34, source: 'RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation' },
   copper_nail_relief: { value: 0.55, source: 'RECONSTRUCTED §8 a raised nail head; tuned so the nails catch the sun at beam distance' },
+  hull_map_metres: { value: 3.0, source: 'RECONSTRUCTED §8 how many metres of the ship\'s side one width of the hull map covers. It is what makes the planking read at the right size, and it is also the unit the weathering counts in: a streak drawn once in the map is drawn thirteen times along her' },
+  hull_plank_relief: { value: 0.55, source: 'RECONSTRUCTED §8 how much of the planking\'s own light and shade is read as height for the normal map. At 1.0 every board stands a hand\'s breadth proud of the one beside it; this is the strength at which a seam catches the sun and a plank does not' },
   hull_normal_scale: { value: 1.15, source: 'RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance' },
   copper_pattern_depth: { value: 0.62, source: 'RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance' },
   copper_sheet_variation: { value: 0.16, source: 'RECONSTRUCTED §8 no two sheets weather alike, and it is the spread between them that stops the bottom reading as one printed panel' },
@@ -212,6 +214,52 @@ export const PAINT = {
   ensign_blue: { hex: '#22375E', roughness: 0.9, source: 'SECONDARY §8 blue ensign bunting, desaturated from the Flag Institute blue' },
   ensign_red: { hex: '#A32D34', roughness: 0.9, source: 'SECONDARY §8 bunting red' },
   ensign_white: { hex: '#E8E2D4', roughness: 0.9, source: 'SECONDARY §8 bunting white' },
+
+  // ----------------------------------------------------------------- the people
+  // Slop clothing, issued from the purser's store, and an officer's coat. Both are dull
+  // on purpose. Twelve figures in bright colours would be the first thing seen of the
+  // whole ship, and what they are for is scale, not decoration.
+  slop_tarpaulin: { hex: '#3A342B', roughness: 0.88, source: 'RECONSTRUCTED §9 a seaman\'s foul-weather rig is canvas soaked in tar and oil: near-black, and darker still when it is wet, which on this ship it always is' },
+  officer_coat: { hex: '#1E2A44', roughness: 0.82, source: 'RECONSTRUCTED §9 undress blue coat, faded by sun and salt from the deep indigo of a new one' },
+
+  // ------------------------------------------------------------------ weathering
+  // What the sea does to her. These are not evidence in the way the rows above are —
+  // no photograph of a museum model can show a year of the Southern Ocean — so they are
+  // graded RECONSTRUCTED and they are kept apart from the pigments on purpose: they are
+  // drawn as a separate overlay in src/ship/weathering.js and composited on top, so that
+  // a stain invented here can never move a colour that was read off the reference.
+  //
+  // The strengths are the whole of the tuning. Every one of them was set by rendering
+  // the beam view and asking the same question: does she look like a ship that has been
+  // at sea, or does she look like a ship somebody has drawn dirt on.
+  weather_rust: { hex: '#7A3A18', source: 'RECONSTRUCTED §8 wet iron oxide on paint: redder and darker than dry rust, which is what runs from a chain bolt in a seaway' },
+  weather_rust_alpha: { value: 0.42, source: 'RECONSTRUCTED §8 strong enough to read on a black topside at gameplay range; above about 0.55 the ship looks derelict rather than used' },
+  weather_salt: { hex: '#C6C2B4', source: 'RECONSTRUCTED §8 dried salt: not white, but a grey-buff bloom that takes the depth out of black paint' },
+  weather_salt_alpha: { value: 0.20, source: 'RECONSTRUCTED §8 enough to lift the topsides where the sea has been over them and leave the rail dark' },
+  weather_slime: { hex: '#2C3524', source: 'RECONSTRUCTED §8 weed and slime in the wind-and-water band, green-black rather than green' },
+  weather_slime_alpha: { value: 0.55, source: 'RECONSTRUCTED §8 the dirtiest line on the ship, and the single strongest cue that a hull has been floating rather than standing on a bench' },
+  weather_slime_band_v: { value: 0.075, source: 'RECONSTRUCTED §8 how far above the copper line and below the load line the wind-and-water band reaches, as a fraction of the hull\'s paint coordinate. A ship in a seaway wets a band far wider than her still waterline' },
+  weather_verdigris: { hex: '#4C6B4E', source: 'RECONSTRUCTED §8 copper goes brown within weeks and mottled green within a commission; without this the sheathing reads as brick-red paint' },
+  weather_verdigris_alpha: { value: 0.26, source: 'RECONSTRUCTED §8 mottled, not covered — the bottom must still read as metal, and metal is what the metalness map says it is' },
+  weather_grime: { hex: '#231D16', source: 'RECONSTRUCTED §8 the black wash off a wet ship: tar, soot from the galley funnel, and dirt' },
+  weather_grime_alpha: { value: 0.30, source: 'RECONSTRUCTED §8 weaker than the rust and there is much more of it' },
+  weather_streak_density: { value: 1.1, source: 'RECONSTRUCTED §8 streaks per texel of texture width, scaled per line of ironwork. Tuned so that the streaks read as many at a distance and as individual runs from alongside' },
+  weather_deck_wet: { hex: '#4A4335', source: 'RECONSTRUCTED §8 wet deck planking is several times darker than dry, and a deck in a gale is wet' },
+  weather_deck_wet_alpha: { value: 0.34, source: 'RECONSTRUCTED §8 patchy rather than uniform; a uniformly wet deck is as flat-looking as a uniformly dry one' },
+  weather_deck_bleach_alpha: { value: 0.16, source: 'RECONSTRUCTED §8 the pale patches the holystone leaves, which are what make the dark ones read as wet' },
+  weather_sail_stain: { hex: '#8C7F63', source: 'RECONSTRUCTED §8 water staining and general dirt in old flax canvas' },
+  weather_sail_stain_alpha: { value: 0.13, source: 'RECONSTRUCTED §8 enough that no two square feet of a sail are the same colour' },
+  weather_mildew: { hex: '#5B5540', source: 'RECONSTRUCTED §8 mildew in canvas handed wet, worst at the foot' },
+  weather_sail_patch: { hex: '#CFC7B0', source: 'RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker' },
+  weather_sail_patch_alpha: { value: 0.16, source: 'RECONSTRUCTED §8 visible as a change of cloth at a cable\'s distance, not as a white rectangle' },
+  weather_sail_variants: { value: 2, source: 'RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator' },
+
+  // How wet she is. Unlike everything else here this is not baked into a map: it is a
+  // uniform the motion layer drives, because a ship running in a gale is wet where the
+  // sea has just been over her and drying everywhere else, and that line moves.
+  wet_darken: { value: 0.55, source: 'RECONSTRUCTED §8 wet paint and wet timber are about half the brightness of dry; measured off any photograph of a ship in a seaway' },
+  wet_roughness: { value: 0.13, source: 'RECONSTRUCTED §8 a film of water is nearly smooth, and the specular sheet it puts on the topsides is what actually says "wet" — the darkening alone reads as a repaint' },
+  wet_line_v: { value: 0.80, source: 'RECONSTRUCTED §8 how far up the hull\'s paint coordinate the sea reaches when she is running hard: to about the sheer strake, which is where the rail begins' },
 
   // ----------------------------------------------------------------- the light
   // The rows above are pigments; these are the light they are seen in, and they belong
@@ -266,6 +314,36 @@ export const PAINT = {
   sea_surface_colour: { hex: '#153549', source: 'RECONSTRUCTED §8 deep water on a sunny day, dark enough that a black hull still reads against it' },
   sea_surface_roughness: { value: 0.40, source: 'RECONSTRUCTED §8 a light chop rather than a mirror; at 0.16 the sun\'s path across the water came back as a hard white wall' },
   sea_surface_env_intensity: { value: 0.42, source: 'RECONSTRUCTED §8 the water is held back from the environment so that warming the sky for the ship\'s sake does not bleach the sea' },
+
+  // ------------------------------------------------------------------- the storm
+  // A third light rig. The studio rig reproduces the reference photograph and the sea rig
+  // is a fine day; this is the weather the ship is actually built for, and it is a
+  // different problem from either. In a Southern Ocean gale there is no sun — there is a
+  // sky, uniformly bright and completely diffuse, and the sea under it is nearly black.
+  // Everything the other two rigs do with a key light has to be done here with fill, and
+  // the danger is the opposite one: with no shadows and no direction, a ship in this
+  // light goes flat and cardboard. What saves her is that the sky is much brighter than
+  // the sea, so the light is strongly top-down, and every horizontal surface reads bright
+  // against a vertical one.
+  storm_sun_colour: { hex: '#C8CCC9', source: 'RECONSTRUCTED §8 the sun behind heavy overcast: not warm, not blue, and barely a direction at all' },
+  storm_sun_intensity: { value: 1.7, source: 'RECONSTRUCTED §8 a third of the fine-weather key. It is kept at all so that the ship still has a lit side and a shaded side; at zero she goes completely flat' },
+  storm_sun_azimuth_deg: { value: 300, source: 'RECONSTRUCTED §8 the same quarter as the fine-weather sun, so the two rigs can be compared' },
+  storm_sun_elevation_deg: { value: 26, source: 'RECONSTRUCTED §8 low: in this weather the brightest part of the sky is the horizon under the cloud base' },
+  storm_sky_colour: { hex: '#BAC1C0', source: 'RECONSTRUCTED §8 the overcast overhead, which in a gale is the whole of the light there is' },
+  storm_water_colour: { hex: '#3A4A4C', source: 'RECONSTRUCTED §8 bounce off a black sea: almost nothing, and cold' },
+  storm_fill_intensity: { value: 2.5, source: 'RECONSTRUCTED §8 four times the fine-weather fill, because here it is not fill — it is the key. A daylight gale is a bright grey day, not a dark one: the mistake to avoid is lighting it for the mood rather than for the hour, which gives a ship at two in the afternoon the exposure of one at dusk' },
+  storm_env_colour: { hex: '#98A4A5', source: 'RECONSTRUCTED §8 what the copper and the wet paint reflect: grey sky, and a great deal of it' },
+  storm_sky_top: { hex: '#6C787E', source: 'RECONSTRUCTED §8 the cloud base overhead, dark and even' },
+  storm_sky_bottom: { hex: '#B2BAB9', source: 'RECONSTRUCTED §8 the lighter band under the cloud at the horizon, which is where a gale keeps its light' },
+  storm_sea_colour: { hex: '#273236', source: 'RECONSTRUCTED §8 a Southern Ocean sea under cloud is nearly black, and its colour is almost entirely what it reflects' },
+  storm_sea_roughness: { value: 0.62, source: 'RECONSTRUCTED §8 rougher than a fine-weather sea: the surface is broken everywhere and mirrors nothing cleanly' },
+  storm_sea_env_intensity: { value: 0.75, source: 'RECONSTRUCTED §8 a broken sea under an even sky returns much of it, which is what makes a storm sea read as bright grey where it faces up and black where it faces away' },
+  storm_wave_height: { value: 3.4, source: 'RECONSTRUCTED §8 crest to trough in a Southern Ocean gale, in metres. It is the viewer\'s scenery and not part of the ship, but it decides how she sits: a frigate whose waterline is a flat plane is a frigate in a bath' },
+  storm_wave_length: { value: 74, source: 'RECONSTRUCTED §8 metres between crests. Twice her own length, which is why she pitches so slowly and so far' },
+  storm_wave_period: { value: 8.6, source: 'RECONSTRUCTED §8 seconds between crests, which follows from the length in deep water' },
+  storm_cloud_break: { value: 0.85, source: 'RECONSTRUCTED §8 how torn the overcast is. A gale sky is not an even grey card: it is cloud in ragged bands lying with the wind, and a still render finds fault with a flat backdrop before it finds fault with anything on the ship' },
+  storm_wake_alpha: { value: 0.30, source: 'RECONSTRUCTED §8 how white the water is where the ship breaks it. It is the last thing that separates a ship at sea from a model standing on one: with a clean waterline and nothing happening along it, the eye reads the whole picture as an object placed on a surface' },
+  storm_spume_alpha: { value: 0.38, source: 'RECONSTRUCTED §8 how much of the sea surface is streaked white. In a full gale the whole surface is marked with it, in long streaks lying with the wind' },
 
   // Shadows. three\'s PCFSoftShadowMap ignores `shadow.radius`, so softness cannot be
   // asked for; it has to be built, by giving the sun a finite size. `shadow_taps` lights

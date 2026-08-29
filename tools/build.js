@@ -2,6 +2,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { openHarness, ROOT } from './harness.js';
+import { TRI_BUDGET as BUDGET } from '../src/ship/lod.js';
 
 const LODS = ['hero', 'game', 'distant'];
 const SAILS = ['full', 'topsails', 'storm', 'furled'];
@@ -11,12 +12,6 @@ const SAILS = ['full', 'topsails', 'storm', 'furled'];
 const MATRIX = LODS.flatMap((lod) =>
   (lod === 'distant' ? ['full', 'furled'] : SAILS).map((sails) => ({ lod, sails }))
 );
-
-const BUDGET = {
-  hero: [200000, 500000],
-  game: [30000, 60000],
-  distant: [1500, 5000],
-};
 
 const h = await openHarness();
 await fs.mkdir(path.join(ROOT, 'build'), { recursive: true });

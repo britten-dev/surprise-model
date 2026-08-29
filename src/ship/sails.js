@@ -12,7 +12,7 @@
 //   storm     a reefed foresail and a close-reefed main topsail, nothing else
 //   furled    every sail handed and stowed on its yard
 import * as THREE from 'three';
-import { SPEC } from '../spec/spec.js';
+import { SPEC, PAINT } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { spar } from '../util/solids.js';
 import { lerp, clamp, deg } from '../util/math.js';
@@ -135,6 +135,36 @@ function foreAndAftSail(corners, cfg, { belly = S('sail_belly'), side = 1 } = {}
   return g;
 }
 
+/**
+ * Move a sail's UVs into one square of the cloth map's variant grid.
+ *
+ * The map is drawn as a grid of independently seeded sails — different stains, different
+ * mildew, a patch in a different place — and this is what hands each sail its own. It is
+ * done to the finished geometry rather than inside each sail generator so that all three
+ * kinds of canvas, square, fore-and-aft and furled, get it from one place.
+ *
+ * Sails are given variants in the order they are built, so the same sail on two ships
+ * built the same way carries the same cloth. That is wanted: a ship should not change her
+ * patches when she shortens sail.
+ */
+function retileUV(geometry, index) {
+  const n = Math.max(1, Math.round(PAINT.weather_sail_variants.value));
+  if (n === 1) return geometry;
+  const tx = index % n;
+  const ty = Math.floor(index / n) % n;
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i++) {
+    // Held a little inside its own square, so that a mipmap of the grid cannot fetch a
+    // texel from the sail next door and hang another sail's patch on this one's leech.
+    const inset = 0.002;
+    const u = clamp(uv.getX(i), inset, 1 - inset);
+    const v = clamp(uv.getY(i), inset, 1 - inset);
+    uv.setXY(i, (tx + u) / n, (ty + v) / n);
+  }
+  uv.needsUpdate = true;
+  return geometry;
+}
+
 /** A sail handed and stowed along its yard: a long tapered bundle. */
 function furledBundle(yard, cfg) {
   const len = yard.length * 0.82;
@@ -161,6 +191,8 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
 
   const squares = [];
   const furled = [];
+  // Which square of the cloth map the next sail takes.
+  let cloth = 0;
 
   // The square sails, each between its own yard and the one below it. The lowest sail
   // on each mast — the course — has no yard below, so its clews come down toward the
@@ -185,7 +217,7 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
       // Not set: it is stowed on its own yard, unless the whole state is 'furled', in
       // which case every yard gets a bundle.
       if (ctx.sails === 'furled' || cfg.deckFurniture !== 'none') {
-        const g = furledBundle(head, cfg);
+        const g = retileUV(furledBundle(head, cfg), cloth++);
         const mesh = new THREE.Mesh(g, mats.sail);
         mesh.position.copy(head.centre);
         mesh.position.y -= S('furled_bundle_diameter') * 0.45;
@@ -217,7 +249,10 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     }
 
     const reef = suit.reefs[sailName] ?? 1;
-    squares.push(squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef, braceRad }));
+    squares.push(retileUV(
+      squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef, braceRad }),
+      cloth++
+    ));
   }
 
   // ------------------------------------------------------------------- fore-and-aft
@@ -231,7 +266,8 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // headsails and small staysails, with the square pyramid dominating.
   const fa = [];
   const lee = -1;                                  // the sails belly to leeward
-  const addTriangle = (head, tack, clew) => fa.push(foreAndAftSail([head, tack, clew], cfg, { side: lee }));
+  const addTriangle = (head, tack, clew) =>
+    fa.push(retileUV(foreAndAftSail([head, tack, clew], cfg, { side: lee }), cloth++));
 
   // A sheeting point at the rail, so many metres abaft a mast and to leeward.
   const sheetAt = (mast, abaft, above = 0.9) => {
@@ -291,7 +327,10 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // The spanker: a four-cornered sail on the gaff and boom abaft the mizzen.
   if (setNames.has('spanker') && ctx.spanker) {
     const sp = ctx.spanker;
-    fa.push(foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: lee }));
+    fa.push(retileUV(
+      foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: lee }),
+      cloth++
+    ));
   }
 
   if (squares.length) {
