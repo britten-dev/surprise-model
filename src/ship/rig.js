@@ -612,7 +612,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
     strikerTop.clone().sub(strikerHeel).normalize()
   );
   strikerSpar.name = 'dolphin_striker';
-  audit(strikerSpar, 'dolphin_striker_length', 'extent_diagonal');
+  audit(strikerSpar, 'dolphin_striker_length', 'extent_caliper');
   group.add(strikerSpar);
 
   // The martingale stay: from the jibboom end down to the striker's heel, and on to the

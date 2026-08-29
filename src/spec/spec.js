@@ -147,7 +147,15 @@ export const PAINT = {
   copper: { hex: '#A2603A', roughness: 0.44, source: 'RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched. Roughness is the polish of a sheet that has been in the water a few months, not of one that has been painted' },
   copper_bright: { hex: '#F7BC9E', roughness: 0.35, source: 'SECONDARY §8 new copper, used for the nail heads' },
   copper_dark: { hex: '#3E2418', roughness: 0.75, source: 'SECONDARY §8 cupric oxide in the sheet laps' },
-  copper_line_above_wl_v: { value: 0.132, source: 'RECONSTRUCTED §8 sheathing carried 2 ft 9 in above the load waterline, converted into the hull V coordinate through the feature heights at the midship station' },
+  // The top of the sheathing, in the hull's V coordinate.
+  //
+  // It sits exactly at the lower edge of the main wale, and that is not a coincidence:
+  // the wale's lower edge is measured at 2 ft 5 in above the load waterline and the
+  // sheathing was carried 2 ft 6 in to 3 ft above it, so on this ship the copper line
+  // and the bottom of the wale are the same line. Pinning them together also removes a
+  // paint band that could never draw — the boot top had been given the space between
+  // them, which was a negative amount.
+  copper_line_above_wl_v: { value: 0.12, source: 'MEASURED §8 the main wale\'s lower edge is 15.2 ft above the moulded base line, 2.4 ft above the load waterline; the sheathing was carried to 2 ft 6 in - 3 ft, so the two coincide' },
 
   // The sheathing pattern. A sheet was 4 ft by 14 in, laid like slates with each course
   // overlapping the one below and each sheet the one ahead. Over a hull 40 m long and

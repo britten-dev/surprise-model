@@ -37,6 +37,14 @@ function hullPaintStrip(size = 1024, cfg) {
   ];
 
   for (const [a, b, key] of bands) {
+    // A band whose top is at or below its bottom cannot draw, and silently produces a
+    // seam where two colours meet with nothing between them. That is worth noticing
+    // rather than ignoring: it means two of the feature heights have crossed over.
+    if (b <= a) {
+      console.warn(`hull paint: the "${key}" band is degenerate (V ${a.toFixed(3)} to ${b.toFixed(3)}) `
+        + 'and will not draw — two feature heights have crossed.');
+      continue;
+    }
     // Canvas Y is inverted relative to V, so V = 0 is the bottom row.
     const y0 = Math.round((1 - b) * size);
     const y1 = Math.round((1 - a) * size);

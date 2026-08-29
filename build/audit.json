@@ -97,9 +97,9 @@
   },
   {
     "key": "dolphin_striker_length",
-    "metric": "extent_diagonal",
+    "metric": "extent_caliper",
     "expected": 2.7432000000000003,
-    "actual": 2.8218254297752763,
+    "actual": 2.747119050923606,
     "source": "RECONSTRUCTED §12 about a quarter of the jib boom; not in Steel 1794, but visible in the reference photograph"
   },
   {

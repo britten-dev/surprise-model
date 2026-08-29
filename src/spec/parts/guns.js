@@ -121,7 +121,11 @@ export const GUNS_SPEC = {
   // ------------------------------------------------------------ where they stand
   gun_run_out_side_clearance: m(ft(0, 2), 'RECONSTRUCTED §9.4 a gun run out has its fore trucks all but against the ship\'s side; this is what is left between the fore end of the cheeks and the inboard face of the side', { noAudit: true }),
   gun_quarterdeck_first_from_stem: m(ft(79, 0), 'RECONSTRUCTED §9.2 the foremost quarterdeck piece stands just abaft the break, which is 78 ft abaft the stem', { noAudit: true }),
-  gun_quarterdeck_spacing: m(ft(7, 0), 'RECONSTRUCTED §9.2 six pieces a side between the break and the after end of the quarterdeck, on Steel\'s equal-spacing rule with the room and space available', { noAudit: true }),
+  // Closed up from 7 ft. At 7 ft the aftermost of the six pieces stood at the quarter
+  // badge and ran its muzzle out through the badge's glazing — the guns and the stern
+  // were built by different people and neither knew where the other's work ended. Six
+  // pieces still fit between the break and the badge at this spacing.
+  gun_quarterdeck_spacing: m(ft(6, 4), 'RECONSTRUCTED §9.2 six pieces a side on Steel\'s equal-spacing rule, closed up so that the aftermost stands forward of the quarter badge', { noAudit: true }),
   gun_quarterdeck_carronades_forward: n(2, 'RECONSTRUCTED §9.1 the two carronades a side take the foremost quarterdeck stations, where the piece can be trained widest across the waist; the four long 4-pdrs stand abaft them', { noAudit: true }),
   gun_forecastle_carronade_from_stem: m(ft(25, 0), 'RECONSTRUCTED §9.2 forecastle carronade station, one a side', { noAudit: true }),
   gun_forecastle_gun_from_stem: m(ft(18, 0), 'RECONSTRUCTED §9.2 the two long 4-pdr chase guns, one a side, mounted abreast on the forecastle; in action they were shifted to the bow ports in the beakhead bulkhead', { noAudit: true }),

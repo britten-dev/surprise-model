@@ -751,7 +751,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `gun_train_tackle_length` | 1.2192 | 4 ft 0 in | SECONDARY | §9.6 the train tackle runs from the rear of the carriage to an eye bolt in the deck on the centreline side |
 | `gun_run_out_side_clearance` | 0.0508 | — | RECONSTRUCTED | §9.4 a gun run out has its fore trucks all but against the ship's side; this is what is left between the fore end of the cheeks and the inboard face of the side |
 | `gun_quarterdeck_first_from_stem` | 24.0792 | 79 ft 0 in | RECONSTRUCTED | §9.2 the foremost quarterdeck piece stands just abaft the break, which is 78 ft abaft the stem |
-| `gun_quarterdeck_spacing` | 2.1336 | 6 ft 12 in | RECONSTRUCTED | §9.2 six pieces a side between the break and the after end of the quarterdeck, on Steel's equal-spacing rule with the room and space available |
+| `gun_quarterdeck_spacing` | 1.9304 | 6 ft 4 in | RECONSTRUCTED | §9.2 six pieces a side on Steel's equal-spacing rule, closed up so that the aftermost stands forward of the quarter badge |
 | `gun_quarterdeck_carronades_forward` | 2 | — | RECONSTRUCTED | §9.1 the two carronades a side take the foremost quarterdeck stations, where the piece can be trained widest across the waist; the four long 4-pdrs stand abaft them |
 | `gun_forecastle_carronade_from_stem` | 7.62 | 25 ft 0 in | RECONSTRUCTED | §9.2 forecastle carronade station, one a side |
 | `gun_forecastle_gun_from_stem` | 5.4864 | 18 ft 0 in | RECONSTRUCTED | §9.2 the two long 4-pdr chase guns, one a side, mounted abreast on the forecastle; in action they were shifted to the bow ports in the beakhead bulkhead |
@@ -1012,7 +1012,7 @@ and the ochre strake follow the sheer.
 | `copper` | #A2603A | 0.44 | 0 | RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched. Roughness is the polish of a sheet that has been in the water a few months, not of one that has been painted |
 | `copper_bright` | #F7BC9E | 0.35 | 0 | SECONDARY §8 new copper, used for the nail heads |
 | `copper_dark` | #3E2418 | 0.75 | 0 | SECONDARY §8 cupric oxide in the sheet laps |
-| `copper_line_above_wl_v` | 0.132 | — | — | RECONSTRUCTED §8 sheathing carried 2 ft 9 in above the load waterline, converted into the hull V coordinate through the feature heights at the midship station |
+| `copper_line_above_wl_v` | 0.12 | — | — | MEASURED §8 the main wale's lower edge is 15.2 ft above the moulded base line, 2.4 ft above the load waterline; the sheathing was carried to 2 ft 6 in - 3 ft, so the two coincide |
 | `copper_sheets_along` | 22 | — | — | SECONDARY §8 sheets 4 ft on the long edge, laid fore and aft over 121 ft of waterline; counted across the hull base map |
 | `copper_sheets_up` | 26 | — | — | SECONDARY §8 sheets 14 in on the short edge; the courses that fit between the keel and the sheathing line, counted over the whole V range of the base map |
 | `copper_lap_relief` | 0.34 | — | — | RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation |
