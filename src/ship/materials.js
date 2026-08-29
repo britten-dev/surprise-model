@@ -147,7 +147,10 @@ export function makeMaterials(cfg) {
     // transmission rather than plain opacity, and they must be double-sided.
     sail: new THREE.MeshPhysicalMaterial({
       map: sailTex,
-      color: col('sail'),
+      // The map already carries the cloth colour. Tinting it again with the same value
+      // multiplies the colour into itself and turns warm flax canvas into cold sage.
+      color: 0xffffff,
+      envMapIntensity: 0.35,
       roughness: PAINT.sail.roughness,
       metalness: 0,
       side: THREE.DoubleSide,
