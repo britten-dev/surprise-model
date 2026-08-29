@@ -28,7 +28,10 @@ function hullPaintStrip(size = 1024, cfg) {
   // The bands, bottom (keel, V = 0) to top (rail, V = 1).
   const bands = [
     [0.0, V.waterline + PAINT.copper_line_above_wl_v.value, 'copper'],
-    [V.waterline + PAINT.copper_line_above_wl_v.value, V.wale_bottom, 'boot_top'],
+    // No boot top on this ship: the sheathing is carried up to the lower edge of the
+    // main wale, so the copper meets the black with nothing between them. On a ship
+    // whose copper stopped lower there would be a band of bare, algae-stained plank
+    // here, and PAINT.boot_top is kept for that case.
     [V.wale_bottom, V.wale_top, 'wale'],
     [V.wale_top, V.port_sill - PAINT.ochre_strake_below_sill_v.value, 'topside_black'],
     [V.port_sill - PAINT.ochre_strake_below_sill_v.value,
