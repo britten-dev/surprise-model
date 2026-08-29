@@ -58,6 +58,15 @@ const CONFIG = {
     rudderIrons: true,
     figurehead: 'carved',
     headRails: true,
+    // The head, owned by src/ship/head.js. The stem, the knee and the beakhead
+    // bulkhead are always built, because without them the bow is an open hole; this
+    // says how much else there is. 'full' adds the gratings, the seats of ease, the
+    // head timbers, the beakhead stanchions and round-houses, the gammoning cleats and
+    // the cathead sheaves; 'principal' keeps the flat of the head as a plain platform
+    // and drops everything smaller than a plank; 'none' leaves only the structure.
+    headDetail: 'full',
+    // How many stations the stem and the knee of the head are lofted through.
+    headStations: 26,
     boats: 'full',
     // Boats: how finely each little hull is lofted, and whether her gear is in her.
     boatStations: 23,
@@ -120,6 +129,8 @@ const CONFIG = {
     rudderIrons: true,
     figurehead: 'simple',
     headRails: true,
+    headDetail: 'principal',
+    headStations: 14,
     boats: 'simple',
     boatStations: 13,
     boatPoints: 9,
@@ -180,6 +191,8 @@ const CONFIG = {
     rudderIrons: false,
     figurehead: 'none',
     headRails: false,
+    headDetail: 'none',
+    headStations: 7,
     boats: 'block',
     boatStations: 7,
     boatPoints: 5,

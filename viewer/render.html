@@ -9,7 +9,9 @@ import { buildShip } from '/src/ship/index.js';
 import { VIEWS, applyView, framingFor } from '/viewer/views.js';
 import { makeEnvironment, makeSea } from '/viewer/scene.js';
 
-const W = 1600, H = 1100;
+// Four by three, the same shape as the reference photograph, so that the verification
+// render and the photograph can be laid side by side without either being letterboxed.
+const W = 1440, H = 1080;
 const canvas = document.createElement('canvas');
 canvas.width = W; canvas.height = H;
 canvas.id = 'shot';
@@ -22,7 +24,7 @@ renderer.setSize(W, H, false);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 0.92;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const camera = new THREE.PerspectiveCamera(35, W / H, 0.05, 2000);

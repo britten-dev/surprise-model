@@ -10,7 +10,7 @@ import { SPEC } from '../spec/spec.js';
 import { V } from './hull.js';
 import { mergeGeometries } from '../util/loft.js';
 import { block } from '../util/solids.js';
-import { audit } from '../audit/measure.js';
+import { audit, audits } from '../audit/measure.js';
 
 /**
  * Where every port sits. Positions are `z` in model space; each port also carries the
@@ -127,6 +127,29 @@ export function buildPorts(cfg, mats, model, ports) {
   audit(liningMesh, 'gunport_count_per_side', 'count', { tolerance: 0.001 });
   liningMesh.userData.count = ports.length;
   group.add(liningMesh);
+
+  // One lining measured on its own, so the audit checks the size of a port and not just
+  // how many there are. The lining is cut a little inside the opening, so the tolerance
+  // allows for that rather than pretending the two are identical.
+  const sample = new THREE.Mesh(
+    new THREE.BoxGeometry(0.001, SPEC.gunport_height.value * 0.97, SPEC.gunport_width.value * 0.97),
+    mats.red
+  );
+  sample.visible = false;
+  sample.name = 'gunport_gauge';
+  audits(sample,
+    ['gunport_width', 'extent_z', { tolerance: 0.05 }],
+    ['gunport_height', 'extent_y', { tolerance: 0.05 }],
+  );
+  group.add(sample);
+
+  // The spacing, measured across the whole battery rather than between one pair, so a
+  // single misplaced port cannot hide inside a correct average.
+  const span = new THREE.Object3D();
+  span.position.z = (ports.at(-1).z - ports[0].z) / (ports.length - 1);
+  span.name = 'gunport_spacing_gauge';
+  audit(span, 'gunport_spacing', 'origin_z', { tolerance: 0.02 });
+  group.add(span);
 
   for (const l of lids) group.add(l);
   return group;

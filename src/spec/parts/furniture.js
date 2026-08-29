@@ -199,9 +199,10 @@ export const FURNITURE_SPEC = {
   // No period source found for either, and research 06 does not cover them.
   // Reconstructed from the reference photograph, in which they are one of the most
   // conspicuous things about the ship, and from Royal Navy practice of the 1790s.
-  hammock_crane_spacing: m(ft(3, 0), 'RECONSTRUCTED §6 from the reference photograph, cranes about 3 ft apart along the rail', { noAudit: true }),
+  hammock_crane_spacing: m(ft(2, 0), 'RECONSTRUCTED §6 counted off the reference photograph, in which the cranes stand close — nearer 2 ft apart than the 2 ft 6 in to 3 ft usually quoted', { noAudit: true }),
   hammock_crane_height: m(ft(2, 0), 'RECONSTRUCTED §6 from the reference photograph, standing about 2 ft above the cap rail', { noAudit: true }),
-  hammock_crane_diameter: m(ft(0, 1.25), 'RECONSTRUCTED §6 wrought-iron crane', { noAudit: true }),
+  hammock_crane_diameter: m(ft(0, 1.5), 'RECONSTRUCTED §6 the crane is drawn bright rather than blacked, because that is how the reference photograph shows it', { noAudit: true }),
+  hammock_rail_diameter: m(ft(0, 2), 'RECONSTRUCTED §6 the rail run through the heads of the cranes, which the photograph shows as a light line along the top of them', { noAudit: true }),
   hammock_crane_spread: m(ft(1, 2), 'RECONSTRUCTED §6 the fork at the head of the crane, which carries the netting outboard of the rail', { noAudit: true }),
   hammock_crane_run_from_stem: m(ft(12, 0), 'RECONSTRUCTED §6 the cranes begin where the rail leaves the head', { noAudit: true }),
   hammock_crane_run_short_of_stern: m(ft(2, 6), 'RECONSTRUCTED §6 the after run stops short of the taffrail', { noAudit: true }),

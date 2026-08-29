@@ -82,7 +82,7 @@ export const BOATS_SPEC = {
   boat_stow_station: m(ft(56, 0), 'RECONSTRUCTED §8.2 midway along the four skid beams; the furniture module lays them from X = 44 ft at 8 ft centres, so their middle is X = 56 ft', { noAudit: true }),
   launch_stow_offset: m(ft(3, 6), 'RECONSTRUCTED §8.2 launch stowed to starboard of the centreline so that the pinnace stows beside her inside the 24 ft clear of the waist', { noAudit: true }),
   pinnace_stow_offset: m(ft(3, 6), 'RECONSTRUCTED §8.2 pinnace to port, the mirror of the launch', { noAudit: true }),
-  cutter_nest_rise: m(ft(1, 5), 'RECONSTRUCTED §8.2 "nested one atop the other"; the cutter rests on the launch\'s thwarts', { noAudit: true }),
+  cutter_nest_rise: m(ft(2, 6), 'RECONSTRUCTED §8.2 "nested one atop the other"; the rise that lands the cutter\'s keel on top of the launch\'s thwarts rather than through them', { noAudit: true }),
   cutter_nest_shift: m(ft(1, 0), 'RECONSTRUCTED §8.2 the nested cutter set a foot aft in the launch to clear her stem', { noAudit: true }),
 
   // ------------------------------------------------------------------ quarter davits
@@ -92,20 +92,20 @@ export const BOATS_SPEC = {
   davit_station: m(ft(116, 0), 'RECONSTRUCTED §8.4 quarter davits stepped on the starboard quarterdeck rail 10 ft forward of the sternpost, where the photograph carries a boat aft', { noAudit: true }),
   davit_spacing: m(ft(9, 0), 'RECONSTRUCTED §8.4 the two davits set to take the jolly boat a little inside her stem and stern', { noAudit: true }),
   davit_height_above_rail: m(ft(4, 6), 'RECONSTRUCTED §8.4 davit head high enough to swing the boat clear of the rail', { noAudit: true }),
-  davit_outreach: m(ft(3, 6), 'RECONSTRUCTED §8.4 davits project outboard about 3 ft 6 in; §8.4 gives 6 ft of projection for the longer transom davit', { noAudit: true }),
+  davit_outreach: m(ft(5, 0), 'RECONSTRUCTED §8.4 the davits reach far enough outboard to swing the boat clear of the quarterdeck rail; §8.4 gives 6 ft of projection for the longer transom davit', { noAudit: true }),
   davit_diameter: m(ft(0, 5), 'RECONSTRUCTED §8.4 davit 5 in in diameter at the step', { noAudit: true }),
   davit_fall_diameter: m(ft(0, 1.5), 'RECONSTRUCTED §8.4 boat fall of 1½ in rope', { noAudit: true }),
   jolly_hang_below_davit: m(ft(2, 9), 'RECONSTRUCTED §8.4 boat griped up close under the davit heads for sea', { noAudit: true }),
 
   // ------------------------------------------------------------------ boat gear
   // Hero level of detail only.
-  boat_oar_count: n(10, 'RECONSTRUCTED §8.3 Steel: "Pinnaces never row more than eight oars, whereas Barges are constructed to row with ten"; the launch\'s oars stowed in her', { noAudit: true }),
+  boat_oar_count: n(10, 'RECONSTRUCTED §8.3 Steel: "Pinnaces never row more than eight oars, whereas Barges are constructed to row with ten"', { noAudit: true }),
   boat_oar_length: m(ft(15, 0), 'RECONSTRUCTED §8.3 oar length by Steel\'s rule for a boat of this beam, stowed fore and aft', { noAudit: true }),
   boat_oar_diameter: m(ft(0, 3), 'RECONSTRUCTED §8.5 loom of the oar 3 in', { noAudit: true }),
   boat_oar_blade_width: m(ft(0, 5.5), 'RECONSTRUCTED §8.5 blade of the oar', { noAudit: true }),
-  boat_hook_count: n(2, 'RECONSTRUCTED §8.3 a boat hook to each of the two boats on the skids', { noAudit: true }),
+  boat_hook_count: n(2, 'RECONSTRUCTED §8.3 a pair of boat hooks stowed along the thwarts', { noAudit: true }),
   boat_hook_length: m(ft(10, 0), 'RECONSTRUCTED §8.3 boat hook stowed along the thwarts', { noAudit: true }),
-  launch_mast_length: m(ft(15, 0), 'RECONSTRUCTED §8.3 the launch\'s mast, unstepped and stowed in her with the sail furled to it', { noAudit: true }),
-  launch_furled_sail_diameter: m(ft(0, 10), 'RECONSTRUCTED §8.3 the boat\'s lug sail furled round its own yard', { noAudit: true }),
-  launch_furled_sail_length: m(ft(9, 0), 'RECONSTRUCTED §8.3 the furl runs over the middle of the mast', { noAudit: true }),
+  boat_mast_length: m(ft(15, 0), 'RECONSTRUCTED §8.3 the boat\'s own mast, unstepped and stowed in her with the sail furled to it', { noAudit: true }),
+  boat_furled_sail_diameter: m(ft(0, 10), 'RECONSTRUCTED §8.3 the boat\'s lug sail furled round its own yard', { noAudit: true }),
+  boat_furled_sail_length: m(ft(9, 0), 'RECONSTRUCTED §8.3 the furl runs over the middle of the mast', { noAudit: true }),
 };

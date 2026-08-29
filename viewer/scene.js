@@ -27,7 +27,11 @@ export function makeEnvironment(renderer, { studio = false } = {}) {
   );
   scene.add(sky);
 
-  const sun = new THREE.DirectionalLight(0xfff2dd, 3.1);
+  // Bright enough for a sunny day, not so bright that everything pale in the ship —
+  // the deck, the boats, the canvas — clips to white and loses its colour. Scrubbed
+  // deck planking and flax canvas are both warm, and that warmth is most of what makes
+  // the ship look like wood and cloth rather than plastic.
+  const sun = new THREE.DirectionalLight(0xfff0d6, 2.1);
   sun.position.set(-38, 46, -30);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -38,9 +42,9 @@ export function makeEnvironment(renderer, { studio = false } = {}) {
 
   // Fill from the sky and bounce from the water, which is what stops the black
   // topsides reading as a silhouette.
-  scene.add(new THREE.HemisphereLight(studio ? 0xf0dcb4 : 0xbcd4ea, studio ? 0x8a7250 : 0x3c5a68, 1.5));
+  scene.add(new THREE.HemisphereLight(studio ? 0xf0dcb4 : 0xbcd4ea, studio ? 0x8a7250 : 0x3c5a68, 0.85));
 
-  const rim = new THREE.DirectionalLight(0xcfe0f0, 0.5);
+  const rim = new THREE.DirectionalLight(0xcfe0f0, 0.35);
   rim.position.set(30, 12, 40);
   scene.add(rim);
 

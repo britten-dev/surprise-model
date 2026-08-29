@@ -158,6 +158,11 @@ export const RIG_SPEC = {
   // ------------------------------------------------------------------------- sails
   // Sail cloths were about two feet wide, which sets the seam spacing on the texture.
   sail_cloth_width: m(ft(2, 0), 'SECONDARY §7.3 of the paint research; period flax canvas bolt width', { noAudit: true }),
+  // The roach: how far the middle of a square sail's foot is scooped up above the line
+  // between its clews, as a fraction of the sail's drop.
+  sail_roach: n(0.085, 'RECONSTRUCTED measured off the reference photograph, where the cut of the courses is clearest', { noAudit: true }),
+  // How far the leeches bow outward between head and clew.
+  sail_leech_curve: n(0.045, 'RECONSTRUCTED from the reference photograph; a sail under strain is a curved surface', { noAudit: true }),
   // How much a full sail bellies, as a fraction of its own width. From the reference
   // photograph, in which the sails are full but not straining.
   sail_belly: n(0.115, 'RECONSTRUCTED from the reference photograph; the draught of a full sail on a soldier\'s wind', { noAudit: true }),

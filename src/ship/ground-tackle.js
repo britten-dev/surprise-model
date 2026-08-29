@@ -146,6 +146,7 @@ function anchorGeometry(cfg, scale) {
   );
   ring.translate(0, shankLen + ringR * 0.72, 0);
   fittings.push(ring);
+  const ringOnly = ring.clone();
 
   const stockLen = q('anchor_stock_length');
   const stockSqM = q('anchor_stock_square_middle');
@@ -189,7 +190,7 @@ function anchorGeometry(cfg, scale) {
   stock.translate(0, stockY, 0);
   stock.computeVertexNormals();
 
-  return { shank, arms, ironwork, stock, shankLen, armLen };
+  return { shank, arms, ironwork, ring: ringOnly, stock, shankLen, armLen, stockY };
 }
 
 /**
@@ -206,8 +207,12 @@ function anchorFrame(ring, toCrown, cantDeg, side, shankLen) {
   return new THREE.Matrix4().makeBasis(across, up, stockAxis).setPosition(crown);
 }
 
-/** Build and place one anchor from a set of prepared geometries. */
-function makeAnchor(mats, name, geom, frame) {
+/**
+ * Build and place one anchor from a set of prepared geometries. `shipStock` false leaves
+ * the stock off the shank — an anchor stowed inboard has its stock unshipped, because a
+ * stocked anchor cannot lie flat on a deck at all.
+ */
+function makeAnchor(mats, name, geom, frame, shipStock = true) {
   const g = new THREE.Group();
   g.name = name;
 
@@ -215,13 +220,18 @@ function makeAnchor(mats, name, geom, frame) {
   shank.name = `${name}_shank`;
   const arms = new THREE.Mesh(geom.arms, mats.iron);
   arms.name = `${name}_arms`;
-  const iron = new THREE.Mesh(geom.ironwork, mats.iron);
+  const iron = new THREE.Mesh(shipStock ? geom.ironwork : geom.ring, mats.iron);
   iron.name = `${name}_ironwork`;
-  // The stock is oak and left bright — the only unpainted timber at the bow.
-  const stock = new THREE.Mesh(geom.stock, mats.timber);
-  stock.name = `${name}_stock`;
+  g.add(shank, arms, iron);
 
-  g.add(shank, arms, iron, stock);
+  let stock = null;
+  if (shipStock) {
+    // The stock is oak and left bright — the only unpainted timber at the bow.
+    stock = new THREE.Mesh(geom.stock, mats.timber);
+    stock.name = `${name}_stock`;
+    g.add(stock);
+  }
+
   g.applyMatrix4(frame);
   return { group: g, shank, arms, stock };
 }
@@ -281,9 +291,12 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     if (side > 0) {
       // One bower carries the measurements for all four: the shank end to end, the arms
       // fluke to fluke, the stock end to end.
-      audit(a.shank, 'anchor_shank_length', 'extent_max');
-      audit(a.arms, 'anchor_arm_span', 'extent_max');
-      audit(a.stock, 'anchor_stock_length', 'extent_max');
+      // These are measured on the diagonal because a catted anchor hangs at an angle
+      // in all three axes: its stock is canted out over the rail and its arms are
+      // fished up to the channel, so no bounding-box side is the length of anything.
+      audit(a.shank, 'anchor_shank_length', 'extent_diagonal');
+      audit(a.arms, 'anchor_arm_span', 'extent_diagonal');
+      audit(a.stock, 'anchor_stock_length', 'extent_diagonal');
     }
 
     const crown = ring.clone().addScaledVector(toCrown.clone().normalize(), bowerGeom.shankLen);
@@ -309,9 +322,15 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
       const zA = model.fromStem(S('anchor_lining_from_stem'));
       const zB = model.fromStem(S('anchor_lining_from_stem') + S('anchor_lining_length'));
       const h = S('anchor_lining_height') / 2, t = S('anchor_lining_thickness');
+      // `sweep` takes its sideways axis as up × tangent, which points outboard to starboard
+      // and inboard to port, so the profile is mirrored for the port side. The small bias
+      // off the curve keeps the plank clear of the hull between the curve's samples.
+      const bias = 0.05;
+      const prof = [[bias, -h], [bias + t, -h], [bias + t, h], [bias, h]]
+        .map(([px, py]) => [px * side, py]);
+      if (side < 0) prof.reverse();
       const lining = new THREE.Mesh(
-        sweep(model.featureCurve('port_head', side, cfg.mouldingSweeps, zA, zB),
-          [[0, -h], [t, -h], [t, h], [0, h]],
+        sweep(model.featureCurve('port_head', side, cfg.mouldingSweeps, zA, zB), prof,
           { steps: Math.max(6, Math.round(cfg.mouldingSweeps / 6)), closed: true }),
         mats.timber
       );
@@ -324,7 +343,7 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     const zBolt = model.fromStem(S('shank_painter_bolt_from_stem'));
     const fBolt = model.featureYAt(zBolt);
     const bolt = new THREE.Vector3(
-      model.halfBreadthAt(zBolt, fBolt.rail) * side,
+      (model.halfBreadthAt(zBolt, fBolt.rail) + S('anchor_lining_thickness')) * side,
       fBolt.rail - S('anchor_lining_height') / 2,
       zBolt
     );
@@ -336,7 +355,13 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
     group.add(painter);
   }
 
-  // ------------------------------------------------------- the spares in the chains
+  // ------------------------------------------------------ the spares on the forecastle
+  // The two bowers take the catheads and, between them, the whole length of the fore
+  // channel, so the sheet and the kedge are stowed inboard on the forecastle, one to each
+  // side, ring forward and arms flat on the deck. Their stocks are unshipped and lashed
+  // along the shank: a stocked anchor cannot lie flat on a deck at all, because the stock
+  // stands square to the arms, and that is why Steel counts stocks as a separate item of
+  // the outfit from the anchors they belong to.
   const spareList = [
     { side: 1, name: 'sheet_anchor', scale: S('sheet_anchor_scale') },
     { side: -1, name: 'kedge_anchor', scale: S('kedge_anchor_scale') },
@@ -345,19 +370,36 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
   for (const spare of spareList) {
     const geom = spare.scale === 1 ? bowerGeom : anchorGeometry(cfg, spare.scale);
     const zRing = model.fromStem(S('stowed_anchor_ring_from_stem'));
-    const zBed = zRing + geom.shankLen;
-    const yShank = model.featureYAt(zRing).rail - S('stowed_anchor_shank_below_rail');
-    const off = S('stowed_anchor_outboard_of_side');
-    const ring = new THREE.Vector3(
-      (model.halfBreadthAt(zRing, yShank) + off) * spare.side, yShank, zRing
-    );
-    const bed = new THREE.Vector3(
-      (model.halfBreadthAt(zBed, yShank) + off) * spare.side, yShank, zBed
-    );
-    const frame = anchorFrame(
-      ring, bed.clone().sub(ring), S('stowed_anchor_stock_cant_deg'), spare.side, geom.shankLen
-    );
-    group.add(makeAnchor(mats, spare.name, geom, frame).group);
+    const zCrown = zRing + geom.shankLen;
+    const zMid = (zRing + zCrown) / 2;
+    const fcRise = SPEC.forecastle_above_gundeck.value;
+    const yDeck = model.featureYAt(zMid).deck + fcRise;
+    const y = yDeck + S('stowed_anchor_above_deck');
+    const xShank = (model.halfBreadthAt(zMid, model.featureYAt(zMid).rail)
+      - S('stowed_anchor_inboard_of_side')) * spare.side;
+
+    const ring = new THREE.Vector3(xShank, y, zRing);
+    const toCrown = new THREE.Vector3(0, 0, 1);
+    // Ninety degrees of cant stands the stock's axis upright, which is what lays the arms
+    // and their palms flat on the deck. The stock itself is not on the anchor.
+    const frame = anchorFrame(ring, toCrown, 90, spare.side, geom.shankLen);
+    group.add(makeAnchor(mats, spare.name, geom, frame, false).group);
+
+    // The unshipped stock, lying fore and aft on the deck outboard of its anchor.
+    const stockGeom = geom.stock.clone();
+    stockGeom.translate(0, -geom.stockY, 0);
+    stockGeom.applyMatrix4(new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(spare.side, 0, 0),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1)
+    ).setPosition(
+      xShank + spare.side * S('stowed_stock_beside_shank'),
+      yDeck + S('anchor_stock_square_middle') * spare.scale / 2,
+      zMid
+    ));
+    const loose = new THREE.Mesh(stockGeom, mats.timber);
+    loose.name = `${spare.name}_stock`;
+    group.add(loose);
   }
 
   // --------------------------------------------------- the hawse holes and the cable

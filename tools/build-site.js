@@ -45,6 +45,26 @@ await copyDir(
 // The viewer is the site.
 await fs.copyFile(path.join(ROOT, 'viewer/index.html'), path.join(DIST, 'index.html'));
 
+// The exported models, so the deliverable can be fetched from the site rather than only
+// rebuilt from the repository. The hero LOD ships in its full-suit state only; all four
+// states of it are 34 MB and the viewer can generate any of them live anyway.
+try {
+  const files = await fs.readdir(path.join(ROOT, 'build'));
+  const wanted = files.filter((f) => f.endsWith('.glb')
+    && (!f.startsWith('surprise-hero') || f === 'surprise-hero-full.glb'));
+  if (wanted.length) {
+    await fs.mkdir(path.join(DIST, 'build'), { recursive: true });
+    for (const f of [...wanted, 'manifest.json']) {
+      try { await fs.copyFile(path.join(ROOT, 'build', f), path.join(DIST, 'build', f)); } catch {}
+    }
+    console.log(`  ${wanted.length} GLB file(s) included`);
+  } else {
+    console.log('  no GLB files found — run `npm run build` first if the site should carry them');
+  }
+} catch {
+  console.log('  build/ not present; the site will carry no GLB files');
+}
+
 // The documents that explain what the thing is, so the deployed site carries its own
 // evidence rather than pointing at a private repository.
 await fs.mkdir(path.join(DIST, 'docs'), { recursive: true });

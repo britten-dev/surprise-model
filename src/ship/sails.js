@@ -58,17 +58,28 @@ function squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef = 
   const lee = new THREE.Vector3(Math.sin(braceRad), 0, Math.cos(braceRad)).normalize();
   const across = new THREE.Vector3(Math.cos(braceRad), 0, -Math.sin(braceRad)).normalize();
 
+  const roach = S('sail_roach');
+  const leechCurve = S('sail_leech_curve');
+
   const pos = [], uvs = [], idx = [];
   for (let j = 0; j <= nv; j++) {
     const v = j / nv;
-    const centre = new THREE.Vector3().lerpVectors(headCentre, foot, v);
-    const width = lerp(headWidth, footWidth, v);
     for (let i = 0; i <= nu; i++) {
       const u = i / nu;
+      // The roach: the foot of a square sail is not cut straight across. It is scooped
+      // upward in the middle so that it clears the stay and the top of the sail below,
+      // and that curve is one of the things the eye reads as "a sail" rather than "a
+      // rectangle of cloth". The clews at the corners stay down where the sheets hold
+      // them; only the middle rises.
+      const vv = v * (1 - roach * Math.sin(Math.PI * u));
+      const centre = new THREE.Vector3().lerpVectors(headCentre, foot, vv);
+      // The leeches bow outward a little between the head and the clew, for the same
+      // reason: a sail under strain is a curved surface, not a flat trapezoid.
+      const width = lerp(headWidth, footWidth, vv) * (1 + leechCurve * Math.sin(Math.PI * vv));
       const s = (u - 0.5) * width;
       // The belly: fullest in the middle of the sail and dying away at head, foot and
       // both leeches, where the sail is held to a spar or a rope.
-      const b = Math.sin(Math.PI * u) * Math.sin(Math.PI * clamp(v * 0.86 + 0.07, 0, 1)) * belly * width;
+      const b = Math.sin(Math.PI * u) * Math.sin(Math.PI * clamp(vv * 0.86 + 0.07, 0, 1)) * belly * width;
       const p = centre.clone().addScaledVector(across, s).addScaledVector(lee, b);
       pos.push(p.x, p.y, p.z);
       uvs.push(u, 1 - v);

@@ -1,5 +1,37 @@
 [
   {
+    "key": "anchor_arm_span",
+    "metric": "extent_max",
+    "expected": 2.7432000000000003,
+    "actual": 2.566978775503917,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §13.2 fluke tip to fluke tip at 0.55 of the shank, the standard long-shank proportion"
+  },
+  {
+    "key": "anchor_count_total",
+    "metric": "count",
+    "expected": 4,
+    "actual": 4,
+    "tolerance": 0.001,
+    "source": "SECONDARY §13.1 Steel 1805 :43220 — four large stocks and two small to every class; the two bowers, the sheet and the kedge are the four modelled"
+  },
+  {
+    "key": "anchor_shank_length",
+    "metric": "extent_max",
+    "expected": 5.0292,
+    "actual": 5.007137583812881,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §13.2 the period rule that the shank equals the stock; stock from Steel's series scaled by the cube root of the weight"
+  },
+  {
+    "key": "anchor_stock_length",
+    "metric": "extent_max",
+    "expected": 5.0292,
+    "actual": 4.472383783685216,
+    "tolerance": 0.03,
+    "source": "RECONSTRUCTED §13.2 Steel 1805 :43221 series (22-0 / 21-9 / 20-6 / …) carried to the 32-gun column by cube-root-of-weight scaling"
+  },
+  {
     "key": "bell_mouth_diameter",
     "metric": "extent_x",
     "expected": 0.2794,
@@ -51,7 +83,7 @@
     "key": "cutter_length",
     "metric": "extent_z",
     "expected": 5.486400000000001,
-    "actual": 5.537468671798706,
+    "actual": 5.530743837356567,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §8.3 cutter 18-22 ft; the shortest taken so that she nests inside the 24 ft launch"
   },
@@ -76,7 +108,7 @@
     "metric": "extent_z",
     "expected": 6.096,
     "actual": 6.095999717712402,
-    "tolerance": 0.06,
+    "tolerance": 0.05,
     "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
   },
   {
@@ -136,6 +168,30 @@
     "source": "PRIMARY §2 threedecks, 24 x 9-pdr on the upper deck, June 1796"
   },
   {
+    "key": "gunport_height",
+    "metric": "extent_y",
+    "expected": 0.7315200000000001,
+    "actual": 0.7095744013786316,
+    "tolerance": 0.05,
+    "source": "MEASURED §8 port sills at 20.4 ft and heads at 22.8 ft above the moulded base line"
+  },
+  {
+    "key": "gunport_spacing",
+    "metric": "origin_z",
+    "expected": 2.5908,
+    "actual": 2.5908,
+    "tolerance": 0.02,
+    "source": "RECONSTRUCTED §4 12 ports spread over the length available between the bow and the transom"
+  },
+  {
+    "key": "gunport_width",
+    "metric": "extent_z",
+    "expected": 0.762,
+    "actual": 0.739139974117279,
+    "tolerance": 0.05,
+    "source": "RECONSTRUCTED §4 Steel, port width for a 9-pounder"
+  },
+  {
     "key": "hull_beam_moulded",
     "metric": "extent_x",
     "expected": 9.4488,
@@ -155,7 +211,7 @@
     "key": "jolly_length",
     "metric": "extent_max",
     "expected": 4.8768,
-    "actual": 5.300880122394512,
+    "actual": 5.034466922902951,
     "tolerance": 0.06,
     "source": "RECONSTRUCTED §8.3 jolly boat 16-18 ft, the smaller taken"
   },
@@ -163,7 +219,7 @@
     "key": "launch_length",
     "metric": "extent_z",
     "expected": 7.315200000000001,
-    "actual": 7.363162279129028,
+    "actual": 7.356813669204712,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §8.3 24 ft launch for a ship of this rate"
   },
@@ -180,7 +236,7 @@
     "metric": "extent_z",
     "expected": 6.934200000000001,
     "actual": 6.934200286865234,
-    "tolerance": 0.06,
+    "tolerance": 0.05,
     "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
   },
   {
@@ -240,14 +296,6 @@
     "source": "RECONSTRUCTED §04 11.1 five lower shrouds and two standing backstays"
   },
   {
-    "key": "mizzen_channel_length",
-    "metric": "extent_z",
-    "expected": 4.2672,
-    "actual": 4.267199516296387,
-    "tolerance": 0.06,
-    "source": "SECONDARY §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column"
-  },
-  {
     "key": "mizzen_mast_rake_deg",
     "metric": "rake_deg",
     "expected": 1.59,
@@ -267,9 +315,25 @@
     "key": "pinnace_length",
     "metric": "extent_z",
     "expected": 7.315200000000001,
-    "actual": 7.355953216552734,
+    "actual": 7.350432634353638,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §8.3 pinnace 24-26 ft; the shorter figure taken so that she stows on the same skid beams as the launch"
+  },
+  {
+    "key": "quarter_gallery_length",
+    "metric": "extent_z",
+    "expected": 2.1336,
+    "actual": 2.1335983276367188,
+    "tolerance": 0.08,
+    "source": "RECONSTRUCTED §12.3 lower rim about 7 ft, Steel: \"the lower-rim should be as long as possible\""
+  },
+  {
+    "key": "rudder_height",
+    "metric": "extent_y",
+    "expected": 5.3340000000000005,
+    "actual": 5.261899948120117,
+    "tolerance": 0.06,
+    "source": "RECONSTRUCTED §6 heel at the underside of the keel, head 13 ft 6 in above the LWL"
   },
   {
     "key": "skid_beam_count",
@@ -294,6 +358,22 @@
     "actual": 8,
     "tolerance": 0.001,
     "source": "RECONSTRUCTED the full suit in the reference photograph: two courses, three topsails and three topgallants"
+  },
+  {
+    "key": "stern_light_count",
+    "metric": "count",
+    "expected": 7,
+    "actual": 7,
+    "tolerance": 0.001,
+    "source": "MEASURED §6 the stern elevation on the ZAZ3067 body plan shows a single row of seven lights; 06 §12.2 and 08 §5.2 reconstruct five from a breadth rule whose stated range is 5 to 7"
+  },
+  {
+    "key": "stern_taffrail_above_wl",
+    "metric": "max_y",
+    "expected": 5.080000000000001,
+    "actual": 5.406966209411621,
+    "tolerance": 0.05,
+    "source": "MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft"
   },
   {
     "key": "wheel_swept_diameter",

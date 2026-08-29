@@ -50,6 +50,20 @@ photograph shows.
   shade, so the cloth is cream, not bleached white.
 * **Ensign** — flown at the mizzen, blue.
 
+## One place the model and the ship differ, and the model is followed anyway
+
+The reference model's lower hull is **bright wood, not copper**. That is normal for a
+display model and it is why she shows so much more black than this model does: her black
+paint runs right down to the waterline, whereas a coppered ship's black stops where the
+sheathing begins, about 2 ft 9 in above the load waterline.
+
+*Surprise* was certainly coppered. The Progress Book entry quoted in the RMG catalogue
+for her own draught says she "was docked on 15 February to be recoppered, and launched on
+2 March" — six weeks before the plan was signed. So the sheathing is built, and the black
+band is correspondingly narrower than the photograph's. What the photograph is followed
+for is the *colour* of the lower hull: warm brown, the tone of copper a few months in the
+water, and never the verdigris green of long immersion.
+
 ## Where the model is an interpretation, not evidence
 
 The Model Shipyard build is a commercial museum-quality model, not a scale reproduction

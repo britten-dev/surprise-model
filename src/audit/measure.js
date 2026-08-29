@@ -39,6 +39,11 @@ const MEASURES = {
   // A yard braced round twelve degrees has a bounding box two per cent shorter than the
   // yard is, which would read as a two per cent error in a yard that is exactly right.
   extent_horizontal: ({ size }) => Math.hypot(size.x, size.z),
+  // The length of a thin part lying at an angle in all three axes — an anchor stock
+  // canted out over the rail, a chainplate raking down the ship's side. For anything
+  // long and thin the box diagonal is its length; for anything else this measurement is
+  // meaningless, so use it only on rods and spars.
+  extent_diagonal: ({ size }) => Math.hypot(size.x, size.y, size.z),
   min_y: ({ box }) => box.min.y,
   max_y: ({ box }) => box.max.y,
   min_z: ({ box }) => box.min.z,

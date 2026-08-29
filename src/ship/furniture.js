@@ -51,6 +51,16 @@ function cylX(r, len, seg, { x = 0, y = 0, z = 0 } = {}) {
   return g;
 }
 
+/** A cylinder between two points — a rail run through the heads of a row of cranes. */
+function rod(a, b, r, seg) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const len = d.length();
+  const g = new THREE.CylinderGeometry(r, r, len, seg, 1);
+  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()));
+  g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+  return g;
+}
+
 /**
  * A grating: battens laid one way, half-lapped battens the other. At the coarser LODs
  * it collapses to a single slab, which is all that reads at that range anyway.
@@ -542,10 +552,15 @@ export function buildFurniture(cfg, mats, model, ctx) {
   }
 
   // ------------------------------------------------- hammock cranes and the netting
-  // Iron crutches along the top of the cap rail with netting stretched between them,
-  // in which the hands' hammocks were stowed by day. The reference photograph shows
-  // them the length of the forecastle and the quarterdeck, and they are a large part
-  // of what makes the ship look manned rather than empty.
+  // Crutches along the top of the rail with netting stretched between them, in which
+  // the hands' hammocks were stowed by day. The reference photograph shows them the
+  // length of the forecastle and the quarterdeck, and they are a large part of what
+  // makes the ship look manned rather than empty.
+  //
+  // They stand on whichever is higher at that station, the cap rail or the edge of the
+  // deck they serve. Forward the rail is well above the forecastle and they sit on the
+  // cap; aft the quarterdeck is carried up past the rail, and there they sit on the
+  // deck edge, which is where the bulwark that carries them would stand.
   if (cfg.hammockCranes) {
     const spacing = SPEC.hammock_crane_spacing.value;
     const h = SPEC.hammock_crane_height.value;
@@ -554,23 +569,39 @@ export function buildFurniture(cfg, mats, model, ctx) {
     const capT = SPEC.rail_cap_thickness.value;
     const rows = SPEC.hammock_netting_rows.value;
     const runs = [
-      [at(SPEC.hammock_crane_run_from_stem.value), zFcBreak],
-      [zQdBreak, model.zAft - SPEC.hammock_crane_run_short_of_stern.value],
+      [at(SPEC.hammock_crane_run_from_stem.value), zFcBreak, fcRise],
+      [zQdBreak, model.zAft - SPEC.hammock_crane_run_short_of_stern.value, qdRise],
     ];
-    for (const [zA, zB] of runs) {
+    for (const [zA, zB, rise] of runs) {
       for (const side of [1, -1]) {
         const n = Math.max(2, Math.round((zB - zA) / spacing));
         const heads = [];
         for (let i = 0; i <= n; i++) {
           const z = lerp(zA, zB, i / n);
           const p = model.pointAt(z, 'rail', side);
-          const x = p.x - side * SPEC.side_thickness.value * 0.4;
-          const yBase = p.y + capT;
-          iron.push(cyl(r, r, h, 5, { x, y: yBase, z }));
+          const xDeck = deckHalfBreadth(z, rise) - SPEC.side_thickness.value * 0.6;
+          const yDeck = deckY(z, rise, xDeck);
+          const onRail = p.y + capT >= yDeck;
+          const x = side * (onRail ? Math.abs(p.x) - SPEC.side_thickness.value * 0.4 : xDeck);
+          const yBase = onRail ? p.y + capT : yDeck;
+          // The crane itself: an upright with the crutch at its head that carries the
+          // netting out over the ship's side.
+          timber.push(cyl(r, r, h, 5, { x, y: yBase, z }));
           if (cfg.hammockCranes === 'full') {
-            iron.push(cylX(r * 0.8, spread, 5, { x: x + side * spread * 0.15, y: yBase + h, z }));
+            timber.push(cylX(r * 0.8, spread, 5, { x: x + side * spread * 0.15, y: yBase + h, z }));
           }
           heads.push({ x, y: yBase, z, side });
+        }
+        // A rail run through the heads. In the reference photograph this light line
+        // along the top of the cranes is what reads first, before the netting does.
+        for (let i = 0; i < heads.length - 1; i++) {
+          const a = heads[i], b = heads[i + 1];
+          const off = spread * 0.3;
+          timber.push(rod(
+            new THREE.Vector3(a.x + a.side * off, a.y + h, a.z),
+            new THREE.Vector3(b.x + b.side * off, b.y + h, b.z),
+            SPEC.hammock_rail_diameter.value / 2, 4,
+          ));
         }
         // The netting between the heads: a few fore-and-aft rows and a diagonal in
         // each bay, drawn as lines, which costs almost nothing and reads at any range.

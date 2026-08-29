@@ -169,6 +169,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `bowsprit_heel_from_stem` | 4.2672 | 13 ft 12 in | RECONSTRUCTED | §4 research 04 §3.3: the heel steps on the gun deck on the beam next before the foremast, whose centre is 14 ft 1.5 in abaft the fore perpendicular. Checked against ZAZ3067: at rig.bowsprit_steeve_deg this puts the spar where the draught draws it crossing the stem |
+| `bowsprit_heel_above_gundeck` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §4 half the bowsprit's diameter, the spar lying in its step on the deck |
+| `bowsprit_partner_thickness` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §6 Steel :39538 tabulates the bowsprit partners but the frigate column is not legible; the thickness of the capstan partners is used |
+| `bowsprit_chock_length` | 0.762 | 2 ft 6 in | SECONDARY | §6 Steel :15357, a chock between the knightheads for the better security of the bowsprit |
 | `bowsprit_length` | 14.859 | 48 ft 9 in | SECONDARY | §3 Steel 1794 v1 p.50, "28 GUNS. 594 Tons." column |
 | `bowsprit_diameter` | 0.6001 | 1 ft 11.6 in | SECONDARY | §3 Steel 1794 v1 p.50, "28 GUNS. 594 Tons." column |
 | `bowsprit_steeve_deg` | 21.9 | — | SECONDARY | §8 Steel, Naval Architecture, CENTRES OF MASTS, 28-gun column; 1 ft 2 1/2 in of stive per yard of length |
@@ -231,6 +235,9 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `bobstay_hole_count` | 2 | — | SECONDARY | §6 Steel :41228, two bobstay holes |
+| `bobstay_hole_diameter` | 0.1016 | 0 ft 4 in | SECONDARY | §6 Steel :41229, 4 in diameter, OCR-doubtful |
+| `bobstay_hole_forward_of_stem` | 1.9812 | — | SECONDARY | §6 Steel :1537, cut through the fore part of the knee of the head below the lower cheek |
 | `fore_channel_shroud_aim_y` | 15.545 | — | RECONSTRUCTED | §04 9 fore top platform 51 ft 0 in above the load waterline |
 | `main_channel_shroud_aim_y` | 17.993 | — | RECONSTRUCTED | §04 9 main top platform 59 ft 0 1/2 in above the load waterline |
 | `mizzen_channel_shroud_aim_y` | 15.342 | — | RECONSTRUCTED | §04 9 mizen top platform 50 ft 4 in above the load waterline |
@@ -263,6 +270,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
 | `sail_cloth_width` | 0.6096 | 2 ft 0 in | SECONDARY | §7.3 of the paint research; period flax canvas bolt width |
+| `sail_roach` | 0.085 | — | RECONSTRUCTED | measured off the reference photograph, where the cut of the courses is clearest |
+| `sail_leech_curve` | 0.045 | — | RECONSTRUCTED | from the reference photograph; a sail under strain is a curved surface |
 | `sail_belly` | 0.115 | — | RECONSTRUCTED | from the reference photograph; the draught of a full sail on a soldier's wind |
 | `square_sails_set` | 8 | — | RECONSTRUCTED | the full suit in the reference photograph: two courses, three topsails and three topgallants |
 | `furled_bundle_diameter` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | a course furled and harbour-stowed makes a bundle about this thick |
@@ -278,7 +287,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `channel_width` | 0.508 | 1 ft 8 in | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column: breadth "sufficient to clear the shrouds of the roughtree rail" |
 | `fore_channel_length` | 6.096 | 20 ft 0 in | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column |
 | `main_channel_length` | 6.9342 | 22 ft 9 in | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column |
-| `mizzen_channel_length` | 4.2672 | 13 ft 12 in | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column |
+| `mizzen_channel_length` | 4.2672 | 13 ft 12 in | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column; the built channel is cut short of this at the after end to clear the counter |
 | `channel_projection` | 0.508 | — | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column: 1 ft 8 in clear of the ship's side |
 | `channel_thickness_inner` | 0.127 | — | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column: thickness at the inner edge, main and fore |
 | `channel_thickness_outer` | 0.0953 | — | SECONDARY | §06 10 Steel 1805 OUTBOARD folio, 32-gun frigate column: thickness at the outer edge, main and fore |
@@ -289,7 +298,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `channel_top_below_rail` | 0.254 | — | RECONSTRUCTED | §06 10 Steel puts the channel in line with the upper edge of the sheer rail, one strake below the cap |
 | `mizzen_channel_top_below_rail` | 0.1524 | — | RECONSTRUCTED | §06 10 Steel carries the mizzen channel 1 ft above the range of the main; four inches of that taken against a level rail line |
 | `channel_inboard_inset` | 0.0508 | — | RECONSTRUCTED | §06 10 the inner edge is let into the ship's side, not butted against the planking |
-| `channel_aft_clearance` | 0.3048 | — | RECONSTRUCTED | §06 10 the after end of a channel is kept off the run of the counter so it lands on the side proper |
+| `channel_aft_clearance` | 0.6096 | — | RECONSTRUCTED | §06 10 the after end of a channel is kept off the run of the counter so that it lands on the side proper |
 | `channel_deadeye_end_margin` | 0.2286 | — | RECONSTRUCTED | §06 10 the outer deadeyes are set in from the ends so the channel is not split at the butt |
 | `fore_channel_taper_fraction` | 0.24 | — | RECONSTRUCTED | §06 10 Steel says the fore channel tapers at its after end to stow the anchor but does not give the length of the taper |
 | `fore_channel_taper_projection` | 0.2286 | — | RECONSTRUCTED | §06 10 projection left at the after end of the fore channel taper |
@@ -378,7 +387,93 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 ### Head, beakhead and figurehead
 
-_none_
+| key | metric | period figure | grade | source |
+|---|---|---|---|---|
+| `head_stem_siding` | 0.3302 | 1 ft 1 in | RECONSTRUCTED | §6 Steel: the stem is sided as the keel, and the keel of this ship is sided 1 ft 1 in (SPEC.keel_siding) |
+| `head_stem_aft_overlap` | 0.1524 | — | RECONSTRUCTED | modelling allowance: how far abaft the hull's foremost station the stem timber is carried, so that it closes the fore end of the lofted shell |
+| `head_stem_head_above_rail` | 0.2286 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the stem head between the knightheads reads 4 to 5 px above the rail line |
+| `head_knee_siding` | 0.2794 | 0 ft 11 in | RECONSTRUCTED | §6 Steel :41236 the gripe is sided as the knee of the head; a knee slightly thinner than the stem it lies against |
+| `head_knee_projection` | 3.6576 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the foremost ink of the head stands 75 px forward of the stem |
+| `head_knee_top_above_rail` | 0 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the top of the knee under the hair bracket runs out level with the rail |
+| `head_knee_forward_at_deck` | 2.8956 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the cutwater's fore edge crossing the gun-deck line |
+| `head_knee_forward_at_waterline` | 1.2192 | — | RECONSTRUCTED | : the cutwater at the load waterline. The draught shows the stem raking aft below the water, which the traced offset table does not carry, so the fore edge is kept plumb over the hull's own forefoot here rather than crossing behind it |
+| `head_knee_length` | 3.81 | 12 ft 6 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the knee and stem together, from the aft face of the stem timber to the hair bracket — the fore-and-aft extent of the built piece |
+| `head_cheek_count` | 2 | — | SECONDARY | §6 Steel :1985, an upper and a lower cheek each side |
+| `head_cheek_sided` | 0.1524 | — | RECONSTRUCTED | §6 a cheek rather lighter than the knee it is bolted to |
+| `head_cheek_moulded` | 0.2286 | — | RECONSTRUCTED | §6 as above |
+| `head_cheek_aft_from_stem` | 2.7432 | 9 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the after ends of the cheeks fair into the bow about 54 px abaft the stem |
+| `head_rail_count` | 3 | — | SECONDARY | §8 the reference photograph shows three rails curving up to the figurehead; Steel :4172 names four (lower, middle, main, upper) plus a false rail, so this is the photograph's reading of a four-rail arrangement |
+| `head_rail_sided` | 0.127 | — | SECONDARY | §6 Steel :41199, the false rail sided 5 in for a small ship |
+| `head_rail_moulded` | 0.1778 | — | RECONSTRUCTED | §6 a rail rather deeper than it is broad, as the draught draws them |
+| `head_rail_lower_aft_from_stem` | 0.3048 | 1 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the lowest rail runs into the ship's side within a foot of the stem, at about the gun-deck line |
+| `head_rail_lower_fore_above_rail` | 0.1524 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
+| `head_rail_lower_half_breadth` | 1.0668 | 3 ft 6 in | RECONSTRUCTED | : no plan view of the head is published; the widest point of the lowest rail, set inside the middle rail |
+| `head_rail_middle_aft_from_stem` | 1.8288 | 6 ft 0 in | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
+| `head_rail_middle_fore_above_rail` | 0.4572 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px |
+| `head_rail_middle_half_breadth` | 1.524 | 5 ft 0 in | RECONSTRUCTED | : as head_rail_lower_half_breadth |
+| `head_rail_main_aft_from_stem` | 3.6576 | 12 ft 0 in | SECONDARY | §6 Steel :15364, the after end of the main head rail bolts to the same timberhead the cat block does, so it ends at the cathead |
+| `head_rail_main_fore_above_rail` | 0.762 | — | MEASURED | §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px: the uppermost rail runs into the back of the figure about 15 px above the rail line |
+| `head_rail_main_half_breadth` | 1.9812 | 6 ft 6 in | RECONSTRUCTED | : the main rail sweeps out nearly to the cathead in plan |
+| `head_timber_count` | 4 | — | SECONDARY | §6 research 06-deck-layout §11, head structure: Steel :3133 defines the head timbers but tabulates no count; four a side is the Sixth-Rate norm — RECONSTRUCTED |
+| `head_timber_sided` | 0.127 | — | RECONSTRUCTED | §6 a head timber sided as the rails it crosses |
+| `head_timber_moulded` | 0.1016 | — | RECONSTRUCTED | §6 as above |
+| `head_grating_aft_from_stem` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | : the after end of the flat of the head, where it meets the bow |
+| `head_grating_forward_of_stem` | 2.4384 | — | RECONSTRUCTED | : the fore end of the flat, short of the hair bracket |
+| `head_grating_above_lower_rail` | 0.1016 | — | RECONSTRUCTED | : the ledges and gratings laid on top of the lowest rail |
+| `head_ledge_sided` | 0.0508 | — | SECONDARY | §6 Steel :41205, ledges framing the flat of the head, 2 in broad |
+| `head_ledge_moulded` | 0.0572 | — | SECONDARY | §6 Steel :41206, 2 1/4 in deep |
+| `head_grating_batten_square` | 0.0508 | — | SECONDARY | §6 Steel :1293, grating battens about 2 in square |
+| `head_grating_batten_gap` | 0.0508 | — | SECONDARY | §6 Steel :2968, laid to leave about 2 in openings |
+| `head_seat_count` | 2 | — | SECONDARY | §6 research 06-deck-layout §11, head structure §11.2: Steel :41211 says only "Seats of Ease, &c., as directed"; two open seats on the flat, one each side of the knee — RECONSTRUCTED |
+| `head_seat_forward_of_stem` | 0.9144 | — | SECONDARY | §6 research 06-deck-layout §11, head structure §11.2, RECONSTRUCTED position |
+| `head_seat_half_breadth` | 0.762 | 2 ft 6 in | SECONDARY | §6 research 06-deck-layout §11, head structure §11.2, RECONSTRUCTED position |
+| `head_seat_width` | 0.508 | 1 ft 8 in | RECONSTRUCTED | : a seat wide enough for one man |
+| `head_seat_depth` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | : as above |
+| `head_seat_height` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | : seat height above the grating |
+| `head_seat_back_height` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | : the coaming behind the seat |
+| `beakhead_bulkhead_from_stem` | 3.6576 | 12 ft 0 in | RECONSTRUCTED | §6 research 06 §5.4: the cat beam is the foremost forecastle beam and the cathead root is at 12 ft, so the bulkhead stands there. Research 06 §11.3 says X = 0 ft, which cannot be right — the hull is 4 in wide at the stem |
+| `beakhead_bulkhead_height` | 1.8288 | 6 ft 0 in | RECONSTRUCTED | §6 a bulkhead tall enough to take a round-house and a head door, with its head at the forecastle rail |
+| `beakhead_bulkhead_above_rail` | 0.2286 | — | RECONSTRUCTED | §6 Steel :39518, the rough-tree rail carried round the bow above the bulkhead |
+| `beakhead_bulkhead_round_forward` | 0.4572 | — | RECONSTRUCTED | §6 Steel's beakhead bulkheads are rounded in plan; this ship has a round bow (ZAZ3067), so the middle of the bulkhead stands forward of its wings |
+| `beakhead_stanchion_per_side` | 5 | — | SECONDARY | §6 Steel :17843-17855, five stanchions each side of the centreline |
+| `beakhead_stanchion_sided` | 0.1778 | — | RECONSTRUCTED | §6 a stanchion sided as a top timber |
+| `beakhead_plank_thickness` | 0.0762 | 0 ft 3 in | RECONSTRUCTED | §6 the bulkhead planked as the ship's side above the ports |
+| `head_roundhouse_width` | 0.8382 | 2 ft 9 in | SECONDARY | §6 research 06-deck-layout §11, head structure §11.2: Steel :17846 keeps the two outer stanchions to the size of the round-houses; no dimension is given — RECONSTRUCTED as a privy for one man |
+| `head_roundhouse_depth` | 0.762 | 2 ft 6 in | RECONSTRUCTED | §6 as above |
+| `head_roundhouse_height` | 1.524 | 5 ft 0 in | RECONSTRUCTED | §6 as above |
+| `head_door_width` | 0.6604 | 2 ft 2 in | RECONSTRUCTED | §6 Steel :17849, the stanchion next inboard of the bow chase port makes the head door |
+| `head_door_height` | 1.3716 | 4 ft 6 in | RECONSTRUCTED | §6 as above |
+| `knighthead_half_breadth` | 0.3556 | 1 ft 2 in | SECONDARY | §6 research 06-deck-layout §5.3, knightheads: immediately each side of the stem head, from Steel :15347's stem half-thickness — RECONSTRUCTED |
+| `knighthead_sided` | 0.254 | — | RECONSTRUCTED | §6 a bollard timber heavier than a top timber |
+| `knighthead_above_bowsprit` | 0.4572 | — | SECONDARY | §6 Steel :15357-15359, the knightheads run high enough above the bowsprit to admit a chock between them |
+| `gammoning_hole_count` | 2 | — | SECONDARY | §6 Steel :41225, two gammoning holes |
+| `gammoning_cleat_forward_of_stem` | 0.9144 | — | SECONDARY | §6 Steel :2914, the gammoning is cut through the knee of the head between the cheeks, abaft the figure |
+| `gammoning_cleat_spacing` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §6 from Steel :41226, a gammoning hole 1 ft 1 in long, with a little wood between the two |
+| `gammoning_cleat_projection` | 0.0762 | — | RECONSTRUCTED | §6 the cleat that keeps the gammoning lashing from surging forward |
+| `cathead_root_from_stem` | 3.6576 | 12 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads: the inboard arm bolts to the cat beam |
+| `cathead_root_half_breadth` | 3.048 | 10 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads |
+| `cathead_outer_from_stem` | 2.4384 | 8 ft 0 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads: the sheave centre at the outer end |
+| `cathead_outer_half_breadth` | 4.4196 | 14 ft 6 in | SECONDARY | §6 research 06-deck-layout §5.4, catheads |
+| `cathead_spread` | 8.8392 | — | SECONDARY | §6 research 06-deck-layout §5.4, catheads: twice cathead_outer_half_breadth, the athwartships span over the two outer ends |
+| `cathead_stive_deg` | 22.6 | — | SECONDARY | §6 Steel :40062-40064, 5 in of rise per foot of length; the whole row is legible across all ten columns |
+| `cathead_sided` | 0.3556 | — | SECONDARY | §6 Steel :40060, OCR-doubtful |
+| `cathead_moulded` | 0.3302 | — | SECONDARY | §6 Steel :40061, OCR-doubtful |
+| `cathead_inboard_length` | 2.5908 | 8 ft 6 in | SECONDARY | §6 Steel :40066, length inboard from the outside of the timber, OCR-doubtful |
+| `cathead_sheave_count` | 3 | — | SECONDARY | §6 Steel :40068-40069, three sheaves in the outer end |
+| `cathead_sheave_diameter` | 0.254 | 0 ft 10 in | SECONDARY | §6 Steel :40069, OCR-doubtful |
+| `cathead_supporter_arm` | 1.0668 | — | SECONDARY | §6 Steel :40074, the thwartship arm of the knee under the cathead |
+| `figurehead_forward_of_stem` | 3.3528 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; sited on the head of the knee where ZAZ3067 draws a small figure, 66 px forward of the stem |
+| `figurehead_above_rail` | 0.1524 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the plinth on the hair bracket |
+| `figurehead_height` | 1.2192 | 4 ft 0 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — "the scale was drastically reduced", so a small figure |
+| `figurehead_rake_deg` | 30 | — | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the figure leans back against the hair bracket, following the run of the head |
+| `figurehead_hem_diameter` | 0.6096 | 2 ft 0 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; the spread of the drapery at the plinth |
+| `figurehead_waist_diameter` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_waist_height` | 0.6858 | 2 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_shoulder_height` | 0.9906 | 3 ft 3 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_shoulder_breadth` | 0.4064 | 1 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_head_diameter` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_arm_diameter` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
+| `figurehead_arm_length` | 0.5334 | 1 ft 9 in | RECONSTRUCTED | §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield |
 
 ### Deck furniture
 
@@ -625,8 +720,8 @@ _none_
 | `boat_entry_power` | 0.55 | — | RECONSTRUCTED | §8.5 fineness of the entry, as an exponent on the forward waterline |
 | `boat_run_power` | 1.6 | — | RECONSTRUCTED | §8.5 fineness of the run aft to the transom |
 | `boat_transom_width_frac` | 0.62 | — | RECONSTRUCTED | §8.5 transom breadth as a fraction of the extreme breadth |
-| `boat_sheer_rise_fwd` | 0.38 | — | RECONSTRUCTED | §8.5 rise of the gunwale at the stem, as a fraction of the depth amidships |
-| `boat_sheer_rise_aft` | 0.2 | — | RECONSTRUCTED | §8.5 rise of the gunwale at the transom |
+| `boat_sheer_rise_fwd` | 0.28 | — | RECONSTRUCTED | §8.5 rise of the gunwale at the stem, as a fraction of the depth amidships |
+| `boat_sheer_rise_aft` | 0.14 | — | RECONSTRUCTED | §8.5 rise of the gunwale at the transom |
 | `boat_rocker_fwd` | 0.62 | — | RECONSTRUCTED | §8.5 rise of the keel into the forefoot, as a fraction of the depth |
 | `boat_sheer_power` | 1.8 | — | RECONSTRUCTED | §8.5 the sheer of a boat runs flat amidships and lifts quickly at the ends; exponent on the rise |
 | `boat_rocker_power` | 1.8 | — | RECONSTRUCTED | §8.5 the same rule applied to the rocker of the keel |
@@ -653,27 +748,27 @@ _none_
 | `boat_chock_width` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §8.2 chock sided 6 in |
 | `boat_chock_spread` | 0.62 | — | RECONSTRUCTED | §8.2 the chocks take the boat under her bilges, at 0.62 of the half breadth |
 | `boat_chock_station` | 0.28 | — | RECONSTRUCTED | §8.2 the two chocks stand this fraction of the length either side of the boat's midlength |
-| `boat_stow_station` | 17.526 | — | RECONSTRUCTED | §8.2 midway along the four skid beams, which stand at X = 44, 53, 62 and 71 ft abaft the stem |
+| `boat_stow_station` | 17.0688 | — | RECONSTRUCTED | §8.2 midway along the four skid beams; the furniture module lays them from X = 44 ft at 8 ft centres, so their middle is X = 56 ft |
 | `launch_stow_offset` | 1.0668 | — | RECONSTRUCTED | §8.2 launch stowed to starboard of the centreline so that the pinnace stows beside her inside the 24 ft clear of the waist |
 | `pinnace_stow_offset` | 1.0668 | — | RECONSTRUCTED | §8.2 pinnace to port, the mirror of the launch |
-| `cutter_nest_rise` | 0.4318 | — | RECONSTRUCTED | §8.2 "nested one atop the other"; the cutter rests on the launch's thwarts |
+| `cutter_nest_rise` | 0.762 | — | RECONSTRUCTED | §8.2 "nested one atop the other"; the rise that lands the cutter's keel on top of the launch's thwarts rather than through them |
 | `cutter_nest_shift` | 0.3048 | — | RECONSTRUCTED | §8.2 the nested cutter set a foot aft in the launch to clear her stem |
-| `davit_station` | 35.3568 | — | RECONSTRUCTED | §8.4 quarter davits stepped on the quarterdeck rail 10 ft forward of the sternpost |
+| `davit_station` | 35.3568 | — | RECONSTRUCTED | §8.4 quarter davits stepped on the starboard quarterdeck rail 10 ft forward of the sternpost, where the photograph carries a boat aft |
 | `davit_spacing` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §8.4 the two davits set to take the jolly boat a little inside her stem and stern |
 | `davit_height_above_rail` | 1.3716 | — | RECONSTRUCTED | §8.4 davit head high enough to swing the boat clear of the rail |
-| `davit_outreach` | 1.0668 | — | RECONSTRUCTED | §8.4 davits project outboard about 3 ft 6 in; §8.4 gives 6 ft of projection for the longer transom davit |
+| `davit_outreach` | 1.524 | — | RECONSTRUCTED | §8.4 the davits reach far enough outboard to swing the boat clear of the quarterdeck rail; §8.4 gives 6 ft of projection for the longer transom davit |
 | `davit_diameter` | 0.127 | 0 ft 5 in | RECONSTRUCTED | §8.4 davit 5 in in diameter at the step |
 | `davit_fall_diameter` | 0.0381 | 0 ft 1.5 in | RECONSTRUCTED | §8.4 boat fall of 1½ in rope |
 | `jolly_hang_below_davit` | 0.8382 | — | RECONSTRUCTED | §8.4 boat griped up close under the davit heads for sea |
-| `boat_oar_count` | 10 | — | RECONSTRUCTED | §8.3 Steel: "Pinnaces never row more than eight oars, whereas Barges are constructed to row with ten"; the launch's oars stowed in her |
+| `boat_oar_count` | 10 | — | RECONSTRUCTED | §8.3 Steel: "Pinnaces never row more than eight oars, whereas Barges are constructed to row with ten" |
 | `boat_oar_length` | 4.572 | 15 ft 0 in | RECONSTRUCTED | §8.3 oar length by Steel's rule for a boat of this beam, stowed fore and aft |
 | `boat_oar_diameter` | 0.0762 | 0 ft 3 in | RECONSTRUCTED | §8.5 loom of the oar 3 in |
 | `boat_oar_blade_width` | 0.1397 | 0 ft 5.5 in | RECONSTRUCTED | §8.5 blade of the oar |
-| `boat_hook_count` | 2 | — | RECONSTRUCTED | §8.3 a boat hook to each of the two boats on the skids |
+| `boat_hook_count` | 2 | — | RECONSTRUCTED | §8.3 a pair of boat hooks stowed along the thwarts |
 | `boat_hook_length` | 3.048 | 10 ft 0 in | RECONSTRUCTED | §8.3 boat hook stowed along the thwarts |
-| `launch_mast_length` | 4.572 | 15 ft 0 in | RECONSTRUCTED | §8.3 the launch's mast, unstepped and stowed in her with the sail furled to it |
-| `launch_furled_sail_diameter` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §8.3 the boat's lug sail furled round its own yard |
-| `launch_furled_sail_length` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §8.3 the furl runs over the middle of the mast |
+| `boat_mast_length` | 4.572 | 15 ft 0 in | RECONSTRUCTED | §8.3 the boat's own mast, unstepped and stowed in her with the sail furled to it |
+| `boat_furled_sail_diameter` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §8.3 the boat's lug sail furled round its own yard |
+| `boat_furled_sail_length` | 2.7432 | 9 ft 0 in | RECONSTRUCTED | §8.3 the furl runs over the middle of the mast |
 
 ### Ground tackle
 
@@ -782,12 +877,17 @@ _none_
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `bow_chase_port_width` | 0.7112 | 2 ft 4 in | SECONDARY | §6 Steel, quarterdeck port width used for the bow chase port in the bulkhead (research 06 §9) |
+| `bow_chase_port_height` | 0.7112 | 2 ft 4 in | SECONDARY | §6 as above |
+| `hair_bracket_length` | 1.2192 | 4 ft 0 in | SECONDARY | §6 Steel :3043, the moulding terminating the head rails and running into the back of the figure |
+| `hair_bracket_sided` | 0.127 | — | RECONSTRUCTED | §6 a moulding sided as the rails it gathers |
+| `trailboard_depth` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §8 research 08 §4.4, "very limited trailboard decoration" on a small ship of this date |
 | `sheet_anchor_scale` | 1 | — | SECONDARY | §13.1 Steel :43220 — the sheet is one of the four large anchors, so it is a bower's size |
 | `kedge_anchor_scale` | 0.585 | — | RECONSTRUCTED | §13.1 the kedge at one fifth of a bower's weight, scaled by the cube root |
-| `stowed_anchor_ring_from_stem` | 8.5344 | 27 ft 12 in | RECONSTRUCTED | §13.1 stowed in the fore chains, clear abaft the catted bower's crown |
-| `stowed_anchor_shank_below_rail` | 0.2286 | — | RECONSTRUCTED | §13.1 the shank carried just under the rail, clear above the gunport heads |
-| `stowed_anchor_outboard_of_side` | 0.3048 | — | RECONSTRUCTED | §13.1 the shank standing a foot off the topside on its lining |
-| `stowed_anchor_stock_cant_deg` | 20 | — | RECONSTRUCTED | §13.1 the spare's stock canted down nearly athwartships so that it lies over the rail and not across the deck |
+| `stowed_anchor_ring_from_stem` | 4.8768 | 16 ft 0 in | RECONSTRUCTED | §13.1 stowed on the forecastle abaft the fore mast, ring forward |
+| `stowed_anchor_inboard_of_side` | 1.2192 | — | RECONSTRUCTED | §13.1 the shank laid four feet in from the ship's side, leaving the gangway clear |
+| `stowed_anchor_above_deck` | 0.127 | 0 ft 5 in | RECONSTRUCTED | §13.1 the shank bearing on the palms and on its chocks |
+| `stowed_stock_beside_shank` | 0.5334 | — | RECONSTRUCTED | §13.1 the unshipped stock lashed on deck alongside its own anchor |
 | `shank_painter_diameter` | 0.032 | 0 ft 1.3 in | SECONDARY | §13.3 Steel :40292 and :44589, stopper bolts 1¼ in — the shank painter chain is of that bar |
 | `shank_painter_bolt_from_stem` | 6.096 | 20 ft 0 in | RECONSTRUCTED | §13.3 "a chain bolted through the topside, abaft the cathead" (Steel :4552) |
 | `shank_painter_on_shank` | 0.78 | — | RECONSTRUCTED | §13.3 the painter takes the shank near the crown |
@@ -864,10 +964,10 @@ and the ochre strake follow the sheer.
 | `ochre_trim` | #BB9476 | 0.5 | 0 | SECONDARY §8 NCS S 3020-Y40R, the Victory ochre; photo samples #dba55d-#eabc66 in warm light |
 | `inboard_red` | #913832 | 0.65 | 0 | SECONDARY §8 red ochre for inboard works and port linings, not Venetian red |
 | `boot_top` | #2A2018 | 0.7 | 0 | SECONDARY §8 exposed plank above the sheathing, algae-stained |
-| `copper` | #A8603E | 0.62 | 0 | RECONSTRUCTED §8 lightly weathered sheathing; the photo reads brown, never green |
+| `copper` | #8E5334 | 0.66 | 0 | RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched |
 | `copper_bright` | #F7BC9E | 0.35 | 0 | SECONDARY §8 new copper, used for the nail heads |
 | `copper_dark` | #3E2418 | 0.75 | 0 | SECONDARY §8 cupric oxide in the sheet laps |
-| `copper_line_above_wl_v` | 0.055 | — | — | RECONSTRUCTED §8 sheathing carried 2 ft 6 in to 3 ft above the load waterline, expressed in the hull V coordinate |
+| `copper_line_above_wl_v` | 0.132 | — | — | RECONSTRUCTED §8 sheathing carried 2 ft 9 in above the load waterline, converted into the hull V coordinate through the feature heights at the midship station |
 | `ochre_strake_below_sill_v` | 0.008 | — | — | MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads |
 | `ochre_strake_above_head_v` | 0.008 | — | — | MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base |
 | `deck` | #C9BCA4 | 0.72 | 0 | SECONDARY §8 holystoned deck planking |

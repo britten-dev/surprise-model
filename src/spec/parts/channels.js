@@ -80,7 +80,12 @@ export const CHANNELS_SPEC = {
 
   fore_channel_length: m(ft(20, 0), S06),
   main_channel_length: m(ft(22, 9), S06),
-  mizzen_channel_length: m(ft(14, 0), S06),
+  // Steel's 14 ft mizzen channel belongs to a ship whose mizzen mast stands 17 ft 3 in
+  // afore the after perpendicular. Scaled onto this hull the mast comes out closer to
+  // the sternpost than that, so the after end of the channel has to give way and the
+  // built mizzen channel is shorter than the figure below. The foremost end is held
+  // against the mast instead, because that is what keeps every shroud raking aft.
+  mizzen_channel_length: m(ft(14, 0), `${S06}; the built channel is cut short of this at the after end to clear the counter`, { noAudit: true }),
 
   channel_projection: m(ft(1, 8), `${S06}: 1 ft 8 in clear of the ship's side`, { noAudit: true }),
   channel_thickness_inner: m(ft(0, 5), `${S06}: thickness at the inner edge, main and fore`, { noAudit: true }),
@@ -101,7 +106,7 @@ export const CHANNELS_SPEC = {
   mizzen_channel_top_below_rail: m(ft(0, 6), 'RECONSTRUCTED §06 10 Steel carries the mizzen channel 1 ft above the range of the main; four inches of that taken against a level rail line', { noAudit: true }),
 
   channel_inboard_inset: m(ft(0, 2), 'RECONSTRUCTED §06 10 the inner edge is let into the ship\'s side, not butted against the planking', { noAudit: true }),
-  channel_aft_clearance: m(ft(1, 0), 'RECONSTRUCTED §06 10 the after end of a channel is kept off the run of the counter so it lands on the side proper', { noAudit: true }),
+  channel_aft_clearance: m(ft(2, 0), 'RECONSTRUCTED §06 10 the after end of a channel is kept off the run of the counter so that it lands on the side proper', { noAudit: true }),
   channel_deadeye_end_margin: m(ft(0, 9), 'RECONSTRUCTED §06 10 the outer deadeyes are set in from the ends so the channel is not split at the butt', { noAudit: true }),
 
   // Steel: the fore channel tapers at its after end so the fluke of the bower beds
@@ -115,8 +120,8 @@ export const CHANNELS_SPEC = {
   channel_rail_notch_clearance: m(ft(0, 2), 'RECONSTRUCTED §06 10 the score is cut a little wider than the strop it takes', { noAudit: true }),
 
   // ------------------------------------------------------------------ deadeyes
-  shroud_deadeye_diameter: m(ft(0, 11), `${S06R}: 11 in for the main and fore shrouds`),
-  mizzen_shroud_deadeye_diameter: m(ft(0, 8), `${S04S}: the mizen entry reads "Dead Eyes 8" inches`),
+  shroud_deadeye_diameter: m(ft(0, 11), `${S06R}: 11 in for the main and fore shrouds`, { noAudit: true }),
+  mizzen_shroud_deadeye_diameter: m(ft(0, 8), `${S04S}: the mizen entry reads "Dead Eyes 8" inches`, { noAudit: true }),
   topmast_backstay_deadeye_diameter: m(ft(0, 9), `${S06R}: 9 in, the after end of the main and fore channels`, { noAudit: true }),
   topgallant_backstay_deadeye_diameter: m(ft(0, 7), `${S06R}: 7 in`, { noAudit: true }),
   mizzen_topmast_backstay_deadeye_diameter: m(ft(0, 8), `${S06R}: 8 in`, { noAudit: true }),
@@ -137,7 +142,7 @@ export const CHANNELS_SPEC = {
   chainplate_width: m(ft(0, 2.5), 'RECONSTRUCTED §06 10 a plate of 1 1/8 in iron is sided about 2 1/2 in', { noAudit: true }),
   chainplate_thickness: m(ft(0, 1.125), 'SECONDARY §06 10 Steel: chain iron 1 1/8 in, main and fore', { noAudit: true }),
   mizzen_chainplate_thickness: m(ft(0, 1), 'SECONDARY §06 10 Steel: chain iron 1 in, mizzen', { noAudit: true }),
-  chain_bolt_below_channel: m(ft(3, 6), 'SECONDARY §06 10 Steel: the chain bolt driven 3 ft 6 in below the channel'),
+  chain_bolt_below_channel: m(ft(3, 6), 'SECONDARY §06 10 Steel: the chain bolt driven 3 ft 6 in below the channel', { noAudit: true }),
   mizzen_chain_bolt_below_channel: m(ft(3, 0), 'SECONDARY §06 10 Steel, scaled for the mizzen', { noAudit: true }),
   chain_bolt_diameter: m(ft(0, 1.5), 'SECONDARY §06 10 Steel: chain bolt 1 1/2 in', { noAudit: true }),
   chainplate_standoff: m(ft(0, 0.5), 'RECONSTRUCTED §06 10 the plate lies on the planking; half an inch keeps the iron clear of the hull surface', { noAudit: true }),

@@ -43,6 +43,11 @@
   <label>Detail</label><div class="seg" id="lod"></div>
   <label>Canvas</label><div class="seg" id="sails"></div>
   <label>Display</label><div class="seg" id="disp"></div>
+  <label>Download</label><div class="seg" id="dl"></div>
+  <div class="sub" style="margin:6px 0 0;font-size:10px;line-height:1.45">
+    The ship is generated in your browser from the source in this page. The files below
+    are the same model exported to glTF.
+  </div>
 </div>
 
 <div class="panel" id="views"><label style="margin-top:0">Camera</label><div class="seg" id="viewbtns"></div></div>
@@ -61,7 +66,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 0.92;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const { scene } = makeEnvironment(renderer, { studio: false });
@@ -115,6 +120,33 @@ for (const name of Object.keys(VIEWS)) {
   b.onclick = () => goToView(name);
   viewBtns.appendChild(b);
 }
+
+// The exported models, if the site was built with them.
+(async () => {
+  const el = document.getElementById('dl');
+  try {
+    const manifest = await (await fetch('/build/manifest.json')).json();
+    const here = new Set();
+    for (const row of manifest) {
+      const label = row.lod === 'hero' ? 'hero' : row.lod;
+      if (here.has(row.name)) continue;
+      here.add(row.name);
+      const ok = await fetch(`/build/${row.name}`, { method: 'HEAD' }).then((r) => r.ok).catch(() => false);
+      if (!ok) continue;
+      const a = document.createElement('a');
+      a.href = `/build/${row.name}`;
+      a.download = row.name;
+      a.textContent = `${label}·${row.sails}`;
+      a.style.cssText = 'flex:1 1 auto;background:#1e262f;color:#b9c2cc;border:1px solid #2b3440;'
+        + 'border-radius:5px;padding:4px 7px;font-size:11px;text-decoration:none;text-align:center';
+      a.title = `${row.name} — ${row.tris.toLocaleString()} triangles, ${row.kb} kB`;
+      el.appendChild(a);
+    }
+    if (!el.children.length) el.innerHTML = '<span style="color:#6b7683;font-size:11px">not exported</span>';
+  } catch {
+    el.innerHTML = '<span style="color:#6b7683;font-size:11px">not exported</span>';
+  }
+})();
 
 const grid = new THREE.GridHelper(120, 120, 0x35506a, 0x1e2c3a);
 grid.visible = false;

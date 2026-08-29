@@ -384,6 +384,16 @@ function deckYAt(model, z, x, rise) {
 }
 
 /**
+ * The slope of the cambered deck at a station and a distance off the centreline. A
+ * carriage stands across this slope, not on the flat, and tilts with it: that is why
+ * the hind trucks of a real carriage are smaller than the fore trucks.
+ */
+function deckSlopeAt(model, z, x, rise) {
+  const xEdge = deckEdgeX(model, z, rise);
+  return Math.atan(-2 * SPEC.deck_camber.value * clamp(Math.abs(x), 0, xEdge) / (xEdge * xEdge));
+}
+
+/**
  * Where a gun run out stands. Its fore trucks are all but against the ship's side, so
  * the anchor is the inboard face of the side at the height of the bore — which needs
  * the deck height, which needs the position. Two passes settle it.
@@ -403,16 +413,21 @@ function siteRunOut(model, z, rise, axisAbove, foreOffset) {
       : deckEdgeX(model, z, rise) - SPEC.gun_deck_inset.value;
     x = inner - foreOffset;
   }
-  return { x, y: deckY };
+  return { x, y: deckY, tilt: deckSlopeAt(model, z, x, rise) };
 }
 
-/** The instance transform for a piece standing at `(x, y, z)` on the given side. */
-function placement(x, y, z, side) {
-  return new THREE.Matrix4().compose(
-    new THREE.Vector3(x * side, y, z),
-    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), side > 0 ? 0 : Math.PI),
-    new THREE.Vector3(1, 1, 1)
-  );
+const UP = new THREE.Vector3(0, 1, 0);
+const FORE_AND_AFT = new THREE.Vector3(0, 0, 1);
+const ONE = new THREE.Vector3(1, 1, 1);
+
+/**
+ * The instance transform for a piece standing on the given side: mirrored to port, and
+ * heeled outboard by the camber of the deck it stands on so that all four trucks touch.
+ */
+function placement(g) {
+  const q = new THREE.Quaternion().setFromAxisAngle(UP, g.side > 0 ? 0 : Math.PI);
+  q.multiply(new THREE.Quaternion().setFromAxisAngle(FORE_AND_AFT, g.tilt));
+  return new THREE.Matrix4().compose(new THREE.Vector3(g.x * g.side, g.y, g.z), q, ONE);
 }
 
 // ----------------------------------------------------------------------------- build
@@ -480,7 +495,7 @@ export function buildGuns(cfg, mats, model, ctx) {
   for (const p of ctx.ports) {
     if (p.kind !== 'gundeck') continue;
     const at = siteRunOut(model, p.z, 0, axis9, trunnionFromFore);
-    for (const side of [1, -1]) natures.nine.at.push({ ...at, z: p.z, side });
+    for (const side of [1, -1]) natures.nine.at.push({ ...at, z: p.z, side, rise: 0 });
   }
 
   // ---- The quarterdeck: six stations a side, the two foremost taken by carronades and
@@ -494,10 +509,10 @@ export function buildGuns(cfg, mats, model, ctx) {
     const z = model.fromStem(qdFirst + i * qdStep);
     if (i < qdCarronades) {
       const at = siteRunOut(model, z, qdRise, axisC, 0);
-      for (const side of [1, -1]) carronade.at.push({ ...at, z, side });
+      for (const side of [1, -1]) carronade.at.push({ ...at, z, side, rise: qdRise });
     } else {
       const at = siteRunOut(model, z, qdRise, axis4, trunnionFromFore);
-      for (const side of [1, -1]) natures.four.at.push({ ...at, z, side });
+      for (const side of [1, -1]) natures.four.at.push({ ...at, z, side, rise: qdRise });
     }
   }
 
@@ -505,10 +520,10 @@ export function buildGuns(cfg, mats, model, ctx) {
   const fcRise = SPEC.forecastle_above_gundeck.value;
   const zFcCar = model.fromStem(SPEC.gun_forecastle_carronade_from_stem.value);
   const atFcCar = siteRunOut(model, zFcCar, fcRise, axisC, 0);
-  for (const side of [1, -1]) carronade.at.push({ ...atFcCar, z: zFcCar, side });
+  for (const side of [1, -1]) carronade.at.push({ ...atFcCar, z: zFcCar, side, rise: fcRise });
   const zFcGun = model.fromStem(SPEC.gun_forecastle_gun_from_stem.value);
   const atFcGun = siteRunOut(model, zFcGun, fcRise, axis4, trunnionFromFore);
-  for (const side of [1, -1]) natures.four.at.push({ ...atFcGun, z: zFcGun, side });
+  for (const side of [1, -1]) natures.four.at.push({ ...atFcGun, z: zFcGun, side, rise: fcRise });
 
   // ---- Instance them all.
   const carriages = [];
@@ -518,7 +533,7 @@ export function buildGuns(cfg, mats, model, ctx) {
     const carr = new THREE.InstancedMesh(nat.carriage, mats.red, nat.at.length);
     carr.name = `${name}_pounder_carriages`;
     nat.at.forEach((g, i) => {
-      const mtx = placement(g.x, g.y, g.z, g.side);
+      const mtx = placement(g);
       barrels.setMatrixAt(i, mtx);
       carr.setMatrixAt(i, mtx);
     });
@@ -537,7 +552,7 @@ export function buildGuns(cfg, mats, model, ctx) {
   const carSlides = new THREE.InstancedMesh(carronade.slide, mats.red, carronade.at.length);
   carSlides.name = 'carronade_slides';
   carronade.at.forEach((g, i) => {
-    const mtx = placement(g.x, g.y, g.z, g.side);
+    const mtx = placement(g);
     carBarrels.setMatrixAt(i, mtx);
     carSlides.setMatrixAt(i, mtx);
   });
@@ -571,6 +586,29 @@ export function buildGuns(cfg, mats, model, ctx) {
   return group;
 }
 
+/** A point in a gun's own frame — outboard, up, fore and aft — put into the ship's. */
+function inGunFrame(g) {
+  const mtx = placement(g);
+  return (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(mtx);
+}
+
+/**
+ * A ring bolt in the ship's side beside a gun, `z` metres fore or aft of it. On the gun
+ * deck the bulwark is carried up round the ports, so the bolt goes into the side a
+ * little above the sill. On the quarterdeck and forecastle, which carry no bulwark in
+ * the hull as traced, it goes into the waterway at the edge of the deck.
+ */
+function sideBolt(model, g, z) {
+  const zz = g.z + z;
+  const f = model.featureYAt(zz);
+  const above = SPEC.gun_breeching_bolt_above_sill.value;
+  const y = g.rise === 0 ? f.port_sill + above : f.deck + g.rise + above;
+  const x = g.rise === 0
+    ? model.halfBreadthAt(zz, y) - SPEC.side_thickness.value
+    : deckEdgeX(model, zz, g.rise) - SPEC.gun_deck_inset.value;
+  return new THREE.Vector3(x * g.side, y, zz);
+}
+
 /**
  * The breeching: a heavy rope whose bight is seized to the cascabel, led through the
  * ring bolts on the carriage brackets and clinched to a ring bolt in the ship's side
@@ -582,22 +620,13 @@ function breeching(cfg, model, nat, g) {
   const cas = SPEC.gun_cascabel_length_cal.value * nat.bore;
   const half = nat.carriageWidth * HALF;
   const xR = SPEC.gun_carriage_trunnion_from_fore.value - nat.carriageLength;
-  const local = (x, y, z) => new THREE.Vector3((g.x + x) * g.side, g.y + y, g.z + z);
+  const local = inGunFrame(g);
 
   const cascabel = local(-tb - cas * 0.6, nat.axis, 0);
   const cheek = (z) => local(xR + nat.carriageLength * 0.25, nat.axis * 0.72, z);
 
-  // The ring bolts in the ship's side, one each side of the port and a little above the
-  // level of the sill. Taken off the hull, so they move with it.
-  const bolt = (z) => {
-    const zz = g.z + z;
-    const y = model.featureYAt(zz).port_sill + SPEC.gun_breeching_bolt_above_sill.value;
-    return new THREE.Vector3(
-      (model.halfBreadthAt(zz, y) - SPEC.side_thickness.value) * g.side, y, zz
-    );
-  };
-
   const off = SPEC.gun_breeching_bolt_from_port.value;
+  const bolt = (z) => sideBolt(model, g, z);
   const pts = [bolt(off), cheek(half), cascabel, cheek(-half), bolt(-off)];
   const sag = SPEC.gun_breeching_sag.value * nat.carriageLength;
   pts[1].y -= sag;
@@ -618,7 +647,7 @@ function gunTackle(cfg, model, nat, g) {
   const r = SPEC.gun_tackle_diameter.value * HALF;
   const sag = SPEC.gun_tackle_sag.value;
   const opts = { tubular: Math.max(3, cfg.ropeSegments), radial: cfg.ropeRadial };
-  const local = (x, y, z) => new THREE.Vector3((g.x + x) * g.side, g.y + y, g.z + z);
+  const local = inGunFrame(g);
   const fall = (a, b) => {
     const mid = a.clone().add(b).multiplyScalar(HALF);
     mid.y -= sag * a.distanceTo(b);
@@ -628,12 +657,7 @@ function gunTackle(cfg, model, nat, g) {
 
   for (const s of [1, -1]) {
     const a = local(xR + nat.carriageLength * 0.55, nat.axis * 0.60, s * half);
-    const zz = g.z + s * SPEC.gun_breeching_bolt_from_port.value;
-    const y = model.featureYAt(zz).deck + SPEC.gun_breeching_bolt_above_sill.value;
-    const b = new THREE.Vector3(
-      (model.halfBreadthAt(zz, y) - SPEC.side_thickness.value) * g.side, y, zz
-    );
-    out.push(fall(a, b));
+    out.push(fall(a, sideBolt(model, g, s * SPEC.gun_breeching_bolt_from_port.value)));
   }
   out.push(fall(
     local(xR, nat.axis * 0.55, 0),

@@ -276,8 +276,8 @@ function makeBoat(P, cfg, mats) {
   }
 
   if (P.gear && cfg.boatGear && !solid) {
-    // The oars stowed fore and aft on the thwarts, two boat hooks beside them, and the
-    // boat's own mast with her lug sail furled to it.
+    // The oars stowed fore and aft across the thwarts, two boat hooks beside them, and
+    // the boat's own mast with her lug sail furled to it.
     const dia = S('boat_oar_diameter');
     const rowY = lines.sheer(0.5) - S('boat_thwart_below_gunwale') + dia;
     const spread = (lines.halfBreadth(0.5) - plank * 3) * 2;
@@ -303,7 +303,7 @@ function makeBoat(P, cfg, mats) {
       timber.push(h);
     }
 
-    const mastLen = S('launch_mast_length');
+    const mastLen = S('boat_mast_length');
     const mastX = spread * 0.3;
     const mastY = rowY + dia * 1.4;
     const mast = spar({
@@ -316,8 +316,8 @@ function makeBoat(P, cfg, mats) {
     mast.translate(mastX, mastY, -mastLen / 2 + P.length * 0.1);
     timber.push(mast);
 
-    const furlR = S('launch_furled_sail_diameter') / 2;
-    const furlLen = S('launch_furled_sail_length');
+    const furlR = S('boat_furled_sail_diameter') / 2;
+    const furlLen = S('boat_furled_sail_length');
     const furl = spar({
       length: furlLen,
       radiusAt: (t) => furlR * (0.55 + 0.45 * Math.sin(Math.PI * clamp01(t))),
@@ -400,7 +400,7 @@ export function buildBoats(cfg, mats, model, ctx) {
   const launch = makeBoat({
     name: 'launch',
     length: S('launch_length'), beam: S('launch_beam'), depth: S('launch_depth'),
-    fullness: fullLaunch, gear: true, rudder: false,
+    fullness: fullLaunch, gear: false, rudder: false,
   }, cfg, mats);
   const launchX = S('launch_stow_offset');
   stow(launch, S('launch_length'), launchX);
@@ -410,7 +410,10 @@ export function buildBoats(cfg, mats, model, ctx) {
   const pinnace = makeBoat({
     name: 'pinnace',
     length: S('pinnace_length'), beam: S('pinnace_beam'), depth: S('pinnace_depth'),
-    fullness: fullPull, gear: false, rudder: false,
+    // The oars, the boat hooks and the mast with her lug sail furled to it go in the
+    // pinnace and not in the launch, because the launch has the cutter nested in her
+    // and anything stowed under it would be both invisible and inside the cutter.
+    fullness: fullPull, gear: true, rudder: false,
   }, cfg, mats);
   stow(pinnace, S('pinnace_length'), -S('pinnace_stow_offset'));
   audit(pinnace.shell, 'pinnace_length', 'extent_z');

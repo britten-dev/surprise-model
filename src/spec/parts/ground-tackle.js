@@ -79,17 +79,19 @@ export const GROUND_TACKLE_SPEC = {
   // canted outboard over the rail.
   anchor_stock_cant_deg: n(58, 'RECONSTRUCTED §PHOTO the stock canted outboard over the rail, read off the reference photograph', { noAudit: true }),
 
-  // ------------------------------------------------------ the spares in the chains
+  // ---------------------------------------------------- the spares on the forecastle
   // Steel's outfit is four large anchors and two small. The two bowers take the catheads
-  // and between them the whole length of the fore channel, so the sheet and the kedge are
-  // stowed in the chains abaft it, shank fore and aft under the rail, which is where a
-  // frigate carried her spares.
+  // and, between them, the whole length of the fore channel, so the sheet and the kedge go
+  // inboard — research 06 §13.1, "the spare is stowed inboard". They lie on the forecastle,
+  // ring forward, arms flat on the deck, with their stocks unshipped and lashed along the
+  // shank: a stocked anchor cannot lie flat on a deck, because the stock stands square to
+  // the arms, which is why Steel counts stocks as an item of the outfit in their own right.
   sheet_anchor_scale: n(1.0, 'SECONDARY §13.1 Steel :43220 — the sheet is one of the four large anchors, so it is a bower\'s size', { noAudit: true }),
   kedge_anchor_scale: n(0.585, 'RECONSTRUCTED §13.1 the kedge at one fifth of a bower\'s weight, scaled by the cube root', { noAudit: true }),
-  stowed_anchor_ring_from_stem: m(ft(28, 0), 'RECONSTRUCTED §13.1 stowed in the fore chains, clear abaft the catted bower\'s crown', { noAudit: true }),
-  stowed_anchor_shank_below_rail: m(ft(0, 9), 'RECONSTRUCTED §13.1 the shank carried just under the rail, clear above the gunport heads', { noAudit: true }),
-  stowed_anchor_outboard_of_side: m(ft(1, 0), 'RECONSTRUCTED §13.1 the shank standing a foot off the topside on its lining', { noAudit: true }),
-  stowed_anchor_stock_cant_deg: n(20, 'RECONSTRUCTED §13.1 the spare\'s stock canted down nearly athwartships so that it lies over the rail and not across the deck', { noAudit: true }),
+  stowed_anchor_ring_from_stem: m(ft(16, 0), 'RECONSTRUCTED §13.1 stowed on the forecastle abaft the fore mast, ring forward', { noAudit: true }),
+  stowed_anchor_inboard_of_side: m(ft(4, 0), 'RECONSTRUCTED §13.1 the shank laid four feet in from the ship\'s side, leaving the gangway clear', { noAudit: true }),
+  stowed_anchor_above_deck: m(ft(0, 5), 'RECONSTRUCTED §13.1 the shank bearing on the palms and on its chocks', { noAudit: true }),
+  stowed_stock_beside_shank: m(ft(1, 9), 'RECONSTRUCTED §13.1 the unshipped stock lashed on deck alongside its own anchor', { noAudit: true }),
 
   // ------------------------------------------------------------- the hawse holes
   // No source gives their position on Surprise. Research 01 records that the replica's

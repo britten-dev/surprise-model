@@ -197,12 +197,13 @@ function channelPlan(model) {
 
   return specs.map((c) => {
     const zMast = model.fromStem(S(c.mastKey));
-    const length = S(c.lengthKey);
-    let z0 = zMast - S(c.foreEndKey);
-    // Steel puts the mizzen mast far enough aft that its channel would run onto the
-    // counter. It is shifted forward bodily rather than shortened, so that the channel
-    // keeps the length the source gives it.
-    if (z0 + length > zLimit) z0 = zLimit - length;
+    const z0 = zMast - S(c.foreEndKey);
+    // The foremost end stays where the source puts it, hard against the mast, because
+    // that is what makes every shroud rake aft. Steel's mizzen stands far enough aft
+    // that his 14 ft channel would run out onto the counter, so it is the after end
+    // that gives way and the mizzen channel comes out short. See the spec note on
+    // mizzen_channel_length.
+    const length = Math.min(S(c.lengthKey), zLimit - z0);
 
     return {
       ...c, zMast, length, z0, z1: z0 + length,
@@ -349,7 +350,7 @@ export function buildChannels(cfg, mats, model, ctx) {
 
     // The rail, in the pieces between the scores.
     if (cfg.channelRails) {
-      const steps = Math.max(2, Math.round(cfg.mouldingSweeps / 24));
+      const steps = Math.max(2, Math.round(cfg.mouldingSweeps / 48));
       const pieces = [];
       let last = 0;
       for (const eye of eyes) {
@@ -391,7 +392,7 @@ export function buildChannels(cfg, mats, model, ctx) {
       if (cfg.deadeyes === true) {
         // The iron strop round the deadeye, which is what the chain hooks to.
         const ir = S(c.stropKey) / 2;
-        const g = new THREE.TorusGeometry(eye.r + ir, ir, 4, Math.max(8, cfg.latheSegments));
+        const g = new THREE.TorusGeometry(eye.r + ir, ir, 3, Math.max(8, Math.round(cfg.latheSegments * 0.6)));
         g.applyMatrix4(frameAt(eye.centre, up, out));
         iron.push(g);
       }
@@ -431,7 +432,9 @@ export function buildChannels(cfg, mats, model, ctx) {
     // Both sides come off one build, so the two can never disagree.
     const platform = new THREE.Mesh(mergeGeometries([...timber, ...timber.map(mirrored)]), mats.timber);
     platform.name = `${c.name}_channel`;
-    audit(platform, c.lengthKey, 'extent_z', { tolerance: 0.06 });
+    // The mizzen channel is cut short at the after end to clear the counter, so its
+    // length is only worth measuring on the two that come out at their full size.
+    if (c.length >= S(c.lengthKey) - 1e-6) audit(platform, c.lengthKey, 'extent_z', { tolerance: 0.05 });
     if (cfg.deadeyes) {
       platform.userData.count = total;
       audit(platform, c.totalKey, 'count', { tolerance: 0.001 });

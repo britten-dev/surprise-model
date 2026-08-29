@@ -9,7 +9,10 @@
 export const VIEWS = {
   // Matched to reference/surprise-reference.jpg: a museum model photographed from the
   // port bow, a little above deck level, the whole rig in frame.
-  reference: { azimuth: 148, elevation: 12, fill: 1.06, fov: 32, aim: [0, 0.46, 0] },
+  // Matched to reference/surprise-reference.jpg by laying the two side by side: the
+  // photograph is taken from the port bow but much closer to the beam than it first
+  // looks, from a little above the rail, with the ship filling the frame.
+  reference: { azimuth: 308, elevation: 9, fill: 0.84, fov: 30, aim: [0, 0.44, 0.02] },
 
   bow: { azimuth: 176, elevation: 9, fill: 1.04, fov: 34, aim: [0, 0.44, 0] },
   beam: { azimuth: 90, elevation: 7, fill: 1.02, fov: 32, aim: [0, 0.48, 0] },

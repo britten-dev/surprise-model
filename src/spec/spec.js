@@ -115,10 +115,10 @@ export const PAINT = {
   inboard_red: { hex: '#913832', roughness: 0.65, source: 'SECONDARY §8 red ochre for inboard works and port linings, not Venetian red' },
   boot_top: { hex: '#2A2018', roughness: 0.70, source: 'SECONDARY §8 exposed plank above the sheathing, algae-stained' },
 
-  copper: { hex: '#A8603E', roughness: 0.62, source: 'RECONSTRUCTED §8 lightly weathered sheathing; the photo reads brown, never green' },
+  copper: { hex: '#8E5334', roughness: 0.66, source: 'RECONSTRUCTED §8 sheathing after some months in the water: brown, not the salmon of new copper and never the green of long immersion. The reference photograph reads warm brown here, and that is what is matched' },
   copper_bright: { hex: '#F7BC9E', roughness: 0.35, source: 'SECONDARY §8 new copper, used for the nail heads' },
   copper_dark: { hex: '#3E2418', roughness: 0.75, source: 'SECONDARY §8 cupric oxide in the sheet laps' },
-  copper_line_above_wl_v: { value: 0.055, source: 'RECONSTRUCTED §8 sheathing carried 2 ft 6 in to 3 ft above the load waterline, expressed in the hull V coordinate' },
+  copper_line_above_wl_v: { value: 0.132, source: 'RECONSTRUCTED §8 sheathing carried 2 ft 9 in above the load waterline, converted into the hull V coordinate through the feature heights at the midship station' },
 
   ochre_strake_below_sill_v: { value: 0.008, source: 'MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads' },
   ochre_strake_above_head_v: { value: 0.008, source: 'MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base' },
