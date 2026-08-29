@@ -26,8 +26,11 @@
 //    merged meshes of tens of thousands of vertices with no nodes inside them to
 //    animate, so the movement has to happen per vertex — and the processor has better
 //    things to do with forty thousand triangles a frame.
-//  * **Node transforms**, for the wheel and for the men. Both are rigid, both have their
-//    own nodes, and moving a node is free.
+//  * **Node transforms**, for the yards, the wheel and the men. All three are rigid, all
+//    three have their own nodes, and moving a node is free. The yards are the important
+//    one: sails.js hangs each square sail on its own yard rather than merging the suit
+//    into one mesh, so bracing a yard brings its canvas round with it — which is what a
+//    square rig is for, and what a merged suit makes impossible.
 //  * **Rewriting the vertices**, for the three flags. A flag is a hundred and fifty
 //    vertices and its exact surface is worth more than the microsecond that costs.
 //
@@ -289,10 +292,16 @@ export function createMotion(ship, opts = {}) {
   }
 
   // ---------------------------------------------------------------- what moves, and how
-  const parts = { flags: [], crew: [], wheel: null };
+  const parts = { flags: [], crew: [], yards: [], wheel: null };
   const named = (n) => ship.getObjectByName(n);
 
-  const sailNames = new Set(['square_sails', 'fore_and_aft_sails']);
+  // The canvas. The fore-and-aft sails are still one merged mesh — they are set on stays
+  // and do not brace — while every square sail is its own mesh hung on its own yard, so
+  // they are matched by the name sails.js gives them rather than by a fixed list. That
+  // pattern is a contract between the two files, and tools/check-motion.js is what holds
+  // them to it: when the square sails were split out of one merged mesh, nothing threw —
+  // they simply stopped shivering, and the check is what noticed.
+  const isSail = (n) => n === 'fore_and_aft_sails' || /_sail$/.test(n);
   const runningNames = new Set(['running_rigging_ropes']);
   const ropeNames = new Set(['shrouds_and_stays', 'ratlines']);
 
@@ -303,7 +312,7 @@ export function createMotion(ship, opts = {}) {
   if (rig) {
     rig.traverse((o) => {
       if (!(o.isMesh || o.isLine || o.isLineSegments)) return;
-      if (sailNames.has(o.name)) patch(o, { aloft: true, sail: true });
+      if (isSail(o.name)) patch(o, { aloft: true, sail: true });
       else if (runningNames.has(o.name)) {
         patch(o, { aloft: true, sway: S('motion_running_rope_factor') });
       } else if (ropeNames.has(o.name)) patch(o, { aloft: true, sway: 1 });
@@ -344,6 +353,7 @@ export function createMotion(ship, opts = {}) {
         node: f,
         home: { position: f.position.clone(), x: f.rotation.x, y: f.rotation.y },
         role: info.role ?? 'deck',
+        pose: info.pose ?? 'stand',
         arms,
         armHome: arms.map((a) => a.rotation.clone()),
         // Each man has a phase of his own, so that thirteen of them do not sway as one.
@@ -354,6 +364,18 @@ export function createMotion(ship, opts = {}) {
   }
   parts.wheel = named('ships_wheel');
 
+  // ------------------------------------------------------------------- the yards
+  //
+  // Every yard that carries a square sail, and its sail with it — sails.js hangs each one
+  // on its own yard for exactly this reason. The spritsail yard under the bowsprit is
+  // left out: it is not braced with the rest and it has no sail on it here.
+  if (rig) {
+    rig.traverse((o) => {
+      if (!o.isMesh || !/_yard$/.test(o.name) || o.name === 'spritsail_yard') return;
+      parts.yards.push({ node: o, built: o.rotation.y });
+    });
+  }
+
   // ------------------------------------------------------------------------ the update
   const whip = new THREE.Vector3();
   const q = new THREE.Quaternion();
@@ -361,6 +383,8 @@ export function createMotion(ship, opts = {}) {
   let lastHeel = 0;
   let lastTime = 0;
   let wet = 0;
+  // The yards start where they were built, and are hauled round from there.
+  let brace = parts.yards[0]?.built ?? 0;
 
   function update(time, state = {}) {
     const {
@@ -415,6 +439,26 @@ export function createMotion(ship, opts = {}) {
       poseFlag(f.node.geometry, f.phase + time * S('motion_flag_wave_speed') * (0.4 + w));
     }
 
+    // ------------------------------------------------------------------- the yards
+    //
+    // Braced to the wind. Square when it is aft, sharp up when it is forward, and the
+    // rule between the two is the one a seaman uses: the yard bisects the angle between
+    // the wind and the keel.
+    //
+    // `cos(wr)` is how far aft the wind is — one dead astern, minus one dead ahead — and
+    // `sin(wr)` which side it is on. The lee yardarm goes forward, so the sign follows
+    // the side the wind is blowing toward.
+    //
+    // They come round at a rate, not instantly. Braces are hauled by hand by a watch on
+    // deck; a rig that snaps to a new angle the moment the wind shifts says plainly that
+    // nobody is working the ship.
+    const braceWant = deg(S('motion_brace_max_deg'))
+      * ((1 - Math.cos(wr)) / 2)
+      * (Math.sin(wr) >= 0 ? 1 : -1);
+    const step = deg(S('motion_brace_rate_deg')) * dt;
+    brace += clamp(braceWant - brace, -step, step);
+    for (const y of parts.yards) y.node.rotation.y = brace;
+
     // ------------------------------------------------------------------- the wheel
     if (parts.wheel) parts.wheel.rotation.x = -helm * deg(S('motion_helm_throw_deg'));
 
@@ -441,6 +485,17 @@ export function createMotion(ship, opts = {}) {
           c.home.position.z + whip.z * c.f
         );
       }
+      if (c.pose === 'haul') {
+        // The one thing anybody on deck is actually *doing*. A man posed as though he
+        // were hauling and never moving is a statue of a man hauling; the pull is what
+        // makes him a man. They are out of phase with each other by design — hands on a
+        // fall work to a call, but not one of them is exactly with the next.
+        const pull = Math.sin(time * (Math.PI * 2) / S('motion_haul_period') + c.phase);
+        const swing = deg(S('motion_haul_swing_deg')) * pull;
+        for (const [i, a] of c.arms.entries()) a.rotation.x = c.armHome[i].x - swing;
+        // And his weight goes back with his arms.
+        c.node.rotation.x += swing * 0.35;
+      }
       if (c.role === 'helm') {
         // His hands go round with the spokes; his feet do not.
         const reach = -helm * deg(S('motion_helmsman_reach_deg'));
@@ -456,5 +511,6 @@ export function createMotion(ship, opts = {}) {
     for (const m of patched) m.dispose();
   }
 
+  parts.patchedCount = patched.length;
   return { update, uniforms, parts, dispose };
 }

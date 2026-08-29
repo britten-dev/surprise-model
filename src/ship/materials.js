@@ -304,6 +304,9 @@ function buildMaterials(cfg) {
 
   mats.hull = std({
     map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, cfg.textureSize),
+    // The lengthwise wear, which hull.js writes into the vertex colours because the map
+    // repeats along her and cannot carry anything that varies from bow to stern.
+    vertexColors: true,
     roughnessMap: mats.hullSurface,
     metalnessMap: mats.hullSurface,
     roughness: 1, metalness: 1,

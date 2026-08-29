@@ -45,6 +45,17 @@ export const CREW_SPEC = {
   crew_rail_inset: n(0.62, `${R} how far out toward the ship's side a man stands, as a fraction of the half-breadth at his station. He stands by the rail, not on the centreline`, { noAudit: true }),
   crew_top_inset: n(0.55, `${R} how far out on the top platform a man stands, as a fraction of its half-breadth`, { noAudit: true }),
 
+  // The joints. A figure with straight limbs can only ever be a mannequin: what says
+  // "a man" at any distance is that his arm bends at the elbow and his leg at the knee,
+  // even when the bend is a few degrees. It costs one more box per limb.
+  crew_upper_arm_fraction: n(0.46, `${R} shoulder to elbow as a fraction of the whole arm; the forearm and hand make up the rest`, { noAudit: true }),
+  crew_elbow_deg: n(24, `${R} how far the forearm is carried in from the line of the upper arm when a man is simply standing. Nobody stands with a straight arm`, { noAudit: true }),
+  crew_elbow_helm_deg: n(52, `${R} at the wheel his elbows are well bent, because the spokes are close in front of him`, { noAudit: true }),
+  crew_elbow_haul_deg: n(64, `${R} hauling, his hands come in toward his chest`, { noAudit: true }),
+  crew_thigh_fraction: n(0.52, `${R} hip to knee as a fraction of the leg`, { noAudit: true }),
+  crew_knee_deg: n(11, `${R} knees soft against the roll. A man on a moving deck never locks them, and it is the difference between a figure standing on the deck and one balanced on it`, { noAudit: true }),
+  crew_head_taper: n(0.72, `${R} how much narrower the head is at the crown than at the jaw, which is what stops it reading as a cube`, { noAudit: true }),
+
   // The poses. A figure with no elbows can only say what it is doing with the angle of
   // its shoulders, and the range is narrow: a straight arm raised much above seventy
   // degrees stops reading as an arm and starts reading as a semaphore.

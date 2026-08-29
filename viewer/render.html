@@ -73,6 +73,11 @@ window.setup = ({ lod = 'hero', sails = 'full', studio = false, storm = false, s
     current.rotation.x = attitude.pitch;
     motion = createMotion(current);
     motion.update(time, attitude);
+    // Exposed so that a tool can run the clock on and watch something that takes time —
+    // the yards, above all, which are hauled round at a rate and are not where the wind
+    // wants them until the watch has had a few seconds to get them there.
+    window.MOTION = motion;
+    window.STATE = attitude;
     current.updateMatrixWorld(true);
     sea3?.userData.followShip?.(current);
   }

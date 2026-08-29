@@ -99,7 +99,7 @@
     "key": "crew_figure_height",
     "metric": "extent_y",
     "expected": 1.6764000000000001,
-    "actual": 1.6887251728597494,
+    "actual": 1.688070885384156,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §9 the average height of a British seaman in the 1790s, from the surviving Marine and Navy muster descriptions. This is the number that gives the ship her scale"
   },

@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
-import { block, post, spar, ropeLines } from '../util/solids.js';
+import { block, post, spar, ropeCurve, ropeTube, ropeLines } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 
@@ -100,6 +100,40 @@ function hatchGeom(w, d, detailed) {
   return mergeGeometries(parts);
 }
 
+/**
+ * A hatchway battened down: tarred canvas over the grating, turned down over the coaming
+ * and held there by battens wedged into cleats.
+ *
+ * A grating is a hole with slats over it. It lets air into the ship, which is its whole
+ * purpose, and it lets water in exactly as freely — so the first thing done when it comes
+ * on to blow is to cover every one of them. A ship shown in a gale with her gratings bare
+ * is a ship whose hold is filling.
+ *
+ * Built about the same origin as `hatchGeom`, so it can simply be added beside it.
+ */
+function battenedGeom(w, d) {
+  const b = SPEC.coaming_broad.value;
+  const h = SPEC.coaming_height_above_deck.value;
+  const t = SPEC.hatch_tarpaulin_thickness.value;
+  const over = SPEC.hatch_tarpaulin_overhang.value;
+  const bat = SPEC.hatch_batten_siding.value;
+  const W = w + 2 * b, D = d + 2 * b;
+  const parts = [
+    // The cloth: over the top of the coaming and down its four sides.
+    bx(W + over * 2, t, D + over * 2, { y: h }),
+    bx(t, over, D + over * 2, { x: (W + over * 2 + t) / 2, y: h - over }),
+    bx(t, over, D + over * 2, { x: -(W + over * 2 + t) / 2, y: h - over }),
+    bx(W + over * 2, over, t, { z: (D + over * 2 + t) / 2, y: h - over }),
+    bx(W + over * 2, over, t, { z: -(D + over * 2 + t) / 2, y: h - over }),
+    // The battens that hold it, one down each side.
+    bx(bat, bat, D + over * 2, { x: (W + over * 2) / 2, y: h - over * 0.55 }),
+    bx(bat, bat, D + over * 2, { x: -(W + over * 2) / 2, y: h - over * 0.55 }),
+    bx(W + over * 2, bat, bat, { z: (D + over * 2) / 2, y: h - over * 0.55 }),
+    bx(W + over * 2, bat, bat, { z: -(D + over * 2) / 2, y: h - over * 0.55 }),
+  ];
+  return mergeGeometries(parts);
+}
+
 /** A ladder standing at its foot, climbing toward `+Y` and `+Z`. */
 function ladderGeom(width, rise, run) {
   const s = SPEC.ladder_stringer_square.value;
@@ -171,6 +205,9 @@ export function buildFurniture(cfg, mats, model, ctx) {
 
   // Geometry buckets, one per material.
   const timber = [], iron = [], brass = [], copper = [], glass = [], black = [];
+  // Canvas work: tarpaulins over the hatches, gripes over the boats. Tarred cloth, so it
+  // takes the same near-black as the port lids rather than the timber's oak.
+  const canvasWork = [];
   const netting = [];
 
   // ------------------------------------------------------------ the ship's wheel
@@ -322,6 +359,11 @@ export function buildFurniture(cfg, mats, model, ctx) {
       const g = hatchGeom(w, d, full && cfg.gratingBattens);
       g.translate(0, deckY(z, 0, 0), z);
       timber.push(g);
+      if (ctx.heavyWeather) {
+        const cover = battenedGeom(w, d);
+        cover.translate(0, deckY(z, 0, 0), z);
+        canvasWork.push(cover);
+      }
     }
 
     const z = at(SPEC.main_hatch_station_from_stem.value);
@@ -337,6 +379,11 @@ export function buildFurniture(cfg, mats, model, ctx) {
     grate.position.set(0, y0 + h * 0.62, z);
     audits(grate, ['main_hatch_width', 'extent_x'], ['main_hatch_length', 'extent_z']);
     group.add(grate);
+    if (ctx.heavyWeather) {
+      const cover = battenedGeom(w, d);
+      cover.translate(0, y0, z);
+      canvasWork.push(cover);
+    }
   }
 
   // --------------------------------------------------------------------- the bitts
@@ -682,6 +729,40 @@ export function buildFurniture(cfg, mats, model, ctx) {
     }
   }
 
+  // ------------------------------------------------------------------- lifelines
+  //
+  // Two ropes stretched fore and aft through the waist at hand height, for the people to
+  // hold by. In a following sea the waist of a frigate is the most dangerous place on
+  // board — it is the low part of the deck, it is where the water that comes aboard goes,
+  // and there is nothing between a man and the lee rail. Lifelines are what he holds.
+  //
+  // They are rigged between the fife rails at the fore and main masts, which are the
+  // strong points that happen to stand at either end of the run.
+  if (ctx.heavyWeather) {
+    const zFwd = at(SPEC.furniture_foremast_station_from_stem.value);
+    const zAft = at(SPEC.furniture_mizzen_station_from_stem.value);
+    const above = SPEC.lifeline_above_deck.value;
+    const off = SPEC.lifeline_from_centre.value;
+    const lines = [];
+    for (const sx of [-1, 1]) {
+      const x = sx * off;
+      const a = new THREE.Vector3(x, deckY(zFwd, fcRise, x) + above, zFwd);
+      const b = new THREE.Vector3(x, deckY(zAft, qdRise, x) + above, zAft);
+      const curve = ropeCurve(a, b, SPEC.lifeline_sag.value, cfg.ropeSegments * 3);
+      lines.push(cfg.ropesAsTubes
+        ? ropeTube(curve, SPEC.lifeline_diameter.value / 2,
+          { tubular: cfg.ropeSegments * 3, radial: cfg.ropeRadial })
+        : null);
+      if (!cfg.ropesAsTubes) netting.push(curve);
+    }
+    const tubes = lines.filter(Boolean);
+    if (tubes.length) {
+      const mesh = new THREE.Mesh(mergeGeometries(tubes), mats.runningRigging);
+      mesh.name = 'lifelines';
+      group.add(mesh);
+    }
+  }
+
   // ---------------------------------------------------------------- one mesh each
   const bucket = (geoms, material, name) => {
     if (!geoms.length) return;
@@ -694,6 +775,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
   bucket(brass, mats.brass, 'furniture_brass');
   bucket(copper, mats.copper, 'galley_funnel');
   bucket(black, mats.black, 'furniture_black');
+  bucket(canvasWork, mats.black, 'battened_hatches');
   bucket(glass, mats.glass, 'skylight_glazing');
 
   if (netting.length) {

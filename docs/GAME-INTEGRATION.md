@@ -30,8 +30,9 @@ flag flies and the animation the host's.
 | | |
 | --- | --- |
 | Build | about 920 ms cold, 90 ms after. Materials are cached per level, so changing canvas at runtime is a geometry rebuild and not another download. |
-| Triangles | 59,888 at the `game` level, of which about 1,900 are the thirteen figures of the watch |
-| Materials | 23, all `MeshStandardMaterial` with baked procedural maps |
+| Triangles | 61,774 at the `game` level, of which about 1,900 are the thirteen figures of the watch |
+| Meshes | 228, up from 167. The square sails are one mesh each so that they can be braced, and the heavy-weather fittings add their own |
+| Materials | 24, all `MeshStandardMaterial` with baked procedural maps |
 | three | a peer dependency, so the host provides it and there is exactly one copy |
 
 ## What already matches
@@ -95,11 +96,22 @@ freely. Costs: no geometry is rebuilt, three flags of about 150 vertices each ar
 on the processor, and everything else is a vertex shader. The one thing to get right is the
 order — `update` last, after the hull has been moved, or the rig lags a frame behind her.
 
-**2b. Gunports.** `sails: 'storm'` shuts the gundeck ports and houses the battery; the
-other three states leave them open with the guns run out. A host that wants the two
-decoupled — ports in before the canvas comes off her, say — passes `ports: 'open'` or
-`ports: 'shut'` explicitly. It is a build-time state, not a runtime one: opening a ship's
-ports is a `buildShip` away, at the same cost as changing her canvas.
+**2b. Secured for sea.** `sails: 'storm'` also sets `weather: 'heavy'`, which shuts the
+gundeck ports and houses the battery, ships deadlights over the stern windows, battens the
+hatches under tarpaulins, rigs lifelines through the waist, gripes the boats down and puts
+tompions in the guns on the open decks. A host that wants any of it decoupled from the
+canvas passes `weather` or `ports` explicitly. All of it is build-time state, not runtime:
+securing a ship for sea is a `buildShip` away, at the same cost as changing her canvas.
+
+**2c. Bracing.** Each square sail is now hung on its own yard instead of being merged into
+one mesh, and `motion.update` braces the yards to `windDeg` — square when the wind is aft,
+sharp up when it is forward, hauled round at nine degrees a second. If your game has a
+wind that shifts, the rig answers it. The cost is seven more draw calls for the canvas.
+
+Two things follow for a host. Yards are found by name (`*_yard`), so the sails are found
+by theirs (`*_sail`) — `tools/check-motion.js` holds both files to that. And the belly of
+each sail is lofted for a wind forward of the beam, so a dead-astern wind wants a rebuild
+rather than a brace.
 
 **3. Sail state.** Building from source rather than loading a GLB is what makes this
 cheap: the materials are cached per level, so a second `buildShip` at a different sail

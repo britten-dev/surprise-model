@@ -249,10 +249,17 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     }
 
     const reef = suit.reefs[sailName] ?? 1;
-    squares.push(retileUV(
+    const geometry = retileUV(
       squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef, braceRad }),
       cloth++
-    ));
+    );
+    // Into the yard's own frame, so that swinging the yard swings the sail. The sail was
+    // lofted in the ship's coordinates, which is the right place to loft it — its head
+    // and foot are on two different spars — and this is the one transform that moves it
+    // onto the spar that carries it.
+    head.node.updateMatrix();
+    geometry.applyMatrix4(new THREE.Matrix4().copy(head.node.matrix).invert());
+    squares.push({ geometry, yard: head, name: `${sailName}_sail` });
   }
 
   // ------------------------------------------------------------------- fore-and-aft
@@ -333,12 +340,35 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     ));
   }
 
+  // The square sails are hung on their own yards rather than merged into one mesh.
+  //
+  // This is the one place where the obvious optimisation is the wrong answer. Merging
+  // eight sails costs one draw call instead of eight, and it welds every sail in the ship
+  // to the hull: the yards can then never be braced, because their canvas would stay
+  // where it was and the sails would come off the spars. A square-rigged ship whose yards
+  // cannot come round cannot answer a change of wind, which is most of what a square rig
+  // is *for*.
+  //
+  // So each sail is built in its own yard's frame and added as a child of it. Seven more
+  // draw calls buys a rig that works. The foot of each sail is spread to the yard below,
+  // which is braced with it — yards on a mast come round together — so the sail stays
+  // bent to both spars however far round they go.
   if (squares.length) {
-    const mesh = new THREE.Mesh(mergeGeometries(squares), mats.sail);
-    mesh.name = 'square_sails';
-    mesh.userData.count = squares.length;
-    audit(mesh, 'square_sails_set', 'count', { tolerance: 0.001 });
-    group.add(mesh);
+    let first = null;
+    for (const { geometry, yard, name } of squares) {
+      const mesh = new THREE.Mesh(geometry, mats.sail);
+      mesh.name = name;
+      yard.node.add(mesh);
+      first ??= mesh;
+    }
+    // The audit counts the suit, and one mesh has to carry the tag. It is put on a marker
+    // in the sails group rather than on a sail, because the sails now live under the rig
+    // and the count is a fact about the suit and not about any one of them.
+    const tally = new THREE.Object3D();
+    tally.name = 'square_sail_tally';
+    tally.userData.count = squares.length;
+    audit(tally, 'square_sails_set', 'count', { tolerance: 0.001 });
+    group.add(tally);
   }
   if (fa.length) {
     const mesh = new THREE.Mesh(mergeGeometries(fa), mats.sail);

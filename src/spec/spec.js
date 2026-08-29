@@ -76,6 +76,22 @@ const CORE = {
   gunport_sill_above_deck: m(ft(1, 9), 'MEASURED §8 sills 20.4 ft above base, deck at side 18.65 ft', { noAudit: true }),
   gunport_spacing: m(ft(8, 6), 'RECONSTRUCTED §4 12 ports spread over the length available between the bow and the transom', { tolerance: 0.05 }),
   gunport_lining_depth: m(ft(0, 9), 'RECONSTRUCTED §4 thickness of the side at the ports, plank and timber', { noAudit: true }),
+  // ------------------------------------------------------- secured for heavy weather
+  // What a ship does when it comes on to blow. Every one of these is something that, left
+  // undone, either lets the sea into her or lets something heavy go adrift inside her.
+  stern_deadlight_thickness: m(0.038, 'RECONSTRUCTED §12 an inch and a half of oak. Deadlights are shipped over the stern windows in heavy weather because glass at the stern in a following sea is the next thing to go after the ports', { noAudit: true }),
+  stern_deadlight_proud: m(0.012, 'RECONSTRUCTED §12 the shutter beds against the outside of the sash frame, so it stands this much off the face of it', { noAudit: true }),
+  hatch_tarpaulin_thickness: m(0.02, 'RECONSTRUCTED §6 tarred canvas over the gratings, held down by battens in cleats round the coaming. A grating is an open hole and a sea on deck goes straight through it', { noAudit: true }),
+  hatch_tarpaulin_overhang: m(0.09, 'RECONSTRUCTED §6 the cloth is cut larger than the coaming and turned down over its sides, where the battens hold it', { noAudit: true }),
+  hatch_batten_siding: m(0.05, 'RECONSTRUCTED §6 two inches square, wedged into cleats on the coaming', { noAudit: true }),
+  lifeline_diameter: m(0.038, 'RECONSTRUCTED §6 an inch and a half rope, which is what a man\'s hand closes round comfortably', { noAudit: true }),
+  lifeline_above_deck: m(0.95, 'RECONSTRUCTED §6 hand height on a moving deck: high enough to hold without stooping, low enough to fall against', { noAudit: true }),
+  lifeline_sag: { value: 0.012, source: 'RECONSTRUCTED §6 set up taut, but no rope of this length is straight', noAudit: true },
+  lifeline_from_centre: m(1.15, 'RECONSTRUCTED §6 how far off the centreline each of the two lines is run, so that a man crossing the waist has one within reach either way', { noAudit: true }),
+  boat_gripe_width: m(0.10, 'RECONSTRUCTED §8.3 the canvas gripes that pass over a stowed boat and set up to ring bolts in the deck. In this weather they are doubled: a boat adrift on the skids is two tons of it', { noAudit: true }),
+  boat_gripe_thickness: m(0.018, 'RECONSTRUCTED §8.3 canvas and rope, not timber', { noAudit: true }),
+  gun_tompion_depth: m(0.06, 'RECONSTRUCTED §9.4 the plug in the muzzle of a gun on an open deck, to keep the sea out of the bore. The gundeck battery needs none: her ports are shut over them', { noAudit: true }),
+
   gunport_lid_overlap: m(0.05, 'RECONSTRUCTED §4 a port lid is larger than its opening and lands on a rabbet cut round it. It has to be here for a second reason as well: the opening is cut by dropping whole faces out of the loft grid, so its size is quantised to that grid and a lid cut exactly to the port leaves the lining showing along one edge', { noAudit: true }),
   gunport_lid_closed_proud: m(0.008, 'RECONSTRUCTED §4 a shut lid lies against the outside of the planking, not flush in the opening, so it stands its own hinge straps proud of the side', { noAudit: true }),
   gunport_lid_thickness: m(ft(0, 3), 'SECONDARY §4 Steel, port-lid thickness', { noAudit: true }),
@@ -255,6 +271,16 @@ export const PAINT = {
   weather_sail_patch: { hex: '#CFC7B0', source: 'RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker' },
   weather_sail_patch_alpha: { value: 0.16, source: 'RECONSTRUCTED §8 visible as a change of cloth at a cable\'s distance, not as a white rectangle' },
   weather_sail_variants: { value: 2, source: 'RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator' },
+
+  // How the weathering varies along her length. The hull map repeats every three metres,
+  // so everything drawn in it is the same at the bow as amidships — and a ship is not.
+  // Her bow takes the sea; her quarters take the wash off the deck; her middle, sheltered
+  // by nothing, still comes off best of the three. This is that variation, and it has to
+  // be carried by something that does not repeat, which on this hull means the vertices.
+  weather_bow_extra: { value: 0.55, source: 'RECONSTRUCTED §8 how much harder the bow is used than amidships. Everything forward of the fore channels is in the sea every time she pitches, and it is the one part of a ship whose paint never lasts a commission' },
+  weather_stern_extra: { value: 0.25, source: 'RECONSTRUCTED §8 the quarters take the wash off the deck and the scour of the rudder, but not the beating the bow takes' },
+  weather_length_tint: { hex: '#6E6255', source: 'RECONSTRUCTED §8 what the extra wear at the ends darkens toward: dirty bare timber showing through beaten paint, not a colour of its own' },
+  weather_boot_darkening: { value: 0.35, source: 'RECONSTRUCTED §8 the whole ship is darker low down and lighter toward the rail, because water runs down and the sun dries the top. It is a small gradient and it does more than it sounds: it is what stops the topsides reading as one flat band of paint' },
 
   // How wet she is. Unlike everything else here this is not baked into a map: it is a
   // uniform the motion layer drives, because a ship running in a gale is wet where the

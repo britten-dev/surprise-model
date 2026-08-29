@@ -570,6 +570,30 @@ export function buildGuns(cfg, mats, model, ctx) {
   const atFcGun = siteRunOut(model, zFcGun, fcRise, axis4, trunnionFromFore);
   for (const side of [1, -1]) natures.four.at.push({ ...atFcGun, z: zFcGun, side, rise: fcRise });
 
+  // ---- Tompions, in heavy weather.
+  //
+  // A plug in the muzzle of every gun that is exposed to the sky. The gundeck battery
+  // needs none — her ports are shut over her — but the quarterdeck and forecastle guns
+  // fire over an open rail and there is nothing between their bores and the weather.
+  // A gun that fills with water is a gun that bursts.
+  const tompions = [];
+  if (ctx.portsShut && cfg.gunBarrels) {
+    const plug = (nature, length, bore, at) => {
+      const g = new THREE.CylinderGeometry(bore * 0.46, bore * 0.42,
+        SPEC.gun_tompion_depth.value, Math.max(5, cfg.latheSegments));
+      g.rotateZ(Math.PI / 2);
+      g.translate(length - SPEC.gun_tompion_depth.value * 0.35, nature.axis, 0);
+      for (const p of at) {
+        const m = placement(p);
+        const c = g.clone().applyMatrix4(m);
+        tompions.push(c);
+      }
+    };
+    // The long 4-pounders. Their trunnion is the origin, so the muzzle is that far out.
+    plug(natures.four, L4 - SPEC.gun_trunnion_from_breech_u.value * L4, d4,
+      natures.four.at.filter((g) => g.rise !== 0));
+  }
+
   // ---- Instance them all.
   const carriages = [];
   for (const [name, nat] of Object.entries(natures)) {
@@ -603,6 +627,13 @@ export function buildGuns(cfg, mats, model, ctx) {
   });
   carBarrels.instanceMatrix.needsUpdate = true;
   carSlides.instanceMatrix.needsUpdate = true;
+
+  if (tompions.length) {
+    const t = new THREE.Mesh(mergeGeometries(tompions), mats.timber);
+    t.name = 'tompions';
+    t.userData.count = tompions.length;
+    group.add(t);
+  }
   audit(carBarrels, 'carronade_12pdr_count', 'count');
   group.add(carBarrels, carSlides);
 

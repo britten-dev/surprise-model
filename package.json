@@ -9,11 +9,12 @@
     "audit": "node tools/audit.js",
     "trace": "node tools/trace.js",
     "render": "node tools/render.js",
-    "check": "node tools/make-specs.js && node tools/trace.js && node tools/audit.js && node tools/build.js && node tools/verify-glb.js",
+    "check": "node tools/make-specs.js && node tools/trace.js && node tools/audit.js && node tools/check-motion.js && node tools/build.js && node tools/verify-glb.js",
     "viewer": "node tools/serve.js",
     "site": "node tools/build-site.js",
     "verify": "node tools/verify-glb.js",
-    "specs": "node tools/make-specs.js"
+    "specs": "node tools/make-specs.js",
+    "motion": "node tools/check-motion.js"
   },
   "devDependencies": {
     "playwright": "^1.49.0",
