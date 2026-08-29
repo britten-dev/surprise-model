@@ -8,12 +8,10 @@
 // from the 110-gun ship, which lands on 16 ft 6 in. Everything derived from that figure is
 // marked RECONSTRUCTED and names the rule it used.
 //
-// The cathead belongs to the head module, not to this one. Its spec file was still empty
-// when the ground tackle was built, so the six `anchor_cathead_*` and `anchor_ring_*` rows
-// below carry the RECONSTRUCTED position out of research 06 §5.4 so that the anchors have
-// something to hang from. They are deliberately prefixed `anchor_` so that they cannot
-// collide with the head module's own cathead rows; when the head lands, these are the rows
-// to reconcile with it.
+// Two things this file deliberately does not define, because another region already does
+// and the two must agree: the cathead, whose position comes from the head module's
+// `cathead_*` rows, and the fore channel's height, which comes from the channels module's
+// `channel_top_below_rail`. The module reads both directly.
 import { ft, m, n } from '../units.js';
 
 export const GROUND_TACKLE_SPEC = {
@@ -53,25 +51,20 @@ export const GROUND_TACKLE_SPEC = {
   anchor_stock_hoop_thickness: m(0.016, 'SECONDARY §13.2 Steel :43228, hoops 5/8 in thick', { noAudit: true }),
 
   // ------------------------------------------------------- where the bowers hang
-  // Research 06 §5.4 and §13.3. The cathead's outer end is 8 ft abaft the stem and stands
-  // 6 ft outboard of the ship's side at the cat beam, 2 ft 6 in above the forecastle deck.
-  // The athwartships offset is taken off the hull model rather than written down as a
-  // half-breadth, because the research's ±14 ft 6 in was reconstructed on a fuller bow than
-  // the traced one; read as "the ship's side plus 6 ft" it lands within 1 per cent of it.
-  anchor_cathead_from_stem: m(ft(8, 0), 'RECONSTRUCTED §5.4/§13.3 research 06, cathead outer end (sheave centre) 8 ft abaft the stem', { noAudit: true }),
-  anchor_cathead_root_from_stem: m(ft(12, 0), 'RECONSTRUCTED §5.4 research 06, cathead root at the cat beam, 12 ft abaft the stem', { noAudit: true }),
-  anchor_cathead_outboard_of_side: m(ft(6, 0), 'SECONDARY §5.4 Steel :40065, length outboard, "sufficient to fit the anchor clear of the bow"', { noAudit: true }),
-  anchor_cathead_end_above_forecastle: m(ft(2, 6), 'RECONSTRUCTED §5.4 research 06, from 22.6 degrees of stive carried over 6 ft of cathead', { noAudit: true }),
-  anchor_cathead_moulded: m(ft(1, 1), 'SECONDARY §5.4 Steel :40061, cathead moulded up and down', { noAudit: true }),
+  // The cathead's own position is NOT repeated here. `src/ship/ground-tackle.js` rebuilds
+  // the outer end from the head module's own rows — cathead_root_from_stem,
+  // cathead_root_half_breadth, cathead_outer_from_stem, cathead_outer_half_breadth,
+  // cathead_stive_deg and cathead_moulded — exactly as `src/ship/head.js` does, so that
+  // the anchor can never hang from a cathead that has moved. Only the drop from the
+  // cathead's underside to the ring, which is gear and not structure, lives here.
   anchor_ring_below_cathead: m(ft(2, 0), 'RECONSTRUCTED §13.3 the depth of a three-sheave cat block and its strop, hung under the cathead', { noAudit: true }),
 
-  // The crown is fished up to the after end of the fore channel, which tapers there to take
-  // it (Steel :41944). The channel's own height belongs to the channels module; until that
-  // lands, the bedding line is taken as a little above the gunport heads, which is where a
-  // frigate's fore channel is fitted.
+  // The crown is fished up onto the fore channel, which tapers at its after end to take it
+  // (Steel :41944). The channel's height is the channels module's `channel_top_below_rail`,
+  // read directly rather than reconstructed a second time.
   anchor_crown_from_stem: m(ft(24, 0), 'RECONSTRUCTED §13.3 research 06, crown and flukes bedded on the fore channel 24 ft abaft the stem', { noAudit: true }),
-  anchor_channel_above_port_head: m(ft(0, 4), 'RECONSTRUCTED §13.3 the fore channel fitted just clear of the gunport heads — to be reconciled with the channels module', { noAudit: true }),
-  anchor_crown_outboard_of_side: m(ft(1, 6), 'RECONSTRUCTED §13.3 the crown bedded a foot and a half outboard of the ship\'s side on the channel', { noAudit: true }),
+  anchor_crown_above_channel: m(ft(0, 4), 'RECONSTRUCTED §13.3 the arm bearing on the channel, not sunk into it', { noAudit: true }),
+  anchor_crown_outboard_of_side: m(ft(1, 6), 'RECONSTRUCTED §13.3 the crown bedded a foot and a half outboard of the ship\'s side, inside the channel\'s outer edge', { noAudit: true }),
 
   // How far the stock is canted up from the athwartships horizontal. A catted anchor is
   // turned on its shank until one fluke lies outboard and clear of the side and the other

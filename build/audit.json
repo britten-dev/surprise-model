@@ -3,7 +3,7 @@
     "key": "anchor_arm_span",
     "metric": "extent_diagonal",
     "expected": 2.7432000000000003,
-    "actual": 3.273840461082808,
+    "actual": 3.255431713595378,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §13.2 fluke tip to fluke tip at 0.55 of the shank, the standard long-shank proportion"
   },
@@ -19,7 +19,7 @@
     "key": "anchor_shank_length",
     "metric": "extent_diagonal",
     "expected": 5.0292,
-    "actual": 5.162713287397183,
+    "actual": 5.13706837553069,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 the period rule that the shank equals the stock; stock from Steel's series scaled by the cube root of the weight"
   },
@@ -27,7 +27,7 @@
     "key": "anchor_stock_length",
     "metric": "extent_diagonal",
     "expected": 5.0292,
-    "actual": 5.499585747344312,
+    "actual": 5.466961124635822,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §13.2 Steel 1805 :43221 series (22-0 / 21-9 / 20-6 / …) carried to the 32-gun column by cube-root-of-weight scaling"
   },
@@ -400,12 +400,19 @@
     "source": "MEASURED §6 the stern elevation on the ZAZ3067 body plan shows a single row of seven lights; 06 §12.2 and 08 §5.2 reconstruct five from a breadth rule whose stated range is 5 to 7"
   },
   {
+    "key": "stern_light_row_breadth",
+    "metric": "extent_x",
+    "expected": 5.486400000000001,
+    "actual": 5.60128927230835,
+    "tolerance": 0.06,
+    "source": "MEASURED §6 the 20 ft transom at the window band less a 1 ft quarter piece each side"
+  },
+  {
     "key": "stern_taffrail_above_wl",
     "metric": "max_y",
     "expected": 5.080000000000001,
-    "actual": 5.406966209411621,
-    "tolerance": 0.05,
-    "source": "MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft"
+    "actual": 6.091899871826172,
+    "source": "MEASURED §6 taffrail 29.5 ft above the moulded base line, LWL at 12.83 ft; a floor, not the built height — see stern_taffrail_above_quarterdeck"
   },
   {
     "key": "wheel_swept_diameter",

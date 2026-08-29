@@ -313,12 +313,18 @@ export function buildGroundTackle(cfg, mats, model, ctx) {
       // The cat block, hanging from the sheaves in the cathead with the ring stopped up in
       // it, and its strop down to the ring.
       const blockCentre = ring.clone().lerp(sheave, 0.52);
-      const block = new THREE.Mesh(
-        new THREE.BoxGeometry(S('cat_block_thickness'), S('cat_block_length'), S('cat_block_width')),
-        mats.timber
+      const shell = new THREE.BoxGeometry(
+        S('cat_block_thickness'), S('cat_block_length'), S('cat_block_width')
       );
+      // The block hangs in the line of the fall, so its length lies along ring to sheave.
+      const up = sheave.clone().sub(ring).normalize();
+      const across = new THREE.Vector3(side, 0, 0)
+        .addScaledVector(up, -new THREE.Vector3(side, 0, 0).dot(up)).normalize();
+      shell.applyMatrix4(new THREE.Matrix4()
+        .makeBasis(across, up, new THREE.Vector3().crossVectors(across, up))
+        .setPosition(blockCentre));
+      const block = new THREE.Mesh(shell, mats.timber);
       block.name = `cat_block_${sideName}`;
-      block.position.copy(blockCentre);
       group.add(block);
 
       const strop = new THREE.Mesh(rope(ring, blockCentre, S('shank_painter_diameter')), mats.iron);

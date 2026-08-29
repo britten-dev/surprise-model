@@ -450,7 +450,11 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
     }
     rows.push(Object.assign(row, { v: paintV(at(z1, p).y) }));
   }
-  const shell = new THREE.Mesh(gridGeometry(rows, { mirror: false, inward: side > 0 }), mats.hull);
+  // Black ground, ochre framing, gilt carving — "Stern, Stern Galleries, Quarter Badges:
+  // black with yellow carvings". Painting the badge on the hull's own strip instead would
+  // carry the ochre gunport strake straight across it, which is what the replica does but
+  // not what English practice of 1798 did, and it makes the badge vanish into the side.
+  const shell = new THREE.Mesh(gridGeometry(rows, { mirror: false, inward: side > 0 }), mats.black);
   shell.name = `quarter_gallery_${side > 0 ? 'starboard' : 'port'}`;
   if (side > 0) audit(shell, 'quarter_gallery_length', 'extent_z');
   group.add(shell);
@@ -483,25 +487,43 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const glass = [], frames = [];
   const fz = (u, v) => at(lerp(z0, z1, u), v);
   const bar = SPEC.stern_glazing_bar.value / SPEC.quarter_gallery_length.value;
+  const centres = [];
   for (let i = 0; i < n; i++) {
     const c = lerp(0.40, 0.88, n === 1 ? 0.5 : i / (n - 1));
     const half = (0.48 / n) * 0.62;
-    frames.push(patch(fz, c - half - bar * 2, c + half + bar * 2, p0 - 0.03, p1 + 0.03, 3, 3));
+    const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
+    const q0 = p0 - 0.04, q1 = p1 + 0.04;
+    frames.push(patch(fz, f0, c - half, q0, q1, 1, 3));
+    frames.push(patch(fz, c + half, f1, q0, q1, 1, 3));
+    frames.push(patch(fz, c - half, c + half, q0, p0, 3, 1));
+    frames.push(patch(fz, c - half, c + half, p1, q1, 3, 1));
     glass.push(patch(fz, c - half, c + half, p0, p1, 3, 3));
+    centres.push(c);
   }
-  // Both sit proud of the badge's own surface, which is why they are pushed outboard
-  // rather than left coplanar with it.
-  const push = (geom, d) => {
-    const p = geom.attributes.position;
-    for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + d * side);
+  // Both sit proud of the badge's own surface, pushed out along its normal. Pushing
+  // along x alone buries them where the badge turns to face aft at the quarter.
+  const normalAt = (u, v) => {
+    const h = 0.02;
+    const a = fz(clamp(u + h, 0, 1), v).sub(fz(clamp(u - h, 0, 1), v));
+    const b = fz(u, clamp(v + h, 0, 1)).sub(fz(u, clamp(v - h, 0, 1)));
+    const nrm = new THREE.Vector3().crossVectors(a, b);
+    if (nrm.lengthSq() < 1e-12) return new THREE.Vector3(side, 0, 0);
+    nrm.normalize();
+    return nrm.x * side < 0 ? nrm.negate() : nrm;
+  };
+  const push = (geom, d, u, v) => {
+    const nrm = normalAt(u, v).multiplyScalar(d);
+    geom.translate(nrm.x, nrm.y, nrm.z);
     geom.computeVertexNormals();
     return geom;
   };
-  const gf = new THREE.Mesh(mergeGeometries(frames.map((g) => push(g, 0.012))), mats.ochre);
+  const gf = new THREE.Mesh(
+    mergeGeometries(frames.map((g, i) => push(g, 0.014, centres[Math.floor(i / 4)], 0.5))), mats.ochre);
   gf.name = 'quarter_gallery_frames';
   group.add(gf);
   if (cfg.galleryGlazing) {
-    const gg = new THREE.Mesh(mergeGeometries(glass.map((g) => push(g, 0.026))), mats.glass);
+    const gg = new THREE.Mesh(
+      mergeGeometries(glass.map((g, i) => push(g, 0.030, centres[i], 0.5))), mats.glass);
     gg.name = 'quarter_gallery_glazing';
     group.add(gg);
   }
@@ -716,9 +738,11 @@ export function buildStern(cfg, mats, model, ctx) {
   // 3. The taffrail: the cap over the transom and the quarter pieces, swept along the top
   //    row of the closure so that it takes its round-up and round-aft from the surface.
   const top = rows[rows.length - 1];
+  // The port half is the starboard half reversed, less its centreline point: leaving the
+  // duplicate in puts a zero-length segment in the curve and the sweep kinks there.
   const topPts = [
     ...[...top].reverse().map((q) => new THREE.Vector3(-q.p.x, q.p.y, q.p.z)),
-    ...top.map((q) => q.p.clone()),
+    ...top.slice(1).map((q) => q.p.clone()),
   ];
   const cw = SPEC.taffrail_cap_width.value / 2, ct = SPEC.taffrail_cap_thickness.value;
   const cap = new THREE.Mesh(

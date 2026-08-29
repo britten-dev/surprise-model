@@ -352,13 +352,12 @@ export function buildHead(cfg, mats, model, ctx) {
   // the offsets put it.
   const cheeks = [];
   for (const side of [1, -1]) {
-    // The lower cheek runs from the wale into the knee at the waterline; the upper
-    // from the sheer strake into the knee at the gun-deck line. Both ends of both are
-    // named lines of the ship, so neither is a number.
-    for (const [feature, uFore, yFore] of [
-      ['wale_top', S('head_knee_forward_at_waterline'), 0],
-      ['sheer_strake', S('head_knee_forward_at_deck'), f0.deck],
-    ]) {
+    // A cheek runs from a named line on the ship's side into the fore edge of the knee
+    // at the same height that line stands at the stem. Both ends of both cheeks are
+    // therefore lines of the ship, and the cutwater decides where they meet it.
+    for (const feature of ['wale_top', 'sheer_strake']) {
+      const yFore = f0[feature];
+      const uFore = cut(yFore);
       const aftPt = model.pointAt(model.fromStem(S('head_cheek_aft_from_stem')), feature, side);
       const pts = [];
       const nc = Math.max(4, Math.round(cfg.headStations / 4));
