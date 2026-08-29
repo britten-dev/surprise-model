@@ -48,6 +48,45 @@ npm run check     # the gate: specs, trace, audit, build, verify
 
 A change that breaks any of them fails the build.
 
+## Using her in another project
+
+The package is the generator, not a file. A host installs it and builds the ship in its
+own scene, from the same source this viewer runs:
+
+```bash
+npm i github:britten-dev/surprise-model
+```
+
+```js
+import { buildShip, LODS, SAIL_STATES } from 'surprise-model';
+
+const ship = buildShip({ lod: 'game', sails: 'storm' });
+scene.add(ship);
+```
+
+`buildShip` returns a `THREE.Group` in the conventions of `docs/CONVENTIONS.md`: metres,
+`-Z` forward, `+Y` up, origin at the design load waterline amidships. Building the whole
+ship takes a few hundred milliseconds, so it belongs at a loading screen and not in a
+frame — but once built, switching sail state is another build, not another download,
+which is what lets a ship shorten sail in front of you.
+
+Other entry points, for a host that wants more than the finished object:
+
+| import | gives |
+| --- | --- |
+| `surprise-model` | `buildShip`, `LODS`, `SAIL_STATES` |
+| `surprise-model/spec` | `SPEC`, `PAINT`, `OFFSETS` — every dimension with its source |
+| `surprise-model/hull` | `hullModel()`, for siting your own parts against her lines |
+| `surprise-model/lod` | the level-of-detail table and the triangle budgets |
+| `surprise-model/views` | the named camera stations used for the verification renders |
+
+**three is a peer dependency.** The host provides it, and there is exactly one copy. If
+it were a dependency of this package instead, a host resolving three differently would
+end up with two copies of the library on one page — two `Vector3` classes, two material
+registries, and `instanceof` failing in ways that take a day to find.
+
+Updates carry across by reinstalling: `npm update surprise-model` and redeploy.
+
 ## How it is organised
 
 ```

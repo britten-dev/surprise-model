@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Parametric 3D model of HMS Surprise (ex-French corvette Unite, 1794)",
+  "description": "Parametric 3D model of HMS Surprise (ex-French corvette Unite, 1794), lofted from her own 1798 Admiralty draught",
   "scripts": {
     "build": "node tools/build.js",
     "audit": "node tools/audit.js",
@@ -15,10 +15,32 @@
     "verify": "node tools/verify-glb.js",
     "specs": "node tools/make-specs.js"
   },
-  "dependencies": {
+  "devDependencies": {
+    "playwright": "^1.49.0",
     "three": "^0.180.0"
   },
-  "devDependencies": {
-    "playwright": "^1.49.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/britten-dev/surprise-model.git"
+  },
+  "license": "UNLICENSED",
+  "exports": {
+    ".": "./src/ship/index.js",
+    "./spec": "./src/spec/spec.js",
+    "./hull": "./src/ship/hull.js",
+    "./lod": "./src/ship/lod.js",
+    "./views": "./viewer/views.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "viewer/views.js",
+    "SPECS.md",
+    "docs",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "peerDependencies": {
+    "three": ">=0.180.0 <1"
   }
 }
