@@ -16,7 +16,13 @@ import { rad } from '../util/math.js';
  * @param {object} [opts]    `tolerance` overrides the default 2 per cent
  */
 export function audit(obj, key, metric, opts = {}) {
-  obj.userData.audit = { key, metric, ...opts };
+  (obj.userData.audit ??= []).push({ key, metric, ...opts });
+  return obj;
+}
+
+/** Tag several measurements on one object: `audits(hull, ['hull_length','extent_z'], …)` */
+export function audits(obj, ...tags) {
+  for (const [key, metric, opts] of tags) audit(obj, key, metric, opts ?? {});
   return obj;
 }
 
@@ -67,18 +73,20 @@ export function measureShip(root) {
   const missing = [];
 
   root.traverse((obj) => {
-    const tag = obj.userData.audit;
-    if (!tag) return;
+    const tags = obj.userData.audit;
+    if (!tags) return;
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
+
+    for (const tag of tags) {
     const spec = SPEC[tag.key];
     if (spec === undefined) {
       missing.push(`audit tag "${tag.key}" has no row in src/spec/spec.js`);
-      return;
+      continue;
     }
     const fn = MEASURES[tag.metric];
-    if (!fn) { missing.push(`unknown audit metric "${tag.metric}" on ${tag.key}`); return; }
+    if (!fn) { missing.push(`unknown audit metric "${tag.metric}" on ${tag.key}`); continue; }
 
-    const box = new THREE.Box3().setFromObject(obj);
-    const size = box.getSize(new THREE.Vector3());
     const actual = fn({ obj, box, size });
 
     rows.push({
@@ -91,6 +99,7 @@ export function measureShip(root) {
       note: typeof spec === 'object' ? spec.note : undefined,
     });
     seen.add(tag.key);
+    }
   });
 
   // The other half of the contract: a spec row that nothing in the model is measured
