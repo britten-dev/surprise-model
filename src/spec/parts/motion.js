@@ -39,12 +39,21 @@ export const MOTION_SPEC = {
   motion_rope_period: n(2.6, `${R} the period of a set-up shroud, in seconds`, { noAudit: true }),
   motion_running_rope_factor: n(3.0, `${R} running rigging is not set up taut and swings this many times as far as a shroud`, { noAudit: true }),
 
+  // --------------------------------------------------------------------- bracing
+  // The yards come round to the wind. This is what a square rig is *for*, and until the
+  // sails were hung on their own yards it could not be done at all: the canvas was welded
+  // to the hull, so the spars could not move without leaving it behind.
+  motion_brace_max_deg: n(62, `${R} how far round the yards can be braced before the shrouds stop them. A frigate braced sharp up lies her yards about this far off square, and no rig will go much further — the fore-and-aft stays and the lee rigging are in the way`, { noAudit: true }),
+  motion_brace_rate_deg: n(9, `${R} degrees a second. Braces are hauled by hand by a watch on deck, so the yards come round slowly; a rig that snaps to a new angle the instant the wind shifts is the plainest possible statement that nobody is working the ship`, { noAudit: true }),
+
   // ------------------------------------------------------------------- colours
   motion_flag_wave_speed: n(2.4, `${R} how fast the wave runs down a flag, in wave lengths per second at the wind speed the model is drawn for. A flag is the fastest thing on the ship and the only part of her that moves at a speed the eye can follow`, { noAudit: true }),
 
   // -------------------------------------------------------------------- people
   motion_crew_sway_deg: n(3.5, `${R} how far a man standing on a moving deck sways out of his own upright, over and above the heel of the ship he is standing on`, { noAudit: true }),
   motion_crew_sway_period: n(4.2, `${R} his period, in seconds — near the ship's roll but not locked to it, so that thirteen men do not sway as one`, { noAudit: true }),
+  motion_haul_period: n(1.9, `${R} seconds for one pull. Men hauling together work to a call and a rhythm, and the rhythm is slow — a heave, a pause to get a fresh hold, and another`, { noAudit: true }),
+  motion_haul_swing_deg: n(22, `${R} how far his shoulders travel through one pull. It is what turns a man posed as though he were hauling into a man who is hauling, and it is the only figure on deck that does anything but stand and sway`, { noAudit: true }),
   motion_helm_throw_deg: n(140, `${R} how far the wheel turns from midships to hard over. A little under half a turn each way, which is the usual four spokes`, { noAudit: true }),
   motion_helmsman_reach_deg: n(26, `${R} how far a helmsman's shoulders follow the wheel. His hands go round with the spokes and his body does not`, { noAudit: true }),
 

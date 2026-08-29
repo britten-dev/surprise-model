@@ -352,6 +352,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `stern_deadlight_thickness` | 0.038 | 0 ft 1.5 in | RECONSTRUCTED | §12 an inch and a half of oak. Deadlights are shipped over the stern windows in heavy weather because glass at the stern in a following sea is the next thing to go after the ports |
+| `stern_deadlight_proud` | 0.012 | — | RECONSTRUCTED | §12 the shutter beds against the outside of the sash frame, so it stands this much off the face of it |
 | `stern_tuck_above_wl` | 0.6604 | 2 ft 2 in | MEASURED | §6 the tuck at 15.0 ft above the moulded base line, LWL at 12.83 ft |
 | `stern_wing_transom_above_wl` | 2.0574 | 6 ft 9 in | MEASURED | §6 wing transom at about 19.6 ft above the moulded base line |
 | `stern_upper_counter_above_wl` | 3.7084 | — | MEASURED | §6 stern profile point at 25.0 ft above the moulded base line |
@@ -676,6 +678,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `gun_tompion_depth` | 0.06 | 0 ft 2.4 in | RECONSTRUCTED | §9.4 the plug in the muzzle of a gun on an open deck, to keep the sea out of the bore. The gundeck battery needs none: her ports are shut over them |
 | `gun_9pdr_count` | 24 | — | PRIMARY | §6.3 threedecks ex Winfield BWAS-1793, Plymouth establishment 6.1796: 24 long 9-pdr on the upper deck. ALTERNATIVE: 24 x 32-pdr carronades in the 21.4.1798 fit |
 | `gun_4pdr_count` | 10 | — | PRIMARY | §6.3 8 long 4-pdr on the quarterdeck and 2 on the forecastle, Plymouth establishment 6.1796. ALTERNATIVE: only the 2 forecastle chase guns survive in the 21.4.1798 fit |
 | `carronade_12pdr_count` | 6 | — | PRIMARY | §6.3 4 twelve-pounder carronades on the quarterdeck and 2 on the forecastle, Plymouth establishment 6.1796. ALTERNATIVE: 18-pdr carronades, 10 of them, in the 21.4.1798 fit |
@@ -765,6 +768,8 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 
 | key | metric | period figure | grade | source |
 |---|---|---|---|---|
+| `boat_gripe_width` | 0.1 | 0 ft 3.9 in | RECONSTRUCTED | §8.3 the canvas gripes that pass over a stowed boat and set up to ring bolts in the deck. In this weather they are doubled: a boat adrift on the skids is two tons of it |
+| `boat_gripe_thickness` | 0.018 | 0 ft 0.7 in | RECONSTRUCTED | §8.3 canvas and rope, not timber |
 | `boat_count` | 4 | — | RECONSTRUCTED | §8.3 launch, pinnace, cutter and jolly boat — the outfit of a sixth rate of 578 tons; no boat list for Surprise was found |
 | `launch_length` | 7.3152 | 24 ft 0 in | RECONSTRUCTED | §8.3 24 ft launch for a ship of this rate |
 | `launch_beam` | 2.1336 | 6 ft 12 in | RECONSTRUCTED | §8.3 launch beam 7 ft 0 in |
@@ -965,6 +970,13 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `crew_taffrail_from_stem` | 37.1856 | 122 ft 0 in | RECONSTRUCTED | §9 an officer aft at the taffrail, watching the following sea, which is the whole business of running before a gale |
 | `crew_rail_inset` | 0.62 | — | RECONSTRUCTED | §9 how far out toward the ship's side a man stands, as a fraction of the half-breadth at his station. He stands by the rail, not on the centreline |
 | `crew_top_inset` | 0.55 | — | RECONSTRUCTED | §9 how far out on the top platform a man stands, as a fraction of its half-breadth |
+| `crew_upper_arm_fraction` | 0.46 | — | RECONSTRUCTED | §9 shoulder to elbow as a fraction of the whole arm; the forearm and hand make up the rest |
+| `crew_elbow_deg` | 24 | — | RECONSTRUCTED | §9 how far the forearm is carried in from the line of the upper arm when a man is simply standing. Nobody stands with a straight arm |
+| `crew_elbow_helm_deg` | 52 | — | RECONSTRUCTED | §9 at the wheel his elbows are well bent, because the spokes are close in front of him |
+| `crew_elbow_haul_deg` | 64 | — | RECONSTRUCTED | §9 hauling, his hands come in toward his chest |
+| `crew_thigh_fraction` | 0.52 | — | RECONSTRUCTED | §9 hip to knee as a fraction of the leg |
+| `crew_knee_deg` | 11 | — | RECONSTRUCTED | §9 knees soft against the roll. A man on a moving deck never locks them, and it is the difference between a figure standing on the deck and one balanced on it |
+| `crew_head_taper` | 0.72 | — | RECONSTRUCTED | §9 how much narrower the head is at the crown than at the jaw, which is what stops it reading as a cube |
 | `crew_arm_rest_deg` | 8 | — | RECONSTRUCTED | §9 arms hanging, a little forward of the body, which is where a man's arms are when he is not using them |
 | `crew_arm_rest_splay_deg` | 7 | — | RECONSTRUCTED | §9 and a little out from his sides, over his hips |
 | `crew_arm_helm_deg` | -62 | — | RECONSTRUCTED | §9 forward and down onto the spokes of the wheel, which stands about chest high |
@@ -993,13 +1005,28 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `motion_rope_sway` | 0.1 | — | RECONSTRUCTED | §10 how far the middle of a shroud swings. A shroud is set up taut and moves very little; a slack brace or a buntline moves several times this, and the running rigging is given that multiple below |
 | `motion_rope_period` | 2.6 | — | RECONSTRUCTED | §10 the period of a set-up shroud, in seconds |
 | `motion_running_rope_factor` | 3 | — | RECONSTRUCTED | §10 running rigging is not set up taut and swings this many times as far as a shroud |
+| `motion_brace_max_deg` | 62 | — | RECONSTRUCTED | §10 how far round the yards can be braced before the shrouds stop them. A frigate braced sharp up lies her yards about this far off square, and no rig will go much further — the fore-and-aft stays and the lee rigging are in the way |
+| `motion_brace_rate_deg` | 9 | — | RECONSTRUCTED | §10 degrees a second. Braces are hauled by hand by a watch on deck, so the yards come round slowly; a rig that snaps to a new angle the instant the wind shifts is the plainest possible statement that nobody is working the ship |
 | `motion_flag_wave_speed` | 2.4 | — | RECONSTRUCTED | §10 how fast the wave runs down a flag, in wave lengths per second at the wind speed the model is drawn for. A flag is the fastest thing on the ship and the only part of her that moves at a speed the eye can follow |
 | `motion_crew_sway_deg` | 3.5 | — | RECONSTRUCTED | §10 how far a man standing on a moving deck sways out of his own upright, over and above the heel of the ship he is standing on |
 | `motion_crew_sway_period` | 4.2 | — | RECONSTRUCTED | §10 his period, in seconds — near the ship's roll but not locked to it, so that thirteen men do not sway as one |
+| `motion_haul_period` | 1.9 | — | RECONSTRUCTED | §10 seconds for one pull. Men hauling together work to a call and a rhythm, and the rhythm is slow — a heave, a pause to get a fresh hold, and another |
+| `motion_haul_swing_deg` | 22 | — | RECONSTRUCTED | §10 how far his shoulders travel through one pull. It is what turns a man posed as though he were hauling into a man who is hauling, and it is the only figure on deck that does anything but stand and sway |
 | `motion_helm_throw_deg` | 140 | — | RECONSTRUCTED | §10 how far the wheel turns from midships to hard over. A little under half a turn each way, which is the usual four spokes |
 | `motion_helmsman_reach_deg` | 26 | — | RECONSTRUCTED | §10 how far a helmsman's shoulders follow the wheel. His hands go round with the spokes and his body does not |
 | `motion_wet_dry_seconds` | 9 | — | RECONSTRUCTED | §10 how long the topsides take to dry after a sea has been over them. It is slow, and it is what makes the wetness read as something that happened rather than as a setting |
 
+### Other
+
+| key | metric | period figure | grade | source |
+|---|---|---|---|---|
+| `hatch_tarpaulin_thickness` | 0.02 | 0 ft 0.8 in | RECONSTRUCTED | §6 tarred canvas over the gratings, held down by battens in cleats round the coaming. A grating is an open hole and a sea on deck goes straight through it |
+| `hatch_tarpaulin_overhang` | 0.09 | — | RECONSTRUCTED | §6 the cloth is cut larger than the coaming and turned down over its sides, where the battens hold it |
+| `hatch_batten_siding` | 0.05 | 0 ft 2 in | RECONSTRUCTED | §6 two inches square, wedged into cleats on the coaming |
+| `lifeline_diameter` | 0.038 | 0 ft 1.5 in | RECONSTRUCTED | §6 an inch and a half rope, which is what a man's hand closes round comfortably |
+| `lifeline_above_deck` | 0.95 | 3 ft 1.4 in | RECONSTRUCTED | §6 hand height on a moving deck: high enough to hold without stooping, low enough to fall against |
+| `lifeline_sag` | 0.012 | — | RECONSTRUCTED | §6 set up taut, but no rope of this length is straight |
+| `lifeline_from_centre` | 1.15 | — | RECONSTRUCTED | §6 how far off the centreline each of the two lines is run, so that a man crossing the waist has one within reach either way |
 
 ---
 
@@ -1131,6 +1158,10 @@ and the ochre strake follow the sheer.
 | `weather_sail_patch` | #CFC7B0 | — | 0 | RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker |
 | `weather_sail_patch_alpha` | 0.16 | — | — | RECONSTRUCTED §8 visible as a change of cloth at a cable's distance, not as a white rectangle |
 | `weather_sail_variants` | 2 | — | — | RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator |
+| `weather_bow_extra` | 0.55 | — | — | RECONSTRUCTED §8 how much harder the bow is used than amidships. Everything forward of the fore channels is in the sea every time she pitches, and it is the one part of a ship whose paint never lasts a commission |
+| `weather_stern_extra` | 0.25 | — | — | RECONSTRUCTED §8 the quarters take the wash off the deck and the scour of the rudder, but not the beating the bow takes |
+| `weather_length_tint` | #6E6255 | — | 0 | RECONSTRUCTED §8 what the extra wear at the ends darkens toward: dirty bare timber showing through beaten paint, not a colour of its own |
+| `weather_boot_darkening` | 0.35 | — | — | RECONSTRUCTED §8 the whole ship is darker low down and lighter toward the rail, because water runs down and the sun dries the top. It is a small gradient and it does more than it sounds: it is what stops the topsides reading as one flat band of paint |
 | `wet_darken` | 0.55 | — | — | RECONSTRUCTED §8 wet paint and wet timber are about half the brightness of dry; measured off any photograph of a ship in a seaway |
 | `wet_roughness` | 0.13 | — | — | RECONSTRUCTED §8 a film of water is nearly smooth, and the specular sheet it puts on the topsides is what actually says "wet" — the darkening alone reads as a repaint |
 | `wet_line_v` | 0.8 | — | — | RECONSTRUCTED §8 how far up the hull's paint coordinate the sea reaches when she is running hard: to about the sheer strake, which is where the rail begins |

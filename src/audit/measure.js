@@ -13,7 +13,14 @@ import { rad } from '../util/math.js';
  * @param {THREE.Object3D} obj
  * @param {string} key       the snake_case key in SPECS.md and src/spec/spec.js
  * @param {string} metric    how to measure it — see MEASURES below
- * @param {object} [opts]    `tolerance` overrides the default 2 per cent
+ * @param {object} [opts]    `tolerance` overrides the default 2 per cent; `self` measures
+ *   the object's own geometry and ignores anything hung on it.
+ *
+ * `self` exists because a part can carry another part. A yard has its sail bent to it —
+ * sails.js hangs each square sail on its own yard so that bracing brings the canvas round
+ * with it — and a bounding box taken over an object's descendants then measures the sail
+ * and calls it the yard. The main topsail yard came out thirty-nine per cent too long the
+ * moment the canvas was hung on it, which is the audit doing exactly what it is for.
  */
 export function audit(obj, key, metric, opts = {}) {
   (obj.userData.audit ??= []).push({ key, metric, ...opts });
@@ -125,10 +132,22 @@ export function measureShip(root) {
   root.traverse((obj) => {
     const tags = obj.userData.audit;
     if (!tags) return;
-    const box = new THREE.Box3().setFromObject(obj);
-    const size = box.getSize(new THREE.Vector3());
+    const boxAll = new THREE.Box3().setFromObject(obj);
+    const sizeAll = boxAll.getSize(new THREE.Vector3());
+    // The object's own geometry, without whatever is hung on it. Computed only if a tag
+    // asks for it, because most parts carry nothing.
+    let boxSelf = null;
+    const ownBox = () => {
+      if (boxSelf) return boxSelf;
+      if (!obj.geometry) return (boxSelf = boxAll);
+      obj.geometry.computeBoundingBox();
+      boxSelf = obj.geometry.boundingBox.clone().applyMatrix4(obj.matrixWorld);
+      return boxSelf;
+    };
 
     for (const tag of tags) {
+      const box = tag.self ? ownBox() : boxAll;
+      const size = tag.self ? box.getSize(new THREE.Vector3()) : sizeAll;
     const spec = SPEC[tag.key];
     if (spec === undefined) {
       missing.push(`audit tag "${tag.key}" has no row in src/spec/spec.js`);

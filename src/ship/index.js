@@ -34,21 +34,30 @@ export { createMotion } from './motion.js';
  * @param {object} [opts]
  * @param {string} [opts.lod]   'hero' | 'game' | 'distant'
  * @param {string} [opts.sails] 'full' | 'topsails' | 'storm' | 'furled'
- * @param {string} [opts.ports] 'open' | 'shut'. Defaults to shut in the storm state and
- *   open in the other three, because a sail state on this ship is really a state of the
- *   weather: a frigate under a reefed foresail has her gunports shut and her guns housed,
- *   and one carrying twenty-four open ports in a following sea would fill her gundeck.
- *   It is a separate option because the two are not the same claim — a ship can be under
- *   her topsails in a rising sea with her ports already in — and a host may say so.
+ * @param {string} [opts.weather] 'fair' | 'heavy'. Defaults to heavy in the storm state.
+ *   This is what a ship *does* about the weather, as against what she is wearing, and it
+ *   is a long list: her gunports are shut and her guns housed, deadlights are shipped over
+ *   the stern windows, the hatches are battened under tarpaulins, lifelines are rigged
+ *   fore and aft for the people to hold by, the boats are double-gripped and the guns on
+ *   the open decks have their tompions in. None of it is decoration — every item is
+ *   something that, left undone, lets the sea into the ship or lets something heavy go
+ *   adrift in her.
+ * @param {string} [opts.ports] 'open' | 'shut'. Follows the weather unless it is given.
+ *   It is separable because the two are not quite the same claim: a ship can be under her
+ *   topsails in a rising sea with her ports already in.
  */
-export function buildShip({ lod = 'hero', sails = 'full', ports: portState } = {}) {
+export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState } = {}) {
   if (!SAIL_STATES.includes(sails)) {
     throw new Error(`unknown sail state "${sails}" — expected one of ${SAIL_STATES.join(', ')}`);
   }
-  const portsShut = portState === undefined ? sails === 'storm' : portState === 'shut';
+  if (weather !== undefined && !['fair', 'heavy'].includes(weather)) {
+    throw new Error(`unknown weather "${weather}" — expected "fair" or "heavy"`);
+  }
   if (portState !== undefined && !['open', 'shut'].includes(portState)) {
     throw new Error(`unknown port state "${portState}" — expected "open" or "shut"`);
   }
+  const heavyWeather = weather === undefined ? sails === 'storm' : weather === 'heavy';
+  const portsShut = portState === undefined ? heavyWeather : portState === 'shut';
   const cfg = lodConfig(lod);
   const mats = makeMaterials(cfg);
   const model = hullModel();
@@ -58,6 +67,7 @@ export function buildShip({ lod = 'hero', sails = 'full', ports: portState } = {
   ship.userData.lod = lod;
   ship.userData.sails = sails;
   ship.userData.ports = portsShut ? 'shut' : 'open';
+  ship.userData.weather = heavyWeather ? 'heavy' : 'fair';
 
   // The hull first, with the gunports cut out of the loft grid as it is built.
   const ports = portLayout(model);
@@ -68,7 +78,7 @@ export function buildShip({ lod = 'hero', sails = 'full', ports: portState } = {
   ship.add(decks.group);
 
   const ctx = {
-    cfg, mats, model, sails, lod, ports, portsShut,
+    cfg, mats, model, sails, lod, ports, portsShut, heavyWeather,
     zFcBreak: decks.zFcBreak,
     zQdBreak: decks.zQdBreak,
   };

@@ -392,7 +392,7 @@ function innerRows(rows, fromY) {
  * because the counter rails and the taffrail ornament are placed against them and have
  * to sit in the same place whether the windows are drawn or not.
  */
-function sternLights(cfg, mats, sp, group, build = true) {
+function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const count = SPEC.stern_light_count.value;
   const ySill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
   const yHead = ySill + SPEC.stern_light_height.value;
@@ -448,6 +448,26 @@ function sternLights(cfg, mats, sp, group, build = true) {
   frame.userData.count = count;
   audit(frame, 'stern_light_count', 'count');
   group.add(frame);
+
+  // Deadlights, in heavy weather. Solid shutters shipped over the whole of each light and
+  // bedded against the outside of its frame, so the glass behind them is protected and
+  // the stern reads as seven blank panels instead of seven windows. On a ship running
+  // before a following sea this is not an ornament: the stern windows are the largest
+  // area of glass in her and they are the part the sea comes at.
+  if (ctx.heavyWeather) {
+    const t = SPEC.stern_deadlight_thickness.value;
+    const out = depth + SPEC.stern_deadlight_proud.value + t;
+    const shutters = [];
+    for (let i = 0; i < count; i++) {
+      const cx = (i - (count - 1) / 2) * pitch;
+      const x0 = cx - w / 2 - bar * 2, x1 = cx + w / 2 + bar * 2;
+      shutters.push(patch(at(out), x0, x1, ySill - bar * 2, yHead + bar * 2, 3, 3));
+    }
+    const dead = new THREE.Mesh(mergeGeometries(shutters), mats.timber);
+    dead.name = 'stern_deadlights';
+    dead.userData.count = count;
+    group.add(dead);
+  }
 
   const pane = new THREE.Mesh(mergeGeometries(glass), mats.glass);
   pane.name = 'stern_light_glazing';
@@ -876,7 +896,7 @@ export function buildStern(cfg, mats, model, ctx) {
   // At silhouette range a row of stern lights and a pair of quarter galleries are a few
   // pixels across and cost a quarter of the whole triangle budget for the level, so they
   // are not built at all there.
-  const lights = sternLights(cfg, mats, sp, group, cfg.sternWindows);
+  const lights = sternLights(cfg, mats, sp, group, cfg.sternWindows, ctx);
 
   // 5. The counter rails. Steel names them from the bottom up — tuck rail, lower counter
   //    rail, upper counter rail — and each runs right across the stern.

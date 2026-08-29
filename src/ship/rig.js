@@ -263,7 +263,10 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
   mesh.position.copy(p);
   mesh.rotation.y = deg(braceDeg);
   mesh.name = name;
-  if (auditKey) audit(mesh, auditKey, 'extent_horizontal');
+  // `self`, because this yard will have its sail bent to it: sails.js hangs each square
+  // sail on its own yard so that bracing the yard brings its canvas round. Measured over
+  // its descendants instead, a yard is as long as the sail hanging from it.
+  if (auditKey) audit(mesh, auditKey, 'extent_horizontal', { self: true });
   group.add(mesh);
   return mesh;
 }
@@ -358,14 +361,19 @@ export function buildRig(cfg, mats, model, ctx) {
   for (const [mastName, tier, lenKey, diaKey, name] of YARDS) {
     const m = geo[mastName];
     const h = m.yardH[tier];
+    const mesh = buildYard(m, h, S(lenKey), S(diaKey), BRACE, cfg, mats, group, name,
+      AUDITED.has(name) ? `${name}_length` : null);
     yards[name] = {
       mast: m, tier, h,
       length: S(lenKey),
       arms: yardArms(m, h, S(lenKey), BRACE),
       centre: m.along(h),
+      // The angle she is braced to as built, and the node that carries it. A sail is
+      // hung on this node rather than merged into the ship, so that bracing the yard
+      // brings its canvas round with it — see the head of src/ship/sails.js.
+      brace: deg(BRACE),
+      node: mesh,
     };
-    buildYard(m, h, S(lenKey), S(diaKey), BRACE, cfg, mats, group, name,
-      AUDITED.has(name) ? `${name}_length` : null);
   }
   ctx.yards = yards;
 

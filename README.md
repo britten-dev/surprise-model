@@ -27,6 +27,13 @@ Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
 close-reefed main topsail) and `furled`.
 
+**The storm state secures her for sea.** `weather: 'heavy'` — which the storm state turns
+on by itself — shuts her gunports and houses her guns, ships deadlights over the stern
+windows, battens the hatches down under tarpaulins, rigs lifelines fore and aft through the
+waist, double-gripes the boats on the skids and puts tompions in the guns on the open
+decks. None of it is decoration: every item is something that, left undone, lets the sea
+into the ship or lets something heavy go adrift in her.
+
 **The storm state shuts her gunports and houses her guns.** A gundeck port is a couple of
 feet above the deck and four above the water amidships, and a frigate running before a
 following sea with twenty-four of them open would fill her gundeck. So under a reefed
@@ -35,8 +42,9 @@ inside the planking, elevated to the ring bolts above the ports, breechings bows
 quarterdeck and forecastle guns are not: they fire over an open rail, there is nothing up
 there to shut, and in heavy weather they are simply secured where they stand.
 
-`buildShip({ ports: 'open' | 'shut' })` says so explicitly, for the cases where the canvas
-and the weather do not agree — a ship can be under her topsails with her ports already in.
+`buildShip({ weather: 'fair' | 'heavy', ports: 'open' | 'shut' })` says so explicitly, for
+the cases where the canvas and the weather do not agree — a ship can be under her topsails
+with her ports already in.
 
 The watch on deck comes with her at the `hero` and `game` levels — thirteen figures, at
 the wheel, at the con, at the pumps, at the braces and two in the main top. They are not
@@ -64,7 +72,8 @@ npm run check     # the gate: specs, trace, audit, build, verify
 | --- | --- |
 | `make-specs` | SPECS.md is regenerated from the spec, so it cannot drift from the code |
 | `trace` | every dimension in the generator has a sourced row in SPECS.md |
-| `audit` | the geometry that was actually built matches those numbers — 54 measurements |
+| `audit` | the geometry that was actually built matches those numbers — 58 measurements |
+| `check-motion` | she still moves. Every other step here proves something about geometry, and none of them can tell whether the ship is alive — which is exactly the failure the motion layer is prone to, because it finds what it moves *by name* |
 | `build` | all ten GLB files export inside their triangle budgets |
 | `verify` | all ten load back through a glTF loader and are the right size and the right way up |
 
@@ -171,6 +180,7 @@ motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 
 | what moves | how |
 | --- | --- |
+| The yards | Braced to the wind, and hauled round at nine degrees a second because braces are hauled by hand. Each square sail is hung on its own yard rather than merged into the suit, so the canvas comes round with the spar — which is what a square rig is *for*, and what a merged suit makes impossible. |
 | The rig | Every spar, rope and sail leans and recovers together, going as the square of the height above the deck and lagging the hull's roll. This is the *whip*, and everything aloft has to agree about it or the topmen stand in mid-air. |
 | Canvas | A ripple runs across each sail from luff to leech and the whole belly breathes with the gusts, dying to nothing at the head, the foot and both leeches, which are bent to a spar and cannot move. The normal is bent with it, or a shivering sail stays evenly lit and reads as plastic. |
 | Cordage | Shrouds and stays swing a little at the middle of their span, running rigging three times as far. |
@@ -182,6 +192,12 @@ motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 Three mechanisms, chosen per part by what that part is: a vertex shader for the merged
 meshes aloft, node transforms for the rigid things that have nodes, and rewritten vertices
 for the flags. The head of `src/ship/motion.js` says why each.
+
+**What she still cannot do.** The belly of each sail is lofted to leeward for a wind
+forward of the beam, and that is baked into the geometry — so bracing the yards round
+swings the canvas correctly, but a wind from dead astern would want the bellies the other
+way and would need a rebuild rather than a brace. It is why the viewer's gale is set with
+the wind on the bow rather than dead aft.
 
 **The weather.** `npm run viewer` has a **gale** button. It puts her in the third light
 rig — a daylight Southern Ocean gale, which is a bright grey day and not a dark one — on a

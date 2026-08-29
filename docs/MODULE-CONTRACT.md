@@ -104,6 +104,12 @@ Tag at least the two or three dimensions that would be most obviously wrong if t
 module drifted. Not every row needs a tag; a row that will never be measured gets
 `noAudit: true` instead.
 
+**If your part carries another part, tag it `{ self: true }`.** A measurement is a bounding
+box over the object *and its descendants*, so a yard with its sail bent to it measures as
+long as the sail. `self` measures the object's own geometry and ignores what is hung on
+it. The main topsail yard came out thirty-nine per cent too long the moment the canvas was
+hung on it — which is the audit working, and is why this exists.
+
 ## If your region should move
 
 `src/ship/motion.js` is a layer over the finished ship, not part of the build, and it
@@ -112,7 +118,11 @@ and two things to move:
 
 * **Name the mesh.** Anything inside the `rig` group moves with the rig automatically. A
   moving part anywhere else — something rigid with a node of its own, like the wheel — is
-  found by name and posed there.
+  found by name and posed there. Two name patterns are load-bearing: `*_yard` is braced,
+  and `*_sail` is given the canvas shader and expected to hang on a yard.
+* **Run `npm run motion` after any renaming.** It builds her, runs her for two instants
+  and measures what changed. When the square sails were split out of one merged mesh
+  nothing threw — they simply stopped shivering — and that check is what noticed.
 * **Do not bake an attitude into geometry that has to change.** The flags used to have
   their wind curve frozen into their vertices; making them fly meant pulling the surface
   back out into `poseFlag`, which now writes it at any phase. If your region has a pose,

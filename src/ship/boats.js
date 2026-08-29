@@ -384,11 +384,42 @@ export function buildBoats(cfg, mats, model, ctx) {
   const stowY = keelRest + S('boat_keel_moulding');
 
   const chockGeoms = [];
+  const gripeGeoms = [];
+
+  /**
+   * The gripes: bands of canvas and rope passed over a stowed boat and set up hard to
+   * ring bolts in the deck each side of the skids.
+   *
+   * A boat lies in her chocks under her own weight and nothing else, which is enough in
+   * a quiet sea and nothing like enough in this one. Two and a half tons of launch adrift
+   * on the booms would go through the bulwark and take the mainmast's rigging with it, so
+   * before it comes on to blow she is gripped down. Two bands to a boat, over her gunwales
+   * at the quarters of her length.
+   */
+  const gripe = (boat, length, x) => {
+    const w = SPEC.boat_gripe_width.value;
+    const t = SPEC.boat_gripe_thickness.value;
+    boat.group.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(boat.group);
+    const top = box.max.y, bottom = skidY;
+    // Her beam where the gripe crosses her. Taken from the built boat rather than from
+    // her offsets, so a gripe fits whichever boat it is passed over.
+    const half = (box.max.x - box.min.x) / 2;
+    for (const f of [-0.24, 0.24]) {
+      const z = zStow + f * length;
+      // Over the top of her, and down each side to the deck.
+      gripeGeoms.push(boxAt(half * 2.1, t, w, x, top + t / 2, z));
+      for (const sx of [-1, 1]) {
+        gripeGeoms.push(boxAt(t, top - bottom, w, x + sx * half * 1.05, (top + bottom) / 2, z));
+      }
+    }
+  };
 
   /** Stow a boat upright on the skids, with her chocks under her. */
   const stow = (boat, length, x) => {
     boat.group.position.set(x, stowY, zStow);
     group.add(boat.group);
+    if (ctx.heavyWeather && !solid) gripe(boat, length, x);
     if (solid) return;
     for (const g of chocks(length, boat.lines, skidY, stowY)) {
       g.translate(x, 0, zStow);
@@ -497,6 +528,12 @@ export function buildBoats(cfg, mats, model, ctx) {
     const ch = new THREE.Mesh(mergeGeometries(chockGeoms), mats.timber);
     ch.name = 'boat_chocks';
     group.add(ch);
+  }
+
+  if (gripeGeoms.length) {
+    const gr = new THREE.Mesh(mergeGeometries(gripeGeoms), mats.black);
+    gr.name = 'boat_gripes';
+    group.add(gr);
   }
 
   group.userData.count = S('boat_count');

@@ -320,6 +320,52 @@ export function hullModel() {
  * @param {object} [opts.skipQuad] the port cutter, which drops the faces inside each
  *   gunport so the openings are real holes through the ship's side.
  */
+/**
+ * Write the lengthwise wear into the hull's vertex colours.
+ *
+ * White is "as the map draws it"; anything darker is a part of the ship that has been
+ * used harder than the map knows about. Two things are laid in:
+ *
+ *  * **The ends.** Wear rises toward the stem and, less, toward the stern, on a curve
+ *    rather than a line, so that the middle third of her is left alone and the change is
+ *    never a visible boundary.
+ *  * **The height.** Darker low down and lighter toward the rail, because water runs down
+ *    a ship's side and the sun dries the top of it. It is a small gradient and it does
+ *    more than it sounds — it is most of what stops the topsides reading as one flat band
+ *    of paint at a distance.
+ */
+function paintLengthwiseWear(geom, model) {
+  const pos = geom.attributes.position;
+  const colours = new Float32Array(pos.count * 3);
+  const tint = new THREE.Color(PAINT.weather_length_tint.hex);
+  const bow = PAINT.weather_bow_extra.value;
+  const stern = PAINT.weather_stern_extra.value;
+  const boot = PAINT.weather_boot_darkening.value;
+  const zF = model.zFwd, zA = model.zAft;
+  const railY = model.featureYAt(0).rail;
+
+  for (let i = 0; i < pos.count; i++) {
+    const z = pos.getZ(i);
+    const y = pos.getY(i);
+    // 0 amidships, 1 at whichever end this vertex is nearest. Squared, so the middle of
+    // the ship is genuinely untouched and the wear gathers at the ends where it belongs.
+    const t = clamp((z - zF) / (zA - zF), 0, 1);
+    const fwd = Math.pow(clamp(1 - t * 2.2, 0, 1), 2);
+    const aft = Math.pow(clamp((t - 0.68) / 0.32, 0, 1), 2);
+    // Above the waterline only: the ends of the underwater body are sheathed in copper
+    // and are not weathered the way painted topsides are.
+    const above = clamp(y / Math.max(0.001, railY), 0, 1);
+    const ends = (fwd * bow + aft * stern) * above;
+    // And the gradient up the side, which applies everywhere.
+    const low = boot * (1 - above);
+    const k = clamp(1 - ends - low, 0, 1);
+    colours[i * 3] = lerp(tint.r, 1, k);
+    colours[i * 3 + 1] = lerp(tint.g, 1, k);
+    colours[i * 3 + 2] = lerp(tint.b, 1, k);
+  }
+  geom.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+}
+
 export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = {}) {
   const group = new THREE.Group();
   group.name = 'hull';
@@ -342,6 +388,20 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
     skipQuad,
     uv: (u, v) => [u * SPEC.hull_length_gundeck.value / PAINT.hull_map_metres.value, v],
   });
+  // The wear that cannot live in the map.
+  //
+  // The hull map repeats every three metres along her, which is what makes the planking
+  // the right size and is also its limit: everything drawn in it is identical at the bow
+  // and amidships. A real ship is not. Her bow is in the sea every time she pitches and
+  // its paint never lasts a commission, while her middle comes off best of the three.
+  //
+  // That variation has to be carried by something that does not repeat, and the vertices
+  // are the only such thing the hull has. So it is painted into vertex colours: a
+  // modulation about white, darkening toward both ends and toward the water, multiplied
+  // into whatever the map says at that point. It costs one attribute, exports as core
+  // glTF, and needs no second set of UVs.
+  paintLengthwiseWear(geom, model);
+
   const hull = new THREE.Mesh(geom, mats.hull);
   hull.name = 'hull_shell';
   // What the shell itself can honestly be measured for.
