@@ -25,8 +25,15 @@ export function buildStern(cfg, mats, model, ctx) {
 
 * `cfg` — the LOD configuration from `src/ship/lod.js`. **Honour it.** Ask it for
   segment counts and for whether a thing exists at all; never hard-code a segment
-  count. If your region needs a switch the config does not have, add one to all three
+  count. If your region needs a switch the config does not have, add one to all four
   levels in `lod.js` — that file is shared, so keep the edit to your own new keys.
+
+  This is not a style rule. Four hard-coded segment counts were found the day the
+  `cinematic` level was added — the running rigging's rope tubes, the spritsail yard, and
+  the tube cross-sections of two torus fittings — and every one of them stayed exactly as
+  coarse at the most expensive level as at the cheapest. A hard-coded count does not show
+  up until somebody builds a level willing to spend, and then it is the one part of the
+  ship that refuses to.
 * `mats` — the materials from `src/ship/materials.js`: `hull`, `deck`, `timber`,
   `mast`, `mastBlack`, `black`, `ochre`, `red`, `white`, `gilt`, `iron`, `brass`,
   `glass`, `sail`, `copper`, `crew`, `standingRigging`, `runningRigging`, and
@@ -36,6 +43,20 @@ export function buildStern(cfg, mats, model, ctx) {
   `crew` is the odd one: it has `vertexColors`, and crew.js writes each part's colour
   into the vertices as it builds it. That is the trick to reach for when one object needs
   many colours — a figure needs six, and six materials would be six draw calls a man.
+
+  `crew` is not the only one any more. `deck`, `timber`, `mastBlack`, `black`, `ochre`,
+  `red`, `white`, `iron`, `brass`, `gilt`, `copper` and `hull` all have `vertexColors`
+  too, because `src/ship/occlusion.js` writes baked contact shadows into whichever of
+  them a mesh uses, after the whole ship is assembled. This asks nothing of you: it runs
+  automatically, it finds a mesh by its material rather than by name, and it multiplies
+  its darkening into a `color` attribute the mesh already has (yours, if you paint your
+  own, as hull.js and crew.js do) or one it adds and fills with white if the mesh has
+  none. The one thing it needs from you is a `normal` attribute — the loft and solid
+  helpers in `src/util/` already call `computeVertexNormals()`, so this is only worth
+  knowing if you build raw `BufferGeometry` by hand. A mesh with no normals is left
+  undarkened rather than guessed at; it is not an error. `mast`, `sail`, `glass`,
+  `standingRigging` and `runningRigging` are deliberately left out — see the head of
+  `occlusion.js` for why the rig and the canvas neither cast nor receive this shading.
 * `model` — the hull, described below.
 * `ctx` — `{ cfg, mats, model, sails, lod, zFcBreak, zQdBreak, ports }`, and after the
   rig has been built, `ctx.rig`, `ctx.yards` and `ctx.spanker`. A module that needs to
@@ -138,8 +159,8 @@ geometry.
 
 ## Triangles
 
-The budget is real and the build fails when it is missed: hero 200–500 k, game 30–80 k,
-distant under 5 k. It is written once, as `TRI_BUDGET` in `src/ship/lod.js`. Merge repeated geometry with `mergeGeometries` from
+The budget is real and the build fails when it is missed: cinematic 380–500 k, hero
+200–500 k, game 30–80 k, distant under 5 k. It is written once, as `TRI_BUDGET` in `src/ship/lod.js`. Merge repeated geometry with `mergeGeometries` from
 `src/util/loft.js` or use `THREE.InstancedMesh`. Twelve gun carriages as twelve
 separate object trees is a waste of both triangles and draw calls.
 

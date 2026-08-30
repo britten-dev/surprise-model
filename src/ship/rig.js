@@ -329,7 +329,9 @@ export function buildRig(cfg, mats, model, ctx) {
       const g = spar({
         length: S('spritsail_yard_length'),
         radiusAt: yardRadius(S('spritsail_yard_diameter')),
-        segments: 5, radial: cfg.sparRadial,
+        // Length-wise taper steps, from the level like every other spar's. Hard-coded at
+        // five, this one spritsail yard stayed coarse while the rest of the rig refined.
+        segments: Math.max(4, cfg.sparSegments), radial: cfg.sparRadial,
       });
       g.translate(0, -S('spritsail_yard_length') / 2, 0);
       g.rotateZ(Math.PI / 2);
@@ -757,7 +759,11 @@ function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
   if (!curves.length) return group;
   if (cfg.ropesAsTubes) {
     const mesh = new THREE.Mesh(
-      mergeGeometries(curves.map((c) => ropeTube(c, rr, { tubular: cfg.ropeSegments, radial: 3 }))),
+      // The radial count comes from the level, as every other rope tube in this file
+      // takes it. It used to be a hard-coded three, which meant the running rigging
+      // stayed a flat triangular prism however much a level was willing to spend — and a
+      // rope with a flat running down it is exactly what a close level exists to remove.
+      mergeGeometries(curves.map((c) => ropeTube(c, rr, { tubular: cfg.ropeSegments, radial: cfg.ropeRadial }))),
       mats.runningRigging
     );
     mesh.name = 'running_rigging_ropes';

@@ -430,7 +430,12 @@ export function buildChannels(cfg, mats, model, ctx) {
       if (cfg.deadeyes === true) {
         // The iron strop round the deadeye, which is what the chain hooks to.
         const ir = S(c.stropKey) / 2;
-        const g = new THREE.TorusGeometry(eye.r + ir, ir, 3, Math.max(8, Math.round(cfg.latheSegments * 0.6)));
+        // Both counts scale with the level. The tube's own cross-section was fixed at
+        // three, so the strop stayed a triangular hoop at every level however round its
+        // ring became — and it is iron, seen from a few feet away in the channels view.
+        const g = new THREE.TorusGeometry(eye.r + ir, ir,
+          Math.max(3, Math.round(cfg.latheSegments * 0.35)),
+          Math.max(8, Math.round(cfg.latheSegments * 0.6)));
         g.applyMatrix4(frameAt(eye.centre, up, out));
         iron.push(g);
       }

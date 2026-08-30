@@ -68,12 +68,21 @@ import { buildShip, LODS, SAIL_STATES } from '/src/ship/index.js';
 import { VIEWS, applyView, framingFor } from '/viewer/views.js';
 import { makeEnvironment, makeSea, makeStormSea } from '/viewer/scene.js';
 import { createMotion } from '/src/ship/motion.js';
+import { createPostStack } from '/viewer/post.js';
 
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+// `antialias` is left off here for the same reason it is dropped in render.html: once a
+// composer stands between the scene and the screen, the only thing that ever reaches the
+// canvas's own default framebuffer is the composer's final full-screen blit, which has no
+// edge of its own for MSAA to smooth. See the "Anti-aliasing" section at the top of
+// viewer/post.js — SMAAPass is what actually antialiases the rigging now.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// Left set here even though a composer is in the chain: OutputPass reads all three of
+// these off the renderer itself, so this is still the one place that decides them, and
+// nothing downstream of OutputPass is allowed to touch colour again. See viewer/post.js.
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -92,6 +101,14 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.maxDistance = 400;
+
+// One composer for the life of the page. Its scene is swapped in place when the weather
+// toggles — see setWeather() below and createPostStack's own header for why that is
+// cheaper and safer than building a new composer per rig. `fair` is graded as grade.js's
+// `sea` rig: this viewer has no studio backdrop of its own, that comparison only exists
+// in the offline renders, so the only two rigs a live viewer ever needs are the fine day
+// and the gale.
+const post = createPostStack(renderer, scene, camera, { rig: 'sea' });
 
 const state = { lod: 'hero', sails: 'full', wire: false, grid: false, ref: false, weather: false };
 const cache = new Map();
@@ -121,8 +138,29 @@ function paintSegs() {
   }
 }
 
-seg('lod', LODS.map((v) => ({ label: v, value: v })), (v) => state.lod === v, (v) => { state.lod = v; rebuild(); });
-seg('sails', SAIL_STATES.map((v) => ({ label: v, value: v })), (v) => state.sails === v, (v) => { state.sails = v; rebuild(); });
+seg('lod', LODS.map((v) => ({ label: v, value: v })), (v) => state.lod === v, (v) => { state.lod = v; rebuildSoon(); });
+seg('sails', SAIL_STATES.map((v) => ({ label: v, value: v })), (v) => state.sails === v, (v) => { state.sails = v; rebuildSoon(); });
+
+/**
+ * Rebuild, but let the page say so first.
+ *
+ * Building the ship is synchronous and it is not quick: the `cinematic` level spends
+ * several seconds, most of it drawing 2048-pixel procedural textures. Called straight
+ * from a button handler that locks the tab solid with no explanation, and the honest
+ * reading of that is that the viewer has crashed. So the panel is told what is happening
+ * and the build is deferred by two frames — one to run the style change, one to paint it.
+ *
+ * The first build at start-up deliberately does NOT go through this. `window.SHIP_READY`
+ * is set at the end of this script and the tools wait on it, so that build has to have
+ * finished by the time the flag goes up or every automated check races it.
+ */
+function rebuildSoon() {
+  const key = `${state.lod}/${state.sails}`;
+  if (cache.has(key)) return rebuild();
+  const panel = document.getElementById('stats');
+  panel.innerHTML = `<b>${key}</b>\nbuilding…`;
+  requestAnimationFrame(() => requestAnimationFrame(() => rebuild()));
+}
 const DISPLAY_TOGGLES = [
   { label: 'wire', value: 'wire' }, { label: 'grid', value: 'grid' }, { label: 'photo', value: 'ref' },
 ];
@@ -196,6 +234,8 @@ function setWeather() {
   scene = state.weather ? envs.storm.scene : envs.fair.scene;
   grid.parent?.remove(grid);
   scene.add(grid);
+  post.setScene(scene, camera);
+  post.setRig(state.weather ? 'storm' : 'sea');
   rebuild(true);
 }
 
@@ -204,7 +244,7 @@ function applyWire() {
   ship.traverse((o) => { if (o.isMesh) o.material.wireframe = state.wire; });
 }
 
-function rebuild(moved = false) {
+function rebuild() {
   try {
     const key = `${state.lod}/${state.sails}`;
     if (ship) ship.parent?.remove(ship);
@@ -263,6 +303,13 @@ function goToView(name) {
 function resize() {
   const w = innerWidth, h = Math.max(1, innerHeight);
   renderer.setSize(w, h, false);
+  // The composer does not track the renderer's size on its own — it owns its own render
+  // targets, sized when it was built, and a resize handler that only calls
+  // renderer.setSize leaves every one of those targets the size the window used to be.
+  // That mismatch is silent rather than an error: the composer just keeps compositing at
+  // the old resolution into a canvas that has moved on, which shows up as a blurred or
+  // cropped frame and nothing in the console to explain it. Hence this line.
+  post.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   // If the camera was framed before the page had a size, its position is NaN and it
@@ -312,7 +359,7 @@ renderer.setAnimationLoop(() => {
       spray: fwd < -1.6 ? 1 : 0,
     });
   }
-  renderer.render(scene, camera);
+  post.render(dt);
 });
 
 // So that automated checks can wait for the page rather than guess at a delay, and so

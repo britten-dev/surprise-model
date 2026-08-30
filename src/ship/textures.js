@@ -206,35 +206,50 @@ export function copperSheathing({
  */
 export function sailCloth({
   base = '#ddd6c4', seam = '#c6bda7', size = 1024, cloths = 14, reefs = 2, seed = 31,
-  variants = 1, stain = null,
+  variants = 1, stain = null, roughBase = 0.85,
 } = {}) {
   // The size belongs in the key. It did not use to be, and the consequence was invisible
   // until the map grew: every level of detail was handed whichever cloth was drawn first,
   // so the silhouette on the horizon carried the hero level's canvas and the exported GLB
   // for it carried an eight-megabyte texture of a sail nobody can see.
-  return memo(`sail:${base}:${cloths}:${reefs}:${seed}:${size}:${variants}:${!!stain}`, () => {
+  return memo(`sail:${base}:${cloths}:${reefs}:${seed}:${size}:${variants}:${!!stain}:${roughBase}`, () => {
     const { c, g } = canvas(size);
+    // The roughness companion, built in step with the colour so a mildewed or salted
+    // patch of canvas is a different finish as well as a different shade of it — see the
+    // head of src/ship/weathering.js for why that correlation is what tells a stain from
+    // a texture. It carries an alpha of its own, attached to the returned canvas rather
+    // than returned alongside it, so a caller that only wants the colour — as
+    // tools/dev/show-texture.js does — need not know it is there.
+    const { c: rc, g: rg } = canvas(size);
     const n = Math.max(1, Math.round(variants));
     for (let vy = 0; vy < n; vy++) {
       for (let vx = 0; vx < n; vx++) {
         const tile = sailTile({
           base, seam, size: Math.round(size / n), cloths: Math.round(cloths / n),
-          reefs, seed: seed + vy * 7 + vx * 13, stain,
+          reefs, seed: seed + vy * 7 + vx * 13, stain, roughBase,
         });
-        g.drawImage(tile, (vx * size) / n, (vy * size) / n);
+        g.drawImage(tile.c, (vx * size) / n, (vy * size) / n);
+        rg.drawImage(tile.rc, (vx * size) / n, (vy * size) / n);
       }
     }
+    c.roughCanvas = rc;
     return c;
   });
 }
 
 /** One sail's worth of cloth, which sailCloth tiles into its variant grid. */
-function sailTile({ base, seam, size, cloths, reefs, seed, stain }) {
+function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
   const { c, g } = canvas(size);
+  const { c: rc, g: rg } = canvas(size);
   {
     const r = rng(seed);
     g.fillStyle = base;
     g.fillRect(0, 0, size, size);
+    // The roughness canvas starts at the cloth's own dry, matte finish and only ever
+    // gets stains painted over it below — there is no weave-level roughness detail here,
+    // because a weave a few pixels wide is well inside what the detail normal map is for.
+    rg.fillStyle = `rgb(0,${Math.round(roughBase * 255)},0)`;
+    rg.fillRect(0, 0, size, size);
     // The weave itself, faint but enough to break up a flat panel under a hard light.
     for (let i = 0; i < size; i += 3) {
       g.fillStyle = `rgba(0,0,0,${(0.012 + r() * 0.014).toFixed(3)})`;
@@ -242,7 +257,7 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain }) {
       g.fillRect(0, i, size, 1);
     }
     // The general staining, under the seams.
-    if (stain) stain(g, { size, seed: seed + 3, stage: 'ground' });
+    if (stain) stain(g, { size, seed: seed + 3, stage: 'ground', rg });
 
     // Cloth seams, vertical, at the width of a bolt of canvas.
     g.globalAlpha = 1;
@@ -263,14 +278,14 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain }) {
     // above the seams — because the cloth is what is stained and the seams are sewn
     // through it.
     g.globalAlpha = 1;
-    if (stain) stain(g, { size, seed: seed + 3, stage: 'patches' });
+    if (stain) stain(g, { size, seed: seed + 3, stage: 'patches', rg });
     // Tabling: the doubled hem all round.
     g.globalAlpha = 0.5;
     g.strokeStyle = seam;
     g.lineWidth = size * 0.018;
     g.strokeRect(0, 0, size, size);
     g.globalAlpha = 1;
-    return c;
+    return { c, rc };
   }
 }
 
@@ -352,6 +367,119 @@ export function ropeTexture({ base = '#6b5a44', dark = '#4a3d2c', size = 128, se
     }
     return c;
   });
+}
+
+/**
+ * A tileable high-frequency height field: a lattice of random values at a cell a
+ * handful of pixels wide, sampled with a smooth blend so the result is a fine, even
+ * grain rather than snow.
+ *
+ * Every relief map elsewhere in this file describes one real feature — a plank seam, a
+ * copper lap, the joints in a painted board — and every one of them goes soft and flat
+ * once the camera is close enough that a single texel covers less of the hull than a
+ * fingernail. This is the layer under all of them: the actual tooth of sawn timber and
+ * brushed paint, which has no feature to name because it is not a feature, it is the
+ * material. `cell` is a size in texture pixels and wants to stay small — large cells
+ * here read as the macro relief's own pattern doubled, not as grain.
+ *
+ * It is written to tile exactly at a period of `cell * floor(size / cell)` texels by
+ * wrapping the lattice index rather than clamping it, which is what lets it sit under a
+ * normal map that repeats along the whole length of the ship without a seam showing
+ * where the repeat closes.
+ */
+function fineGrainHeight(size, { seed = 5, cell = 5 } = {}) {
+  const { c, g } = canvas(size);
+  const img = g.createImageData(size, size);
+  const d = img.data;
+  const step = Math.max(1, cell);
+  const w = Math.max(1, Math.round(size / step));
+  const r = rng(seed);
+  const lat = new Float32Array(w * w);
+  for (let i = 0; i < lat.length; i++) lat[i] = r();
+  const at = (i, j) => lat[(((j % w) + w) % w) * w + (((i % w) + w) % w)];
+  const smooth = (t) => t * t * (3 - 2 * t);
+  for (let y = 0; y < size; y++) {
+    const gy = (y / size) * w, jy = Math.floor(gy), fy = smooth(gy - jy);
+    for (let x = 0; x < size; x++) {
+      const gx = (x / size) * w, jx = Math.floor(gx), fx = smooth(gx - jx);
+      const n = (at(jx, jy) * (1 - fx) + at(jx + 1, jy) * fx) * (1 - fy)
+              + (at(jx, jy + 1) * (1 - fx) + at(jx + 1, jy + 1) * fx) * fy;
+      const v = Math.round(n * 255);
+      const i = (y * size + x) * 4;
+      d[i] = d[i + 1] = d[i + 2] = v;
+      d[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+/**
+ * Combine a macro normal map with a fine detail normal by *whiteout blending*: add the
+ * two maps' tilt (their x and y components) and keep the macro map's own depth (its z),
+ * then renormalise. This is not the same as averaging the two maps' colours, and the
+ * difference matters. Averaging a normal tilted left with one tilted right gives a
+ * normal tilted nowhere — the flat result a surface has when nothing is happening to
+ * it — so a colour-averaged blend cancels exactly the relief it is meant to add and the
+ * detail disappears into the macro map instead of sitting on top of it. Adding the
+ * tilts is what actually happens when one bump sits on another: two slopes crossing add
+ * their gradients, they do not split the difference.
+ */
+export function blendNormalsWhiteout(baseCanvas, detailCanvas, strength = 1) {
+  const size = baseCanvas.width;
+  const read = (src) => src.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, size, size).data;
+  const a = read(baseCanvas), b = read(detailCanvas);
+  const { c, g } = canvas(size);
+  const out = g.createImageData(size, size);
+  const d = out.data;
+  for (let i = 0; i < a.length; i += 4) {
+    const ax = (a[i] / 255) * 2 - 1, ay = (a[i + 1] / 255) * 2 - 1, az = (a[i + 2] / 255) * 2 - 1;
+    const bx = ((b[i] / 255) * 2 - 1) * strength, by = ((b[i + 1] / 255) * 2 - 1) * strength;
+    const nx = ax + bx, ny = ay + by, nz = az;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    d[i] = ((nx / len) * 0.5 + 0.5) * 255;
+    d[i + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+    d[i + 2] = ((nz / len) * 0.5 + 0.5) * 255;
+    d[i + 3] = 255;
+  }
+  g.putImageData(out, 0, 0);
+  return c;
+}
+
+export { fineGrainHeight };
+
+/**
+ * Derive a roughness map from a colour map's own light and shade: the same technique
+ * `combinePlankAndPaint` in materials.js uses to turn planking into colour depth, aimed
+ * at the green channel instead of the red one. A plank seam or a wear mark that catches
+ * a shadow is not only darker, it is a different finish — a seam is a crack that traps
+ * dirt and holds less of a sheen than the smooth face beside it — so the luminance that
+ * already says "this pixel is a seam" is a fair, free guide to how rough that pixel is.
+ *
+ * `invert` is for the marks where the dark thing is the smooth one instead: a patch of
+ * timber rubbed shiny by a hand or a rope reads dark in `paintedSurface`'s wear layer,
+ * not light, because that is how wear is drawn there, but the patch itself is polish
+ * and wants to be smoother, not rougher.
+ */
+export function roughnessFromLuminance(colorCanvas, { baseRough, amplitude = 0.08, invert = false } = {}) {
+  const size = colorCanvas.width;
+  const src = colorCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, size, size).data;
+  const { c, g } = canvas(size);
+  const out = g.createImageData(size, size);
+  const d = out.data;
+  for (let i = 0; i < src.length; i += 4) {
+    const lum = (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114) / 255;
+    // Darker is rougher by default — a seam or a smear of dirt is both — so the delta
+    // runs off how far a pixel sits *below* the midpoint, not above it.
+    const delta = (0.5 - lum) * amplitude * (invert ? -1 : 1);
+    const rough = Math.max(0, Math.min(1, baseRough + delta));
+    d[i] = 0;
+    d[i + 1] = Math.round(rough * 255);
+    d[i + 2] = 0;
+    d[i + 3] = 255;
+  }
+  g.putImageData(out, 0, 0);
+  return c;
 }
 
 /**

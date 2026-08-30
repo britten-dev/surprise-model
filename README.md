@@ -19,9 +19,17 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
+| `cinematic` | 380–500 k | A camera that can go anywhere. Round spars and ropes, 2048 maps. **Not exported** — see below. |
 | `hero` | 200–500 k | Close inspection. Every ratline, gun, port lid and gallery light. |
 | `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
+
+`cinematic` exists because `hero` still shows its budget when the camera comes close: ropes
+are a few sides, lathe work is coarse, textures stop at 1024. It builds in about three and a
+half seconds — nearly all of it drawing 2048-pixel textures rather than geometry — and it is
+**deliberately absent from the GLB export matrix**, which stays at exactly ten files. A
+2048-map level would be an enormous download and no host game wants one. It is for the
+viewer and for still renders.
 
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
@@ -142,6 +150,7 @@ docs/CONVENTIONS.md   axes, units and origin
 src/spec/spec.js      the spec as code; the only place a number may be written
 src/ship/             the generator, one module per region of the ship
 src/ship/weathering.js  what the sea does to her, drawn as a layer over the paint
+src/ship/occlusion.js  baked contact shadows, voxelised and written into vertex colours
 src/ship/crew.js      the watch on deck
 src/ship/motion.js    the runtime movement layer — the only part of her that is not static
 src/util/             lofting, interpolation, solid primitives
@@ -153,7 +162,7 @@ viewer/               the inspection page and the render harness
 ## A ship, not a model
 
 Everything above builds a ship that is *correct*. Correct is not the same as convincing,
-and the four things that gave her away had nothing to do with her dimensions:
+and the five things that gave her away had nothing to do with her dimensions:
 
 **1. Nothing had ever been to sea.** The paint was evidence, read off a museum model's
 photograph, and it was perfectly clean. `src/ship/weathering.js` draws what a commission
@@ -218,6 +227,50 @@ same thing to a file, at one stated instant so the render stays repeatable.
 The sea and the wake are the viewer's scenery, not part of the package: a host game has
 its own ocean. They are here because a frigate sitting in a mirror is a frigate in a bath,
 and she cannot be judged that way.
+
+**5. Nothing darkened where two surfaces met.** A single key light and its shadow map
+prove that a boat sits *above* the deck; they do nothing at all to say she sits *on* it.
+`src/ship/occlusion.js` fixes that at build time rather than at render time: it voxelises
+the finished ship into a coarse occupancy grid, marches a short bundle of rays from every
+vertex of every solid fitting — the hull, the deck, the boats, the guns, the ironwork —
+and darkens that vertex's colour by how much of its own hemisphere the rest of the ship
+blocks within a couple of metres. The result sits under a boat's keel where it meets the
+skids, in the angle where the deck meets the inner bulwark, and around a gun where its
+carriage meets the planking, and it costs the host nothing to keep out of the loading
+screen it does not affect: at the `game` LOD the whole pass runs in under 400 ms, and the
+`distant` LOD skips it outright because a contact shadow a few pixels wide is not worth
+its own vertex colours. It multiplies into whatever colour a surface already carries —
+the hull's weathering, a figure's coat — rather than replacing it, for the same reason
+`src/ship/weathering.js` keeps its own stains out of PAINT: this is not evidence about
+the paint, so it must never be able to move a colour that is.
+
+## How she is rendered
+
+The geometry stopped being what dated the picture some time ago. Two things now do most of
+the work of making a render of her look like a photograph rather than a screenshot, and
+neither is in the model at all.
+
+**Contact shadow.** `src/ship/occlusion.js` — described above. Nothing else in a real-time
+renderer will darken the gap under a boat on the skids.
+
+**A post stack**, in `viewer/post.js`, with its numbers in `viewer/grade.js`: bloom, SMAA,
+a per-rig grade with a vignette, fine film grain, and a whisper of chromatic aberration at
+the frame's corners. Two things about it are worth knowing before touching it.
+
+The first is the order. Everything before the final `OutputPass` runs on the scene's own
+untouched linear light, because three only applies tone mapping and colour encoding when it
+draws straight to the screen — so bloom sees real HDR and the grade moves real brightness,
+and the ACES curve is applied exactly once, at the end. Getting this wrong produces a
+washed-out or double-gamma'd image and is the most likely way this file breaks.
+
+The second is that **the `studio` grade is identity, deliberately**. That render is the one
+laid beside the reference photograph, and the whole value of the comparison is that nothing
+between the renderer and the pixel has an opinion. A grade that improved the studio shot
+would be a grade that broke the only measurement this project has against a real object.
+
+The grade numbers live in `viewer/grade.js` and not in the spec, for the reason that file
+gives: a gunport spacing has a source and a bloom radius does not. One is a claim about the
+ship and the other is a claim about the renderer, and the spec is only for the first.
 
 ## The rule about numbers
 

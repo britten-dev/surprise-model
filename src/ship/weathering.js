@@ -25,7 +25,7 @@
 //  * **Nothing is uniform.** A stain of one strength everywhere is another kind of
 //    clean. Every generator here works from a seeded random so that the density itself
 //    varies along the ship.
-import { rng } from '../util/math.js';
+import { rng, clamp } from '../util/math.js';
 import { PAINT } from '../spec/spec.js';
 import { V } from './hull.js';
 
@@ -38,6 +38,23 @@ function rgb(h) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 const rgba = (h, a) => `rgba(${rgb(h).join(',')},${a})`;
+
+/**
+ * A target roughness, encoded as the "#00ggbb" colour the surface finish maps use —
+ * glTF packs roughness in green and metalness in blue. Building it this way means the
+ * same alpha-compositing helpers below that paint a stain's *colour* — streak, band,
+ * mottle — can paint a stain's *finish* too, with no idea that is what they are doing:
+ * a rougher or smoother patch is drawn exactly like a rust streak or a slime band,
+ * because compositing a roughness value onto a roughness map is the same arithmetic as
+ * compositing a paint colour onto a paint map. Metalness always goes in as zero here:
+ * the one surface with a metal band, the hull's copper, keeps its metalness by never
+ * letting this overlay touch that band's alpha at all — see hullSurfaceMap in
+ * materials.js — so nothing weathered here needs to carry a real metal value.
+ */
+function surfaceHex(rough) {
+  const byte = Math.round(clamp(rough, 0, 1) * 255).toString(16).padStart(2, '0');
+  return `#00${byte}00`;
+}
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -216,8 +233,18 @@ function grain(g, { size, colour, alpha, seed = 1, vFrom = 0, vTo = 1, scale = 1
  *  * the wind-and-water band at the waterline, the dirtiest line on the ship;
  *  * the topsides, salt-bleached low down and streaked from every iron bolt in them.
  */
+// Each stain is drawn twice: once for colour, in `g`, and once for finish, in `rg` —
+// the same shape and the same strength, painted onto the roughness/metalness map
+// hullSurfaceMap builds in materials.js instead of onto the paint. A wet-and-weeded
+// waterline that is not also smoother than the topsides above it, or a rust streak that
+// is not also rougher than the paint it runs down, is a colour decal: it says "dirt" to
+// the eye and "flat plastic with a picture on it" to the light. Doing both here, from
+// the same computed shape rather than a second roll of the dice, is what keeps a streak
+// and its own finish sitting on the same pixels. `rg` is optional so a caller after the
+// colour alone — tools/dev/show-texture.js — need not build a canvas it will not use.
 export function hullStains({ size = 1024, seed = 61 } = {}) {
   const { c, g } = canvas(size, size);
+  const { c: rc, g: rg } = canvas(size, size);
   const r = rng(seed);
   const vy = (v) => (1 - v) * size;
 
@@ -244,6 +271,17 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
     count: per(90), scale: pxPerM * 0.035, seed: seed + 1,
     vFrom: 0, vTo: copperTop,
   });
+  // Verdigris is a powdery oxide film and holds no shine at all, but it never gets the
+  // chance to say so here: this mottle is entirely inside the copper band, whose
+  // metalness hullSurfaceMap refuses to let any overlay touch (see the note there), so
+  // painting it rougher would be invisible under a metalness that a moment later gets
+  // put back to 1. It is called with the same seed regardless, so that if the copper
+  // band's shape ever changes this stops being a silent no-op rather than a mystery.
+  mottle(rg, {
+    size, colour: surfaceHex(num('weather_verdigris_roughness')), alpha: num('weather_verdigris_alpha'),
+    count: per(90), scale: pxPerM * 0.035, seed: seed + 1,
+    vFrom: 0, vTo: copperTop,
+  });
   mottle(g, {
     size, colour: hex('weather_grime'), alpha: num('weather_verdigris_alpha') * 0.5,
     count: per(45), scale: pxPerM * 0.05, seed: seed + 2,
@@ -260,12 +298,23 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
     size, vFrom: bandLow, vTo: bandHigh,
     colour: hex('weather_slime'), alpha: num('weather_slime_alpha'), seed: seed + 3,
   });
+  // The single strongest finish change on the ship: a band that is wet more often than
+  // it is dry reads as wet, and wet is smooth. Same seed, same band, so the smooth patch
+  // sits exactly under the dark one rather than beside it.
+  band(rg, {
+    size, vFrom: bandLow, vTo: bandHigh,
+    colour: surfaceHex(num('weather_slime_roughness')), alpha: num('weather_slime_alpha'), seed: seed + 3,
+  });
   // Weed hanging below the band in tongues, where it has grown down into the water.
   for (let i = 0; i < per(6); i++) {
+    const x = r() * size, yTop = vy(bandLow + r() * 0.01);
+    const length = vPerM * size * (0.1 + r() * 0.35), width = pxPerM * (0.02 + r() * 0.10);
+    const alpha = num('weather_slime_alpha') * (0.3 + r() * 0.5);
     streak(g, {
-      x: r() * size, yTop: vy(bandLow + r() * 0.01),
-      length: vPerM * size * (0.1 + r() * 0.35), width: pxPerM * (0.02 + r() * 0.10),
-      colour: hex('weather_slime'), alpha: num('weather_slime_alpha') * (0.3 + r() * 0.5),
+      x, yTop, length, width, colour: hex('weather_slime'), alpha, spread: 0.7, blur: pxPerM * 0.02,
+    });
+    streak(rg, {
+      x, yTop, length, width, colour: surfaceHex(num('weather_slime_roughness')), alpha,
       spread: 0.7, blur: pxPerM * 0.02,
     });
   }
@@ -276,6 +325,13 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
   band(g, {
     size, vFrom: V.wale_bottom - 0.02, vTo: V.sheer_strake,
     colour: hex('weather_salt'), alpha: num('weather_salt_alpha'), seed: seed + 4, bite: 0.85,
+  });
+  // Dried salt is a crystalline bloom sitting proud of the paint film under it, the
+  // opposite of the waterline band just above: rougher, not smoother, which is most of
+  // why the two read as different kinds of dirty rather than as one grey wash.
+  band(rg, {
+    size, vFrom: V.wale_bottom - 0.02, vTo: V.sheer_strake,
+    colour: surfaceHex(num('weather_salt_roughness')), alpha: num('weather_salt_alpha'), seed: seed + 4, bite: 0.85,
   });
   grain(g, {
     size, colour: hex('weather_salt'), alpha: num('weather_salt_alpha') * 0.5,
@@ -298,14 +354,17 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
       // so a bolt makes two or three streaks beside each other rather than one.
       const x0 = r() * size;
       for (let k = 0; k < 1 + Math.floor(r() * 3); k++) {
-        streak(g, {
-          x: x0 + (r() - 0.5) * pxPerM * 0.25,
-          yTop: vy(line.v) + (r() - 0.5) * size * 0.004,
-          length: vPerM * size * line.len * (0.4 + r()),
-          width: pxPerM * (0.015 + r() * 0.045),
-          colour: hex('weather_rust'),
-          alpha: num('weather_rust_alpha') * line.alpha * (0.35 + r() * 0.65),
-          blur: pxPerM * 0.012,
+        const x = x0 + (r() - 0.5) * pxPerM * 0.25;
+        const yTop = vy(line.v) + (r() - 0.5) * size * 0.004;
+        const length = vPerM * size * line.len * (0.4 + r());
+        const width = pxPerM * (0.015 + r() * 0.045);
+        const alpha = num('weather_rust_alpha') * line.alpha * (0.35 + r() * 0.65);
+        streak(g, { x, yTop, length, width, colour: hex('weather_rust'), alpha, blur: pxPerM * 0.012 });
+        // Rust scale is a crust, not a stain: it is the roughest thing that gets painted
+        // onto this ship anywhere, which is why it is still legible as rust at a
+        // distance a plain colour streak would have lost to the noise of the planking.
+        streak(rg, {
+          x, yTop, length, width, colour: surfaceHex(num('weather_rust_roughness')), alpha, blur: pxPerM * 0.012,
         });
       }
     }
@@ -315,19 +374,30 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
   // wet ship. Weaker than the rust, and there is more of it.
   for (let i = 0; i < per(1.6); i++) {
     const top = r() > 0.45 ? V.deck : V.rail;
-    streak(g, {
-      x: r() * size, yTop: vy(top),
-      length: vPerM * size * (0.3 + r() * 2.2), width: pxPerM * (0.01 + r() * 0.03),
-      colour: hex('weather_grime'), alpha: num('weather_grime_alpha') * (0.25 + r() * 0.75),
-      blur: pxPerM * 0.015,
+    const x = r() * size, yTop = vy(top);
+    const length = vPerM * size * (0.3 + r() * 2.2), width = pxPerM * (0.01 + r() * 0.03);
+    const alpha = num('weather_grime_alpha') * (0.25 + r() * 0.75);
+    streak(g, { x, yTop, length, width, colour: hex('weather_grime'), alpha, blur: pxPerM * 0.015 });
+    // This is wash, not crust: the run itself is wet oftener than the paint round it, so
+    // like the waterline band it goes smoother rather than rougher.
+    streak(rg, {
+      x, yTop, length, width, colour: surfaceHex(num('weather_grime_roughness')), alpha, blur: pxPerM * 0.015,
     });
   }
-  // And the general grain of painted timber that has been wet for three years.
+  // And the general grain of painted timber that has been wet for three years. Left as
+  // colour only: it is a per-pixel wash rather than a named feature, and pairing it
+  // would be spending a second full grain pass — the expensive part of this function —
+  // on a difference too fine for a roughness map to carry any better than the generic
+  // fine grain hullSurfaceMap already lays over the whole hull.
   grain(g, {
     size, colour: hex('weather_grime'), alpha: num('weather_grime_alpha') * 0.35,
     seed: seed + 6, vFrom: V.wale_bottom, vTo: 1, scale: 3,
   });
 
+  // See the head of this function: attached rather than returned as a pair, so that
+  // tools/dev/show-texture.js and any other caller after the colour alone can keep
+  // treating this as a plain canvas.
+  c.roughCanvas = rc;
   return c;
 }
 
@@ -341,6 +411,9 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
  */
 export function deckStains({ size = 1024, seed = 71 } = {}) {
   const { c, g } = canvas(size, size);
+  // The roughness companion — see the note over hullStains for why a wet patch that is
+  // not also a smoother patch reads as a picture of water rather than as water.
+  const { c: rc, g: rg } = canvas(size, size);
   const r = rng(seed);
 
   // Wet, dark patches. On a deck that is being swept by the sea these are most of what
@@ -349,20 +422,40 @@ export function deckStains({ size = 1024, seed = 71 } = {}) {
     size, colour: hex('weather_deck_wet'), alpha: num('weather_deck_wet_alpha'),
     count: Math.round(size * 0.5), scale: size * 0.13, seed: seed + 1,
   });
-  // Pale bleached patches where the sun and the holystone have been.
+  mottle(rg, {
+    size, colour: surfaceHex(num('weather_deck_wet_roughness')), alpha: num('weather_deck_wet_alpha'),
+    count: Math.round(size * 0.5), scale: size * 0.13, seed: seed + 1,
+  });
+  // Pale bleached patches where the sun and the holystone have been. Holystoning is
+  // scrubbing with a soft sandstone block, which polishes as much as it cleans, so a
+  // bleached patch is a little smoother than the deck round it as well as a little
+  // paler — not by much, because it is still bare, walked-on oak and not a varnished rail.
   mottle(g, {
     size, colour: hex('weather_salt'), alpha: num('weather_deck_bleach_alpha'),
     count: Math.round(size * 0.35), scale: size * 0.11, seed: seed + 2,
   });
-  // Tar and pitch, trodden out of the seams and dropped from aloft.
+  mottle(rg, {
+    size, colour: surfaceHex(num('weather_deck_bleach_roughness')), alpha: num('weather_deck_bleach_alpha'),
+    count: Math.round(size * 0.35), scale: size * 0.11, seed: seed + 2,
+  });
+  // Tar and pitch, trodden out of the seams and dropped from aloft. Pitch is glossy
+  // where paint and bare oak are not, so this is the one deck stain that goes smoother
+  // rather than rougher, same as it would if it were rope-tar on a man's jacket.
   for (let i = 0; i < size * 0.15; i++) {
     const x = r() * size, y = r() * size;
     const rad = size * (0.001 + r() * 0.005);
-    g.fillStyle = rgba(hex('weather_grime'), num('weather_grime_alpha') * (0.5 + r()));
+    const rx = rad * (1 + r()), rot = r() * 3;
+    const alpha = num('weather_grime_alpha') * (0.5 + r());
+    g.fillStyle = rgba(hex('weather_grime'), alpha);
     g.beginPath();
-    g.ellipse(x, y, rad * (1 + r()), rad, r() * 3, 0, 7);
+    g.ellipse(x, y, rx, rad, rot, 0, 7);
     g.fill();
+    rg.fillStyle = rgba(surfaceHex(num('weather_deck_tar_roughness')), alpha);
+    rg.beginPath();
+    rg.ellipse(x, y, rx, rad, rot, 0, 7);
+    rg.fill();
   }
+  c.roughCanvas = rc;
   return c;
 }
 
@@ -378,7 +471,14 @@ export function deckStains({ size = 1024, seed = 71 } = {}) {
  * *over*, because a patch is a piece of cloth sewn on afterwards and it hides what is
  * beneath it.
  */
-export function sailStains(g, { size, seed = 81, stage = 'ground' } = {}) {
+// `rg` is a second context, the same size as `g`, that gets the same shapes painted onto
+// it in the surface-finish encoding surfaceHex builds, so that a stained patch of cloth
+// is also a different weave, not only a different shade of it — see the note over
+// hullStains for why. It is read off `o.rg` rather than taken as its own argument, so a
+// caller that has never heard of it — the ground stage of `sailTile`'s first draft did
+// not carry one, and neither does tools/dev/show-texture.js today — passes nothing and
+// gets colour only, exactly as before.
+export function sailStains(g, { size, seed = 81, stage = 'ground', rg = null } = {}) {
   const r = rng(seed);
   const a = num('weather_sail_stain_alpha');
 
@@ -401,15 +501,35 @@ export function sailStains(g, { size, seed = 81, stage = 'ground' } = {}) {
       g.setLineDash([size / 190, size / 240]);
       g.strokeRect(x, y, w, h);
       g.setLineDash([]);
+      // The patch is newer cloth, tighter-woven than the sail it is sewn to, and that is
+      // a real difference in finish as well as in age: it is the one mark on the whole
+      // suit that goes smoother rather than rougher.
+      if (rg) {
+        rg.save();
+        rg.filter = `blur(${(size / 400).toFixed(2)}px)`;
+        rg.fillStyle = rgba(surfaceHex(num('weather_sail_patch_roughness')), num('weather_sail_patch_alpha'));
+        rg.fillRect(x, y, w, h);
+        rg.restore();
+      }
     }
     return;
   }
 
-  // The general unevenness of old flax: large, soft and weak.
+  // The general unevenness of old flax: large, soft and weak. Old, sun-rotted flax
+  // frays rather than smooths, so it goes rougher, unlike almost everything else drawn
+  // rough-and-together with its colour on this ship — the theme elsewhere is "wet is
+  // smooth, dirty is rough", and worn cloth is the dirty half of that even though the
+  // reason is fraying rather than grime.
   mottle(g, {
     size, colour: hex('weather_sail_stain'), alpha: a,
     count: Math.round(size * 0.12), scale: size * 0.09, seed: seed + 1,
   });
+  if (rg) {
+    mottle(rg, {
+      size, colour: surfaceHex(num('weather_sail_stain_roughness')), alpha: a,
+      count: Math.round(size * 0.12), scale: size * 0.09, seed: seed + 1,
+    });
+  }
   // Mildew: small, dark, and worst low down where a sail is handed wet and the water
   // collects — but graded away upward rather than stopped at a line. A band of dirt
   // across the middle of every sail in the ship is worse than no dirt at all.
@@ -420,21 +540,44 @@ export function sailStains(g, { size, seed = 81, stage = 'ground' } = {}) {
     const t = 1 - r2() * r2();
     const y = t * size;
     const rad = size * (0.002 + r2() * 0.010);
+    const strength = a * 0.9 * (0.3 + r2() * 0.7);
     const grad = g.createRadialGradient(x, y, 0, x, y, rad);
-    grad.addColorStop(0, rgba(hex('weather_mildew'), a * 0.9 * (0.3 + r2() * 0.7)));
+    grad.addColorStop(0, rgba(hex('weather_mildew'), strength));
     grad.addColorStop(1, rgba(hex('weather_mildew'), 0));
     g.fillStyle = grad;
     g.beginPath();
     g.arc(x, y, rad, 0, 7);
     g.fill();
+    // Mildew is a fungal growth with real texture to it, not a stain soaked into the
+    // weave, so it roughens the cloth it sits on.
+    if (rg) {
+      const rgrad = rg.createRadialGradient(x, y, 0, x, y, rad);
+      rgrad.addColorStop(0, rgba(surfaceHex(num('weather_mildew_roughness')), strength));
+      rgrad.addColorStop(1, rgba(surfaceHex(num('weather_mildew_roughness')), 0));
+      rg.fillStyle = rgrad;
+      rg.beginPath();
+      rg.arc(x, y, rad, 0, 7);
+      rg.fill();
+    }
   }
-  // Water staining up from the foot, in the tide lines a wet sail dries in.
+  // Water staining up from the foot, in the tide lines a wet sail dries in. The stain
+  // itself is a mineral residue left behind once the water that carried it has gone, so
+  // unlike the hull's wind-and-water band this is dry by the time anyone sees it and
+  // goes rougher along with the general old-flax unevenness above, not smoother.
   for (let i = 0; i < 3; i++) {
     const y = size * (0.86 + r() * 0.12);
-    const grad = g.createLinearGradient(0, y, 0, y - size * (0.04 + r() * 0.10));
+    const h = size * (0.04 + r() * 0.10);
+    const grad = g.createLinearGradient(0, y, 0, y - h);
     grad.addColorStop(0, rgba(hex('weather_sail_stain'), a * 1.1));
     grad.addColorStop(1, rgba(hex('weather_sail_stain'), 0));
     g.fillStyle = grad;
     g.fillRect(0, y - size * 0.2, size, size * 0.2);
+    if (rg) {
+      const rgrad = rg.createLinearGradient(0, y, 0, y - h);
+      rgrad.addColorStop(0, rgba(surfaceHex(num('weather_sail_stain_roughness')), a * 1.1));
+      rgrad.addColorStop(1, rgba(surfaceHex(num('weather_sail_stain_roughness')), 0));
+      rg.fillStyle = rgrad;
+      rg.fillRect(0, y - size * 0.2, size, size * 0.2);
+    }
   }
 }
