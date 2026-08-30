@@ -1122,6 +1122,12 @@ and the ochre strake follow the sheer.
 | `hull_normal_scale` | 1.15 | — | — | RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance |
 | `copper_pattern_depth` | 0.62 | — | — | RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance |
 | `copper_sheet_variation` | 0.16 | — | — | RECONSTRUCTED §8 no two sheets weather alike, and it is the spread between them that stops the bottom reading as one printed panel |
+| `hull_rough_pattern_var` | 0.09 | — | — | RECONSTRUCTED §8 how much the hull's planking and sheathing patterns are allowed to modulate its own roughness map, the same technique combinePlankAndPaint uses for colour: a plank seam that catches a shadow is a real crack and holds less of a sheen than the smooth face beside it |
+| `paint_wear_roughness` | 0.5 | — | — | RECONSTRUCTED §8 tuned in a close crop of a belaying pin and a port-lid hinge strap so the polished patches catch a visible highlight without the whole surface looking varnished |
+| `surface_roughness_grain` | 0.05 | — | — | RECONSTRUCTED §8 the amplitude of a fine, all-over roughness noise applied on top of the paint, the deck and the bright spars, standing in for the thousand small differences a real painted or oiled surface has that no drawn feature accounts for — the same reasoning paintedSurface gives for its own wear layer, aimed at finish instead of colour |
+| `detail_normal_cell` | 9 | — | — | RECONSTRUCTED §8 the noise lattice's cell size in texture pixels; coarse enough to compress reasonably, still fine enough to read as grain rather than as the macro relief's own pattern repeated |
+| `detail_normal_strength` | 2.4 | — | — | RECONSTRUCTED §8 the contrast fed to normalFrom for the detail height field; tuned so the grain is visible in a close crop of the beam view without becoming visible in the same crop of the whole-ship view, where it should disappear into the ordinary texel noise a screen has anyway |
+| `detail_normal_blend` | 0.6 | — | — | RECONSTRUCTED §8 how strongly the detail's tilt is added to the macro map's own in the whiteout blend; at 1.0 the fine grain competed with the plank seams and copper laps for attention instead of sitting quietly under them |
 | `ochre_strake_below_sill_v` | 0.008 | — | — | MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads |
 | `ochre_strake_above_head_v` | 0.004 | — | — | MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base. The strake is carried just clear of the port heads and no further: the band between the heads and the rail is narrow, and any more ochre than this closes it up and the ship stops reading as black |
 | `ochre_moulding_v` | 0.006 | — | — | MEASURED §8 a moulding about 4 in deep on a topside whose V range spans some 22 ft; the reference photograph shows one such line on the sheer and none above the port heads |
@@ -1139,6 +1145,8 @@ and the ochre strake follow the sheer.
 | `sail_seam` | #C6BDA7 | 0.88 | 0 | SECONDARY §8 seams between cloths |
 | `sail_glow` | 0.055 | — | — | RECONSTRUCTED §8 flax canvas is translucent backlit; the emission that replaces it is tuned against the reference photograph, in which the sails glow faintly and are opaque |
 | `sail_glow_tint` | #FFEFD2 | — | 0 | RECONSTRUCTED §8 light through flax picks up the warmth of the cloth, so the glow is warmer than the cloth itself |
+| `sail_sheen` | 0.55 | — | — | RECONSTRUCTED §8 tuned against the beam view so the topsails pick up a visible grazing highlight without the whole suit turning satin |
+| `sail_sheen_roughness` | 0.6 | — | — | RECONSTRUCTED §8 the roughness of the sheen lobe itself, distinct from the cloth's own diffuse roughness; a sheen roughness this far below 1 is what keeps the highlight a narrow band along the weave rather than a general brightening of every sail alike |
 | `rigging_tarred` | #2A211A | 0.85 | 0 | SECONDARY §8 standing rigging, tarred hemp |
 | `rigging_hemp` | #A89574 | 0.9 | 0 | SECONDARY §8 running rigging, untarred hemp |
 | `ensign_blue` | #22375E | 0.9 | 0 | SECONDARY §8 blue ensign bunting, desaturated from the Flag Institute blue |
@@ -1154,24 +1162,35 @@ and the ochre strake follow the sheer.
 | `officer_facing` | #D8D2C2 | 0.84 | 0 | RECONSTRUCTED §9 white lapels, waistcoat and breeches. On a dark coat they are what says "officer" from clear across the deck, before any detail of the man is visible at all |
 | `weather_rust` | #7A3A18 | — | 0 | RECONSTRUCTED §8 wet iron oxide on paint: redder and darker than dry rust, which is what runs from a chain bolt in a seaway |
 | `weather_rust_alpha` | 0.42 | — | — | RECONSTRUCTED §8 strong enough to read on a black topside at gameplay range; above about 0.55 the ship looks derelict rather than used |
+| `weather_rust_roughness` | 0.82 | — | — | RECONSTRUCTED §8 tuned so a rust run still reads as a change of finish, not only of hue, under the beam view's raking light |
 | `weather_salt` | #C6C2B4 | — | 0 | RECONSTRUCTED §8 dried salt: not white, but a grey-buff bloom that takes the depth out of black paint |
 | `weather_salt_alpha` | 0.2 | — | — | RECONSTRUCTED §8 enough to lift the topsides where the sea has been over them and leave the rail dark |
+| `weather_salt_roughness` | 0.68 | — | — | RECONSTRUCTED §8 above topside_black's 0.50 by enough to catch a highlight the black paint round it does not |
 | `weather_slime` | #2C3524 | — | 0 | RECONSTRUCTED §8 weed and slime in the wind-and-water band, green-black rather than green |
 | `weather_slime_alpha` | 0.55 | — | — | RECONSTRUCTED §8 the dirtiest line on the ship, and the single strongest cue that a hull has been floating rather than standing on a bench |
 | `weather_slime_band_v` | 0.075 | — | — | RECONSTRUCTED §8 how far above the copper line and below the load line the wind-and-water band reaches, as a fraction of the hull's paint coordinate. A ship in a seaway wets a band far wider than her still waterline |
+| `weather_slime_roughness` | 0.25 | — | — | RECONSTRUCTED §8 close to wet_roughness (0.13), the value the runtime spray layer uses for a sea that has just come aboard; held a little higher because this band is only wet on average, not at the instant of a render |
 | `weather_verdigris` | #4C6B4E | — | 0 | RECONSTRUCTED §8 copper goes brown within weeks and mottled green within a commission; without this the sheathing reads as brick-red paint |
 | `weather_verdigris_alpha` | 0.26 | — | — | RECONSTRUCTED §8 mottled, not covered — the bottom must still read as metal, and metal is what the metalness map says it is |
+| `weather_verdigris_roughness` | 0.6 | — | — | RECONSTRUCTED §8 oxide films read matte; well above copper's own 0.44 |
 | `weather_grime` | #231D16 | — | 0 | RECONSTRUCTED §8 the black wash off a wet ship: tar, soot from the galley funnel, and dirt |
 | `weather_grime_alpha` | 0.3 | — | — | RECONSTRUCTED §8 weaker than the rust and there is much more of it |
+| `weather_grime_roughness` | 0.32 | — | — | RECONSTRUCTED §8 below topside_black's 0.50, but not as smooth as the wind-and-water band itself: this runs and dries between wettings, the band alongside it never fully does |
 | `weather_streak_density` | 1.1 | — | — | RECONSTRUCTED §8 streaks per texel of texture width, scaled per line of ironwork. Tuned so that the streaks read as many at a distance and as individual runs from alongside |
 | `weather_deck_wet` | #4A4335 | — | 0 | RECONSTRUCTED §8 wet deck planking is several times darker than dry, and a deck in a gale is wet |
 | `weather_deck_wet_alpha` | 0.34 | — | — | RECONSTRUCTED §8 patchy rather than uniform; a uniformly wet deck is as flat-looking as a uniformly dry one |
+| `weather_deck_wet_roughness` | 0.22 | — | — | RECONSTRUCTED §8 close to wet_roughness (0.13); held a little higher because a deck patch is wet on average across a render rather than at the instant a sea crosses it |
 | `weather_deck_bleach_alpha` | 0.16 | — | — | RECONSTRUCTED §8 the pale patches the holystone leaves, which are what make the dark ones read as wet |
+| `weather_deck_bleach_roughness` | 0.62 | — | — | RECONSTRUCTED §8 below the deck's own 0.72 by a small margin, tuned so the bleached patches read as worn wood rather than as a second coat of paint |
+| `weather_deck_tar_roughness` | 0.18 | — | — | RECONSTRUCTED §8 pitch in the sun has a real gloss to it; set below weather_deck_wet_roughness so a tar spot still reads as a distinct, harder mark against a merely wet plank |
 | `weather_sail_stain` | #8C7F63 | — | 0 | RECONSTRUCTED §8 water staining and general dirt in old flax canvas |
 | `weather_sail_stain_alpha` | 0.13 | — | — | RECONSTRUCTED §8 enough that no two square feet of a sail are the same colour |
+| `weather_sail_stain_roughness` | 0.94 | — | — | RECONSTRUCTED §8 above the cloth's own 0.85-0.88; tuned against the beam view so a stained cloth catches less of the sun than the bolt beside it |
 | `weather_mildew` | #5B5540 | — | 0 | RECONSTRUCTED §8 mildew in canvas handed wet, worst at the foot |
+| `weather_mildew_roughness` | 0.96 | — | — | RECONSTRUCTED §8 the roughest mark on the whole suit of canvas, which is right for a growth sitting on top of the weave rather than a discolouration inside it |
 | `weather_sail_patch` | #CFC7B0 | — | 0 | RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker |
 | `weather_sail_patch_alpha` | 0.16 | — | — | RECONSTRUCTED §8 visible as a change of cloth at a cable's distance, not as a white rectangle |
+| `weather_sail_patch_roughness` | 0.76 | — | — | RECONSTRUCTED §8 below the cloth's own 0.85-0.88, the same direction newer canvas moves in relative to old |
 | `weather_sail_variants` | 2 | — | — | RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator |
 | `weather_bow_extra` | 0.55 | — | — | RECONSTRUCTED §8 how much harder the bow is used than amidships. Everything forward of the fore channels is in the sea every time she pitches, and it is the one part of a ship whose paint never lasts a commission |
 | `weather_stern_extra` | 0.25 | — | — | RECONSTRUCTED §8 the quarters take the wash off the deck and the scour of the rudder, but not the beating the bow takes |
@@ -1225,6 +1244,13 @@ and the ochre strake follow the sheer.
 | `storm_cloud_break` | 0.85 | — | — | RECONSTRUCTED §8 how torn the overcast is. A gale sky is not an even grey card: it is cloud in ragged bands lying with the wind, and a still render finds fault with a flat backdrop before it finds fault with anything on the ship |
 | `storm_wake_alpha` | 0.3 | — | — | RECONSTRUCTED §8 how white the water is where the ship breaks it. It is the last thing that separates a ship at sea from a model standing on one: with a clean waterline and nothing happening along it, the eye reads the whole picture as an object placed on a surface |
 | `storm_spume_alpha` | 0.38 | — | — | RECONSTRUCTED §8 how much of the sea surface is streaked white. In a full gale the whole surface is marked with it, in long streaks lying with the wind |
+| `ao_voxel_size` | 0.3 | — | — | RECONSTRUCTED §8 within the 0.25-0.4 m band a cell this size resolves; below the gap under a boat on the skids and inside a gunport, coarse enough that the occupancy grid over the whole ship builds in a few tens of milliseconds rather than several hundred |
+| `ao_ray_count` | 10 | — | — | RECONSTRUCTED §8 ten rays over the hemisphere read as a smooth gradient rather than a spatter of dark specks at the strength this is used at; fewer than eight left a visible dither on the flattest surfaces, such as the inner bulwark |
+| `ao_ray_distance` | 2.4 | — | — | RECONSTRUCTED §8 how far a ray marches before it is called unoccluded, in metres. Contact occlusion is a local effect — the point of this pass is the gap under a boat or beside a gunport, not a global shadow — and at the ship's own scale this is short enough that two parts of the hull on opposite sides of the beam never darken each other |
+| `ao_ray_step` | 0.3 | — | — | RECONSTRUCTED §8 kept equal to ao_voxel_size so that no step can skip past a one-cell-thick occluder such as a gunport lid without ever landing inside it |
+| `ao_min_cos` | 0.5 | — | — | RECONSTRUCTED §8 the cosine of the largest angle off the normal a sampled ray may take — 60 degrees. See the note above this row for the self-occlusion measurement that set it |
+| `ao_bias` | 0.45 | — | — | RECONSTRUCTED §8 a voxel and a half of headroom before the first sample. See the note above ao_min_cos for the measurement the two were tuned against together |
+| `ao_strength` | 0.55 | — | — | RECONSTRUCTED §8 how far a fully enclosed vertex is darkened. Tuned down from an initial 0.8, which read as dirt smeared into the corners rather than shadow sitting in them; at 0.55 the deepest creases — under the boats, inside the ports — go convincingly dark without the open decks and topsides, which pick up a little occlusion from everything standing on them, looking grubby |
 | `shadow_taps` | 3 | — | — | RECONSTRUCTED §8 three is the fewest that reads as a penumbra rather than as a double image, and each one costs a full shadow pass |
 | `shadow_spread_deg` | 2.6 | — | — | RECONSTRUCTED §8 five times the sun's true half-degree, which is what it takes for the penumbra to be visible at this scale; tuned on the ship's shadow on the sea in the beam view |
 | `shadow_map_size` | 2048 | — | — | RECONSTRUCTED §8 over a shadow camera 96 m across this is 47 mm to the texel. Three of these are rendered every frame, one per tap, so the size is a third of what a single map could afford — and it can be, because the taps blend away the staircase a single map has to resolve out with resolution |

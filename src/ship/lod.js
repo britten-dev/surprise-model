@@ -2,12 +2,133 @@
 // what it is allowed to spend, rather than deciding for itself, so the triangle budget
 // is set in one readable place instead of being scattered through the build.
 //
-//   hero     200-500k tris — close inspection, every ratline, every gun, every light
-//   game     30-60k        — the host game's ship at normal viewing range
-//   distant  under 5k      — a silhouette on the horizon
-export const LODS = ['hero', 'game', 'distant'];
+//   cinematic 380-500k tris — the interactive viewer and stills, never exported
+//   hero      200-500k tris — close inspection, every ratline, every gun, every light
+//   game      30-60k        — the host game's ship at normal viewing range
+//   distant   under 5k      — a silhouette on the horizon
+//
+// `cinematic` is listed first because it is the top of the ladder every other level is
+// judged against, not because anything iterates this array in that order. Note well: it
+// is a viewer-and-stills level only. `tools/build.js` keeps its own list of exported
+// LODs and does not read this array, precisely so that adding a level here can never by
+// itself add a file to the GLB matrix.
+export const LODS = ['cinematic', 'hero', 'game', 'distant'];
 
 const CONFIG = {
+  // The level above hero. Nobody ships this: it exists because "close inspection" at
+  // hero still shows a budget the moment the camera stops moving. A rope is a 5-sided
+  // tube with a visible flat running down it, a spar is a decagon you can count the
+  // sides of, and a lathe-turned truck or cap-square is coarse enough to look faceted
+  // rather than turned. None of that matters to a host game, which never gets this
+  // close and never gets this level — see `tools/build.js`, which has its own list of
+  // exported LODs and does not read this file's `LODS` array, so a still or a viewer
+  // session can spend here without a host ever downloading the bill. Every switch below
+  // that is an on/off or an enum is already at hero's maximum, because hero already
+  // turns everything on; what changes here is purely resolution — more sides on every
+  // round thing, more stations down the hull and the stern and the head, more segments
+  // in every sail, and a texture atlas at twice hero's edge.
+  cinematic: {
+    // Hull surface resolution. Half again more stations down her length, and a third
+    // more girth points at each one, so the turn of the bilge and the tumblehome read
+    // as a fair curve instead of a lofted polygon even with the camera sitting on the
+    // planking.
+    hullStations: 181,
+    hullPoints: 96,
+    // Round things: spars, ropes, deadeyes, gun barrels. Ten-sided is a decagon at
+    // arm's length; sixteen reads as round. Five-sided rope is the one hero fault every
+    // enthusiast's eye catches first — a flat running down a stay — so it goes to eight,
+    // which is the point a tube stops looking like a prism. The lathe count follows the
+    // same reasoning for a truck, a cap, a deadeye or a gun's reinforce rings: hero's 20
+    // is coarse enough to see the facets on a bright highlight, 32 is not.
+    sparSegments: 20,
+    sparRadial: 16,
+    ropeRadial: 8,
+    ropeSegments: 16,
+    latheSegments: 32,
+
+    // What exists at all. Everything here is already on at hero, so nothing changes:
+    // there is no further "on" to reach for. It is listed for the same reason hero's
+    // list is — so the next reader can see at a glance that this level was not merely
+    // copied from hero and never checked.
+    ropesAsTubes: true,
+    ratlines: true,
+    ratlineEvery: 1,
+    gammoning: true,
+    footropes: true,
+    runningRigging: 'full',
+    deadeyes: true,
+    chainplates: true,
+    channelRails: true,
+    channelKnees: true,
+    blocks: true,
+    gunBarrels: true,
+    gunCarriages: true,
+    gunBarrelStages: 'full',
+    gunBreechings: true,
+    gunTackles: true,
+    portLids: true,
+    innerBulwarks: true,
+    deckFurniture: 'full',
+    gratingBattens: true,
+    hammockCranes: 'full',
+    belayingPins: true,
+    galleryGlazing: true,
+    // The stern: half again more stations through the counter and the transom, so the
+    // carved quarter-pieces and the transom's curvature stand comparison with the
+    // reference photograph at the range a still is actually cropped to.
+    sternStations: 24,
+    sternWindows: true,
+    sternGalleries: true,
+    sternOrnament: 'carved',
+    rudderIrons: true,
+    figurehead: 'carved',
+    headRails: true,
+    headDetail: 'full',
+    // The head: the same reasoning as the stern, for the same reason — it is the other
+    // end of the ship an enthusiast's camera goes looking for carved work.
+    headStations: 36,
+    boats: 'full',
+    // The boats are small enough, and few enough, that spending on them barely shows in
+    // the total: a third more stations and points each so a stove-in dinghy on the
+    // skids does not give away its budget when everything around it has stopped doing so.
+    boatStations: 31,
+    boatPoints: 18,
+    boatGear: true,
+    anchorDetail: 'full',
+    anchorSpares: 2,
+    anchorCables: true,
+    flags: 'full',
+    // Bunting is cheap and reads as fabric rather than a flat pennant once the leech has
+    // enough segments to hold a curl; half again more than hero in both directions.
+    flagSegments: [28, 14],
+    flagHalliards: true,
+    crew: 'full',
+    copperNails: true,
+    hullRelief: true,
+    surfaceDetail: true,
+    // Sails: the belly and the ripple both live in these segment counts, and a coarse
+    // grid is exactly where the canvas shader's shivering looks like a flag rather than
+    // a sail. Half again more across and forty percent more up the leech.
+    sailSegments: [20, 14],
+    // Mouldings — the sheer strake, the wales, the headrails, the channel edges — are
+    // swept along a curve in this many steps; hero's 96 already reads fair from a few
+    // metres off, but the fiddle-head curls at the head and the scroll-work at the
+    // stern are drawn from the same helper and are exactly the tight radii where a
+    // sweep with too few steps chords visibly. Half again more.
+    mouldingSweeps: 144,
+    // Contact shadows cost the same at any resolution above this one — occlusion.js
+    // voxelises the finished ship rather than sampling per-triangle — so there is no
+    // reason to want them off at the one level built to be looked at hardest.
+    ambientOcclusion: true,
+
+    // Twice hero's edge. A texture at 1024 already shows soft pixels on a normal map's
+    // plank seam when the camera sits on the planking, which is exactly the distance
+    // this level exists to survive; 2048 is where that stops happening. It is also the
+    // one number here that materials.js's cache key already keys on, so this level gets
+    // its own material set for free rather than colliding with hero's.
+    textureSize: 2048,
+  },
+
   hero: {
     // Hull surface resolution.
     hullStations: 121,
@@ -100,8 +221,15 @@ const CONFIG = {
     // are the only relief on a surface that is otherwise perfectly smooth, and a hull
     // with none of it is the flattest thing in the scene.
     hullRelief: true,
+    // The fine surface maps: roughness variation and detail normals. See materials.js.
+    surfaceDetail: true,
     sailSegments: [14, 10],
     mouldingSweeps: 96,
+    // Baked contact shadows — see src/ship/occlusion.js. Close inspection is exactly
+    // where a boat with no shadow under it or a gun that looks glued to the deck gives
+    // the game away fastest, so this stays on even though it is the one switch here
+    // whose cost was tuned against the *game* budget rather than this one.
+    ambientOcclusion: true,
 
     textureSize: 1024,
   },
@@ -166,8 +294,13 @@ const CONFIG = {
     // The plank seams still catch the light at gameplay range; the copper's nails do not,
     // and they cost a second full pass of the sheathing generator.
     hullRelief: true,
+    surfaceDetail: true,
     sailSegments: [8, 6],
     mouldingSweeps: 48,
+    // On, at the level the host game actually calls `buildShip` at a loading screen —
+    // src/ship/occlusion.js is budgeted against this LOD specifically, under 400 ms for
+    // the whole ship, so turning it off here would be turning it off where it matters.
+    ambientOcclusion: true,
 
     textureSize: 512,
   },
@@ -236,8 +369,14 @@ const CONFIG = {
     crew: false,
     copperNails: false,
     hullRelief: false,
+    // Off. She is a silhouette on the horizon; roughness variation on her is invisible
+    // by definition, and it cost twelve textures in a file whose point is to be small.
+    surfaceDetail: false,
     sailSegments: [3, 2],
     mouldingSweeps: 12,
+    // A contact shadow under a boat is a few pixels wide at this range and a silhouette
+    // does not have vertex colours worth spending on; see src/ship/occlusion.js.
+    ambientOcclusion: false,
 
     textureSize: 256,
   },
@@ -259,6 +398,13 @@ export function lodConfig(lod) {
 // the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
 // 'none' — in that order.
 export const TRI_BUDGET = {
+  // Measured at 418k-421k across the four sail states — the resolution bumps above are
+  // all in things that are a small fraction of the ship (ropes, spar rings, lathe
+  // stages, sweep steps), so the total moved from hero's measured 244k by about
+  // three-quarters rather than by the sum of every individual multiplier. Not exported,
+  // and not read by `tools/build.js`, but kept honest rather than left as a guess: a
+  // future change to this level should still have something real to be checked against.
+  cinematic: [380000, 500000],
   hero: [200000, 500000],
   game: [30000, 80000],
   distant: [1500, 5000],

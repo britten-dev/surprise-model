@@ -192,6 +192,44 @@ export const PAINT = {
   copper_pattern_depth: { value: 0.62, source: 'RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance' },
   copper_sheet_variation: { value: 0.16, source: 'RECONSTRUCTED §8 no two sheets weather alike, and it is the spread between them that stops the bottom reading as one printed panel' },
 
+  // ---------------------------------------------------------------- surface finish
+  // Roughness used to be the one property on this ship with no variation at all: a
+  // one-pixel-wide strip gave the whole hull exactly one value per height band,
+  // identical from stem to stern and across every plank, which is most of why a
+  // correctly-coloured ship still read as shaded plastic rather than as timber and
+  // paint. These rows are what breaks that up, on the hull and on every other big
+  // painted surface: the deck, the boats and ironwork sharing paintedSurface, the bright
+  // spars, and the sail cloth. None of it invents a new material — it only lets the
+  // roughness a surface already has vary the way the colour of it already did.
+  hull_rough_pattern_var: { value: 0.09, source: 'RECONSTRUCTED §8 how much the hull\'s planking and sheathing patterns are allowed to modulate its own roughness map, the same technique combinePlankAndPaint uses for colour: a plank seam that catches a shadow is a real crack and holds less of a sheen than the smooth face beside it' },
+  // Not an absolute roughness — paintedTex is one shared modulation map read by every
+  // painted colour on the ship, each with its own roughness (0.5-0.7), and a texture
+  // sampled as a roughnessMap can only ever reduce a material's own roughness scalar,
+  // never raise it above it. So this is the *multiplier* a fully worn patch applies at
+  // the darkest or lightest extreme of paintedSurface's existing wear layer: the sheen
+  // where a hand or a length of running rigging has polished timber smooth is a much
+  // stronger effect on finish than it is on colour, which is why that wear layer reads
+  // as only a faint darkening there and is allowed to matter more here.
+  paint_wear_roughness: { value: 0.5, source: 'RECONSTRUCTED §8 tuned in a close crop of a belaying pin and a port-lid hinge strap so the polished patches catch a visible highlight without the whole surface looking varnished' },
+  surface_roughness_grain: { value: 0.05, source: 'RECONSTRUCTED §8 the amplitude of a fine, all-over roughness noise applied on top of the paint, the deck and the bright spars, standing in for the thousand small differences a real painted or oiled surface has that no drawn feature accounts for — the same reasoning paintedSurface gives for its own wear layer, aimed at finish instead of colour' },
+  // The detail normal: a second, high-frequency relief blended over whatever macro
+  // relief a surface already has (or stands alone where there is none), so timber and
+  // paint keep some tooth when the camera comes close enough that the macro relief's own
+  // texels are bigger than the thing they describe. One set of numbers for the whole
+  // ship, the same argument paintedSurface already makes for sharing one modulation map:
+  // the fine tooth of sawn timber and brushed paint is not a different thing on the hull
+  // than it is on a port lid.
+  // A cell this size is a compromise against the GLB rather than only a look: noise is
+  // the one kind of image a lossless texture format cannot compress, because PNG's
+  // filters work by predicting a texel from its neighbours and a texel of random noise
+  // defeats that by definition. A finer cell reads a little crisper up close but costs
+  // real megabytes once it is baked across the hull, the deck, the timber and the paint
+  // — an early cell of 5 px added several megabytes to the hero export for a difference
+  // only visible in a crop tighter than any of the verification views use.
+  detail_normal_cell: { value: 9, source: 'RECONSTRUCTED §8 the noise lattice\'s cell size in texture pixels; coarse enough to compress reasonably, still fine enough to read as grain rather than as the macro relief\'s own pattern repeated' },
+  detail_normal_strength: { value: 2.4, source: 'RECONSTRUCTED §8 the contrast fed to normalFrom for the detail height field; tuned so the grain is visible in a close crop of the beam view without becoming visible in the same crop of the whole-ship view, where it should disappear into the ordinary texel noise a screen has anyway' },
+  detail_normal_blend: { value: 0.6, source: 'RECONSTRUCTED §8 how strongly the detail\'s tilt is added to the macro map\'s own in the whiteout blend; at 1.0 the fine grain competed with the plank seams and copper laps for attention instead of sitting quietly under them' },
+
   ochre_strake_below_sill_v: { value: 0.008, source: 'MEASURED §8 the ochre strake carries the port band, sills at 20.4 ft and heads at 22.8 ft above base; black above the wale and again above the port heads' },
   ochre_strake_above_head_v: { value: 0.004, source: 'MEASURED §8 the channel-wale band above the port heads is black, 22.9 to 24.1 ft above base. The strake is carried just clear of the port heads and no further: the band between the heads and the rail is narrow, and any more ochre than this closes it up and the ship stops reading as black' },
   // The one thin ochre moulding, swept along the sheer strake in the black topside below
@@ -225,6 +263,15 @@ export const PAINT = {
   // black, and exports as core glTF.
   sail_glow: { value: 0.055, source: 'RECONSTRUCTED §8 flax canvas is translucent backlit; the emission that replaces it is tuned against the reference photograph, in which the sails glow faintly and are opaque' },
   sail_glow_tint: { hex: '#FFEFD2', source: 'RECONSTRUCTED §8 light through flax picks up the warmth of the cloth, so the glow is warmer than the cloth itself' },
+  // Sheen: the grazing highlight woven cloth throws along the direction of its threads,
+  // which is most of what makes canvas read as fabric rather than as painted board. It
+  // costs a fraction of what transmission does and, unlike transmission, is exactly as
+  // stable seen from the back of a double-sided sail as from the front — see the long
+  // note over the `sail` material in materials.js for the double-sided transmission
+  // failure this replaces no part of, because the two are independent: sheen is added on
+  // top of the same emissive-glow standard material, not instead of it.
+  sail_sheen: { value: 0.55, source: 'RECONSTRUCTED §8 tuned against the beam view so the topsails pick up a visible grazing highlight without the whole suit turning satin' },
+  sail_sheen_roughness: { value: 0.6, source: 'RECONSTRUCTED §8 the roughness of the sheen lobe itself, distinct from the cloth\'s own diffuse roughness; a sheen roughness this far below 1 is what keeps the highlight a narrow band along the weave rather than a general brightening of every sail alike' },
 
   rigging_tarred: { hex: '#2A211A', roughness: 0.85, source: 'SECONDARY §8 standing rigging, tarred hemp' },
   rigging_hemp: { hex: '#A89574', roughness: 0.90, source: 'SECONDARY §8 running rigging, untarred hemp' },
@@ -263,24 +310,80 @@ export const PAINT = {
   // at sea, or does she look like a ship somebody has drawn dirt on.
   weather_rust: { hex: '#7A3A18', source: 'RECONSTRUCTED §8 wet iron oxide on paint: redder and darker than dry rust, which is what runs from a chain bolt in a seaway' },
   weather_rust_alpha: { value: 0.42, source: 'RECONSTRUCTED §8 strong enough to read on a black topside at gameplay range; above about 0.55 the ship looks derelict rather than used' },
+  // Rust scale is a crust standing proud of the paint film, the roughest thing painted
+  // onto the ship anywhere: above topside_black's own 0.50 by more than any other single
+  // weathering mark, which is deliberate, because a rust streak with no more shine to it
+  // than the wet paint round it is a colour change and nothing else. It is what
+  // hullSurfaceMap paints onto the roughness map at the same streaks weather_rust paints
+  // onto the colour map — see the pairing in src/ship/weathering.js.
+  weather_rust_roughness: { value: 0.82, source: 'RECONSTRUCTED §8 tuned so a rust run still reads as a change of finish, not only of hue, under the beam view\'s raking light' },
   weather_salt: { hex: '#C6C2B4', source: 'RECONSTRUCTED §8 dried salt: not white, but a grey-buff bloom that takes the depth out of black paint' },
   weather_salt_alpha: { value: 0.20, source: 'RECONSTRUCTED §8 enough to lift the topsides where the sea has been over them and leave the rail dark' },
+  // A dried salt bloom is crystalline and sits proud of the paint under it, unlike the
+  // wet band at the waterline it stands well above: rougher than the black topside's
+  // 0.50, and rougher still than the wet band below it, which is the whole of what makes
+  // the two read as two different kinds of dirty rather than as one grey wash up the side.
+  weather_salt_roughness: { value: 0.68, source: 'RECONSTRUCTED §8 above topside_black\'s 0.50 by enough to catch a highlight the black paint round it does not' },
   weather_slime: { hex: '#2C3524', source: 'RECONSTRUCTED §8 weed and slime in the wind-and-water band, green-black rather than green' },
   weather_slime_alpha: { value: 0.55, source: 'RECONSTRUCTED §8 the dirtiest line on the ship, and the single strongest cue that a hull has been floating rather than standing on a bench' },
   weather_slime_band_v: { value: 0.075, source: 'RECONSTRUCTED §8 how far above the copper line and below the load line the wind-and-water band reaches, as a fraction of the hull\'s paint coordinate. A ship in a seaway wets a band far wider than her still waterline' },
+  // The wind-and-water band is wet far oftener than it is dry, and a wet surface is a
+  // smooth one — a film of water fills in whatever tooth the paint has under it. This is
+  // the smoothest thing painted onto the hull anywhere, on purpose: it is the single
+  // strongest finish cue that the ship is floating, the same job weather_slime_alpha
+  // already does for colour, done again for roughness so the two do not disagree.
+  weather_slime_roughness: { value: 0.25, source: 'RECONSTRUCTED §8 close to wet_roughness (0.13), the value the runtime spray layer uses for a sea that has just come aboard; held a little higher because this band is only wet on average, not at the instant of a render' },
   weather_verdigris: { hex: '#4C6B4E', source: 'RECONSTRUCTED §8 copper goes brown within weeks and mottled green within a commission; without this the sheathing reads as brick-red paint' },
   weather_verdigris_alpha: { value: 0.26, source: 'RECONSTRUCTED §8 mottled, not covered — the bottom must still read as metal, and metal is what the metalness map says it is' },
+  // Verdigris is a powdery oxide bloom with none of clean copper's polish (copper itself
+  // is 0.44). In practice this never reaches the rendered ship — the copper band's
+  // metalness is never let move, and a non-metal's roughness under a metalness of 1 has
+  // nothing left to say — but it is written down anyway, both because the value is a real
+  // one and because a future change that gave the sheathing patchy metalness would want
+  // it waiting rather than invented on the spot.
+  weather_verdigris_roughness: { value: 0.60, source: 'RECONSTRUCTED §8 oxide films read matte; well above copper\'s own 0.44' },
   weather_grime: { hex: '#231D16', source: 'RECONSTRUCTED §8 the black wash off a wet ship: tar, soot from the galley funnel, and dirt' },
   weather_grime_alpha: { value: 0.30, source: 'RECONSTRUCTED §8 weaker than the rust and there is much more of it' },
+  // Grime here is the wash off a *wet* ship — the run itself is water carrying soot and
+  // tar down the side, not a dry crust like the salt above — so it goes smoother, the
+  // same direction as the waterline band and for the same reason.
+  weather_grime_roughness: { value: 0.32, source: 'RECONSTRUCTED §8 below topside_black\'s 0.50, but not as smooth as the wind-and-water band itself: this runs and dries between wettings, the band alongside it never fully does' },
   weather_streak_density: { value: 1.1, source: 'RECONSTRUCTED §8 streaks per texel of texture width, scaled per line of ironwork. Tuned so that the streaks read as many at a distance and as individual runs from alongside' },
   weather_deck_wet: { hex: '#4A4335', source: 'RECONSTRUCTED §8 wet deck planking is several times darker than dry, and a deck in a gale is wet' },
   weather_deck_wet_alpha: { value: 0.34, source: 'RECONSTRUCTED §8 patchy rather than uniform; a uniformly wet deck is as flat-looking as a uniformly dry one' },
+  // Wet oak, like wet paint, is smoother than dry: a film of standing water is nearly a
+  // mirror next to bare, holystoned wood. Close to wet_roughness for the same reason
+  // weather_slime_roughness is.
+  weather_deck_wet_roughness: { value: 0.22, source: 'RECONSTRUCTED §8 close to wet_roughness (0.13); held a little higher because a deck patch is wet on average across a render rather than at the instant a sea crosses it' },
   weather_deck_bleach_alpha: { value: 0.16, source: 'RECONSTRUCTED §8 the pale patches the holystone leaves, which are what make the dark ones read as wet' },
+  // Holystoning scrubs the deck with a block of soft sandstone, which polishes the
+  // surface as much as it cleans it — a bleached patch is a little smoother than the
+  // deck round it, not only a little paler, though it is still bare walked-on oak and
+  // nothing like as smooth as a varnished rail.
+  weather_deck_bleach_roughness: { value: 0.62, source: 'RECONSTRUCTED §8 below the deck\'s own 0.72 by a small margin, tuned so the bleached patches read as worn wood rather than as a second coat of paint' },
+  // Tar and pitch — trodden out of the deck seams and dropped from aloft — are drawn in
+  // the same colour as the general grime wash (weather_grime) but they are not the same
+  // material: pitch is glossy where a wet-wood wash is merely dark, so this is the one
+  // deck mark that goes smoother than even the wet patches above it.
+  weather_deck_tar_roughness: { value: 0.18, source: 'RECONSTRUCTED §8 pitch in the sun has a real gloss to it; set below weather_deck_wet_roughness so a tar spot still reads as a distinct, harder mark against a merely wet plank' },
   weather_sail_stain: { hex: '#8C7F63', source: 'RECONSTRUCTED §8 water staining and general dirt in old flax canvas' },
   weather_sail_stain_alpha: { value: 0.13, source: 'RECONSTRUCTED §8 enough that no two square feet of a sail are the same colour' },
+  // Old flax frays rather than smooths, so both the general unevenness and the dried
+  // water-stain tide lines it shares this value with go rougher than new canvas
+  // (0.85-0.88), not smoother — the one weathering mark on the ship where "wet" is not
+  // the same story as "smooth", because by the time it is seen the water is long gone
+  // and what it left behind is stiffened, salt-stained fibre.
+  weather_sail_stain_roughness: { value: 0.94, source: 'RECONSTRUCTED §8 above the cloth\'s own 0.85-0.88; tuned against the beam view so a stained cloth catches less of the sun than the bolt beside it' },
   weather_mildew: { hex: '#5B5540', source: 'RECONSTRUCTED §8 mildew in canvas handed wet, worst at the foot' },
+  // A fungal growth has real texture of its own, distinct from a stain soaked into the
+  // weave: rougher again than the general staining above.
+  weather_mildew_roughness: { value: 0.96, source: 'RECONSTRUCTED §8 the roughest mark on the whole suit of canvas, which is right for a growth sitting on top of the weave rather than a discolouration inside it' },
   weather_sail_patch: { hex: '#CFC7B0', source: 'RECONSTRUCTED §8 a patch is newer cloth than the sail round it, so it is lighter, not darker' },
   weather_sail_patch_alpha: { value: 0.16, source: 'RECONSTRUCTED §8 visible as a change of cloth at a cable\'s distance, not as a white rectangle' },
+  // The one mark on the sail that goes smoother rather than rougher: a patch is newer,
+  // tighter-woven cloth, sewn on to replace what wore through, and it has not yet had
+  // three years of sun and salt to fray it the way the rest of the sail is frayed.
+  weather_sail_patch_roughness: { value: 0.76, source: 'RECONSTRUCTED §8 below the cloth\'s own 0.85-0.88, the same direction newer canvas moves in relative to old' },
   weather_sail_variants: { value: 2, source: 'RECONSTRUCTED §8 the cloth map is drawn as a grid of this many independent variants and each sail is given one, because fifteen sails carrying the same patch in the same place is the most obvious tell that a suit of canvas came out of a generator' },
 
   // How the weathering varies along her length. The hull map repeats every three metres,
@@ -383,6 +486,31 @@ export const PAINT = {
   storm_cloud_break: { value: 0.85, source: 'RECONSTRUCTED §8 how torn the overcast is. A gale sky is not an even grey card: it is cloud in ragged bands lying with the wind, and a still render finds fault with a flat backdrop before it finds fault with anything on the ship' },
   storm_wake_alpha: { value: 0.30, source: 'RECONSTRUCTED §8 how white the water is where the ship breaks it. It is the last thing that separates a ship at sea from a model standing on one: with a clean waterline and nothing happening along it, the eye reads the whole picture as an object placed on a surface' },
   storm_spume_alpha: { value: 0.38, source: 'RECONSTRUCTED §8 how much of the sea surface is streaked white. In a full gale the whole surface is marked with it, in long streaks lying with the wind' },
+
+  // Baked ambient occlusion. src/ship/occlusion.js voxelises the finished ship and
+  // marches a fixed bundle of short rays from every vertex on the surfaces it darkens,
+  // so these six numbers are not a colour read off anything — they are the geometry of
+  // the search itself, tuned by rendering the waist and the gallery views and looking at
+  // where a boat, a gun or a bulwark actually meets what it stands on.
+  ao_voxel_size: { value: 0.3, source: 'RECONSTRUCTED §8 within the 0.25-0.4 m band a cell this size resolves; below the gap under a boat on the skids and inside a gunport, coarse enough that the occupancy grid over the whole ship builds in a few tens of milliseconds rather than several hundred' },
+  ao_ray_count: { value: 10, source: 'RECONSTRUCTED §8 ten rays over the hemisphere read as a smooth gradient rather than a spatter of dark specks at the strength this is used at; fewer than eight left a visible dither on the flattest surfaces, such as the inner bulwark' },
+  ao_ray_distance: { value: 2.4, source: 'RECONSTRUCTED §8 how far a ray marches before it is called unoccluded, in metres. Contact occlusion is a local effect — the point of this pass is the gap under a boat or beside a gunport, not a global shadow — and at the ship\'s own scale this is short enough that two parts of the hull on opposite sides of the beam never darken each other' },
+  ao_ray_step: { value: 0.3, source: 'RECONSTRUCTED §8 kept equal to ao_voxel_size so that no step can skip past a one-cell-thick occluder such as a gunport lid without ever landing inside it' },
+  // `ao_min_cos` and `ao_bias` are a pair and were tuned together, against a single
+  // failure: measured in isolation, with nothing else in the scene at all, the bare
+  // gundeck surface came back with a *mean* self-occlusion of 0.16 and spots as high as
+  // 0.38 — from nothing but its own camber and sheer, voxelised. A smoothly curved
+  // surface reduced to 0.3 m cells is a staircase, and a ray leaving nearly parallel to
+  // it clips that staircase's own risers a step or two later; pushing `ao_bias` out on
+  // its own to 1.2 m — four voxels — still left a 0.045 mean, because the artefact is
+  // the angle, not the distance. Raising `ao_min_cos` so the sampled cap stops sixty
+  // degrees off the normal instead of running to the horizon, together with a bias of a
+  // voxel and a half, took the same measurement to exactly zero: those are also the
+  // directions a grazing ray contributes least through anyway, so nothing the eye would
+  // call shading was given up to fix it.
+  ao_min_cos: { value: 0.5, source: 'RECONSTRUCTED §8 the cosine of the largest angle off the normal a sampled ray may take — 60 degrees. See the note above this row for the self-occlusion measurement that set it' },
+  ao_bias: { value: 0.45, source: 'RECONSTRUCTED §8 a voxel and a half of headroom before the first sample. See the note above ao_min_cos for the measurement the two were tuned against together' },
+  ao_strength: { value: 0.55, source: 'RECONSTRUCTED §8 how far a fully enclosed vertex is darkened. Tuned down from an initial 0.8, which read as dirt smeared into the corners rather than shadow sitting in them; at 0.55 the deepest creases — under the boats, inside the ports — go convincingly dark without the open decks and topsides, which pick up a little occlusion from everything standing on them, looking grubby' },
 
   // Shadows. three\'s PCFSoftShadowMap ignores `shadow.radius`, so softness cannot be
   // asked for; it has to be built, by giving the sun a finite size. `shadow_taps` lights

@@ -9,6 +9,7 @@ import { buildShip } from '/src/ship/index.js';
 import { VIEWS, applyView, framingFor } from '/viewer/views.js';
 import { makeEnvironment, makeSea, makeStormSea } from '/viewer/scene.js';
 import { createMotion } from '/src/ship/motion.js';
+import { createPostStack } from '/viewer/post.js';
 
 // Four by three, the same shape as the reference photograph, so that the verification
 // render and the photograph can be laid side by side without either being letterboxed.
@@ -19,11 +20,21 @@ canvas.id = 'shot';
 canvas.style.cssText = `width:${W / 2}px;height:${H / 2}px`;
 document.body.appendChild(canvas);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+// `antialias` is left off deliberately now that a composer sits between the scene and
+// the screen — see the "Anti-aliasing" section of viewer/post.js for why asking the
+// context for MSAA no longer buys anything once nothing renders straight to the canvas.
+// `preserveDrawingBuffer` still has to stay on: the harness reads this canvas back with
+// `element.screenshot()` after the frame has already been swapped, and without it the
+// buffer the screenshot reads can already have been cleared for the next frame.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.setSize(W, H, false);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// These three stay set on the renderer even though a composer is in the chain: OutputPass
+// reads them off the renderer itself rather than taking its own copies, so this is still
+// the one place that decides the tone curve, the exposure and the output encoding. See
+// viewer/post.js for why nothing else in the chain is allowed to touch any of the three.
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -36,6 +47,11 @@ const envs = {};
 function ensureEnv(kind) {
   return (envs[kind] ??= makeEnvironment(renderer, { studio: kind === 'studio', storm: kind === 'storm' }));
 }
+
+// One composer for the life of the page, its scene swapped per shot rather than rebuilt
+// per shot — see createPostStack's own header for why. It starts pointed at nothing in
+// particular; `setup()` below points it at whichever rig's scene is about to be shot.
+const post = createPostStack(renderer, ensureEnv('sea').scene, camera, { rig: 'sea' });
 
 window.setup = ({ lod = 'hero', sails = 'full', studio = false, storm = false, sea = true,
                  time = 12.5, state = {} } = {}) => {
@@ -83,6 +99,10 @@ window.setup = ({ lod = 'hero', sails = 'full', studio = false, storm = false, s
   }
   currentKey = key;
   window.SCENE = scene;
+  // The grade is per rig, not per shot: `kind` is exactly the rig name grade.js keys its
+  // table by, so this is the only line that has to know the two are the same set of names.
+  post.setScene(scene, camera);
+  post.setRig(kind);
 };
 
 window.shoot = (viewName, overrides = {}) => {
@@ -90,7 +110,13 @@ window.shoot = (viewName, overrides = {}) => {
   if (!view.azimuth && view.azimuth !== 0) throw new Error(`unknown view "${viewName}"`);
   const { bounds, frame } = framingFor(THREE, current);
   applyView(camera, view, bounds, frame);
-  renderer.render(window.SCENE, camera);
+  // A fixed step rather than a wall-clock delta: this harness renders exactly one frame
+  // per call and has no notion of "since the last frame", so the grain pass is handed a
+  // nominal 1/60 s each time. It only has to advance the grain's seed by something, and a
+  // repeat run of the same shot getting a different grain pattern than the last run is
+  // expected — the render is a still frame of a moving ship, not a still frame of a still
+  // camera, and the grain is the camera's, not the scene's.
+  post.render(1 / 60);
   const size = new THREE.Box3().setFromObject(current).getSize(new THREE.Vector3());
   return { size: { x: size.x, y: size.y, z: size.z } };
 };

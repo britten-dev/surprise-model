@@ -19,6 +19,7 @@ import { buildGroundTackle } from './ground-tackle.js';
 import { buildFlags } from './flags.js';
 import { buildRig } from './rig.js';
 import { buildCrew } from './crew.js';
+import { applyAmbientOcclusion } from './occlusion.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
@@ -96,6 +97,13 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   // The watch last, because two of them stand in the main top and the rig has to have
   // been built before anything can be stood on it.
   ship.add(buildCrew(cfg, mats, model, ctx));
+
+  // Contact shadows, last of all and over the whole finished ship rather than any one
+  // part of it — a boat sited on the skids, a gun run out on the deck, the watch
+  // standing where they stand. src/ship/occlusion.js needs the assembled geometry to
+  // ask where anything actually touches anything else, which is exactly what none of
+  // the modules above it know on their own.
+  applyAmbientOcclusion(ship, cfg, mats);
 
   return ship;
 }

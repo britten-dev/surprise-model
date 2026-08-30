@@ -3,48 +3,48 @@
     "name": "surprise-hero-full.glb",
     "lod": "hero",
     "sails": "full",
-    "tris": 243578,
-    "verts": 238605,
+    "tris": 252286,
+    "verts": 243318,
     "meshes": 270,
     "lines": 1734,
     "materials": 22,
-    "kb": 13769,
+    "kb": 18916,
     "inBudget": true
   },
   {
     "name": "surprise-hero-topsails.glb",
     "lod": "hero",
     "sails": "topsails",
-    "tris": 242218,
-    "verts": 237865,
+    "tris": 250926,
+    "verts": 242578,
     "meshes": 266,
     "lines": 1734,
     "materials": 22,
-    "kb": 13733,
+    "kb": 18880,
     "inBudget": true
   },
   {
     "name": "surprise-hero-storm.glb",
     "lod": "hero",
     "sails": "storm",
-    "tris": 243888,
-    "verts": 240500,
+    "tris": 252596,
+    "verts": 245213,
     "meshes": 269,
     "lines": 1734,
     "materials": 22,
-    "kb": 13826,
+    "kb": 19003,
     "inBudget": true
   },
   {
     "name": "surprise-hero-furled.glb",
     "lod": "hero",
     "sails": "furled",
-    "tris": 241682,
-    "verts": 237586,
+    "tris": 250390,
+    "verts": 242299,
     "meshes": 262,
     "lines": 1734,
     "materials": 22,
-    "kb": 13717,
+    "kb": 18864,
     "inBudget": true
   },
   {
@@ -56,7 +56,7 @@
     "meshes": 230,
     "lines": 782,
     "materials": 21,
-    "kb": 4024,
+    "kb": 6317,
     "inBudget": true
   },
   {
@@ -68,7 +68,7 @@
     "meshes": 226,
     "lines": 782,
     "materials": 21,
-    "kb": 4005,
+    "kb": 6298,
     "inBudget": true
   },
   {
@@ -80,7 +80,7 @@
     "meshes": 229,
     "lines": 782,
     "materials": 21,
-    "kb": 4071,
+    "kb": 6387,
     "inBudget": true
   },
   {
@@ -92,31 +92,31 @@
     "meshes": 222,
     "lines": 782,
     "materials": 21,
-    "kb": 3995,
+    "kb": 6287,
     "inBudget": true
   },
   {
     "name": "surprise-distant-full.glb",
     "lod": "distant",
     "sails": "full",
-    "tris": 4456,
-    "verts": 3670,
+    "tris": 4450,
+    "verts": 3666,
     "meshes": 82,
     "lines": 272,
     "materials": 11,
-    "kb": 816,
+    "kb": 902,
     "inBudget": true
   },
   {
     "name": "surprise-distant-furled.glb",
     "lod": "distant",
     "sails": "furled",
-    "tris": 4468,
-    "verts": 3698,
+    "tris": 4462,
+    "verts": 3694,
     "meshes": 74,
     "lines": 272,
     "materials": 11,
-    "kb": 808,
+    "kb": 894,
     "inBudget": true
   }
 ]

@@ -733,7 +733,11 @@ export function buildHead(cfg, mats, model, ctx) {
       for (let k = 0; k < S('bobstay_hole_count'); k++) {
         const y = f0.wale_top - S('trailboard_depth') - k * S('bobstay_hole_diameter') * 3;
         const r = S('bobstay_hole_diameter') / 2;
-        const g = new THREE.TorusGeometry(r, r / 3, 4, Math.max(6, cfg.latheSegments));
+        // As with the channels' deadeye strops: the ring's roundness scaled with the
+        // level and the tube's cross-section did not, so the bobstay holes stayed
+        // square-sectioned rings at every level.
+        const g = new THREE.TorusGeometry(r, r / 3,
+          Math.max(4, Math.round(cfg.latheSegments * 0.4)), Math.max(6, cfg.latheSegments));
         g.rotateY(Math.PI / 2);
         g.translate(0, y, fwd(cut(clamp(y, cut.yFoot, cut.yHead))) - r);
         irons.push(g);
