@@ -52,6 +52,15 @@ decoration. A ship with nobody on her has no scale at all: the eye has nothing i
 the height of, so her gunports could be a foot high or four, and that is most of why a
 rendered ship reads as a model. One man at the wheel fixes every dimension on board.
 
+They are a ship's company and not thirteen copies of one man: the captain aft in a tailed
+coat and a cocked hat worn athwartships, the officer of the watch by the binnacle, a
+midshipman, the bosun, and the hands in tarpaulin jackets, wet duck trousers and low round
+hats. At the size any of them is ever seen, what does the work is not detail but
+**silhouette and the pattern of light and dark** — a tailed coat against a short jacket, a
+cocked hat against a round one, white lapels on dark cloth. A face does not survive to two
+metres; a hat does at two hundred. Each man's colours are written into his vertices, so he
+can wear six of them and still cost one draw call.
+
 Live at **[hms-surprise-model.netlify.app](https://hms-surprise-model.netlify.app)** — the
 viewer builds the ship in your browser from this source, in about 400 ms, and the exported
 glTF files can be downloaded from the same page.

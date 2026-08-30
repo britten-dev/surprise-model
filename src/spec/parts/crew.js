@@ -45,6 +45,19 @@ export const CREW_SPEC = {
   crew_rail_inset: n(0.62, `${R} how far out toward the ship's side a man stands, as a fraction of the half-breadth at his station. He stands by the rail, not on the centreline`, { noAudit: true }),
   crew_top_inset: n(0.55, `${R} how far out on the top platform a man stands, as a fraction of its half-breadth`, { noAudit: true }),
 
+  // What each man is wearing, and how he is built. A ship's company is not a set of
+  // identical figures: an officer's coat has tails and a seaman's jacket has none, which
+  // is the difference the eye reads first and at the greatest distance.
+  crew_coat_tail_drop: n(0.34, `${R} how far an officer's coat tails hang below his waist, as a fraction of his leg. The tailed coat is the officer silhouette — take it away and he is a seaman in better cloth`, { noAudit: true }),
+  crew_jacket_drop: n(0.10, `${R} a seaman's jacket ends just below the hip and no lower. It is cut short so that it does not foul him when he goes aloft`, { noAudit: true }),
+  crew_hat_brim: m(ft(0, 4.5), `${R} the brim of a round hat, beyond the crown all round. It is the widest thing about a man's head and the part that survives being three hundred pixels away`, { noAudit: true }),
+  crew_hat_crown: m(ft(0, 3.5), `${R} the crown of a low round hat, tarred against the weather`, { noAudit: true }),
+  crew_cocked_hat_span: m(ft(1, 3), `${R} across a cocked hat from point to point. Worn athwartships by an officer of this date, it is a wider mark than his shoulders and it is how he is known at a distance`, { noAudit: true }),
+  crew_neck_height: m(ft(0, 2.5), `${R} the neck, which is small and matters: without one the head sits on the shoulders like a ball on a wall`, { noAudit: true }),
+  crew_hand_length: m(ft(0, 7), `${R} the hand at the end of the sleeve. Bare skin at the end of a dark arm is what says the arm is an arm`, { noAudit: true }),
+  crew_queue_length: m(ft(0, 7), `${R} the tarred pigtail every seaman of this date wore down his back, and one of the few silhouette details that is unmistakably of the period rather than of any century`, { noAudit: true }),
+  crew_build_variation: n(0.05, `${R} how much the height and breadth of a figure vary from man to man, as a fraction. Small — but thirteen men of exactly one height read as thirteen prints of one man, which is worse than any of them looking wrong`, { noAudit: true }),
+
   // The joints. A figure with straight limbs can only ever be a mannequin: what says
   // "a man" at any distance is that his arm bends at the elbow and his leg at the knee,
   // even when the bend is a few degrees. It costs one more box per limb.

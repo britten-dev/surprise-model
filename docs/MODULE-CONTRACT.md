@@ -29,9 +29,13 @@ export function buildStern(cfg, mats, model, ctx) {
   levels in `lod.js` — that file is shared, so keep the edit to your own new keys.
 * `mats` — the materials from `src/ship/materials.js`: `hull`, `deck`, `timber`,
   `mast`, `mastBlack`, `black`, `ochre`, `red`, `white`, `gilt`, `iron`, `brass`,
-  `glass`, `sail`, `copper`, `crewSlop`, `crewCoat`, `standingRigging`,
-  `runningRigging`, and `mats.bunting(key)`. Use them. Do not construct a new material
-  for a colour that already exists.
+  `glass`, `sail`, `copper`, `crew`, `standingRigging`, `runningRigging`, and
+  `mats.bunting(key)`. Use them. Do not construct a new material for a colour that
+  already exists.
+
+  `crew` is the odd one: it has `vertexColors`, and crew.js writes each part's colour
+  into the vertices as it builds it. That is the trick to reach for when one object needs
+  many colours — a figure needs six, and six materials would be six draw calls a man.
 * `model` — the hull, described below.
 * `ctx` — `{ cfg, mats, model, sails, lod, zFcBreak, zQdBreak, ports }`, and after the
   rig has been built, `ctx.rig`, `ctx.yards` and `ctx.spanker`. A module that needs to
