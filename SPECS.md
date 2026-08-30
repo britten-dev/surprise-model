@@ -970,6 +970,15 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `crew_taffrail_from_stem` | 37.1856 | 122 ft 0 in | RECONSTRUCTED | §9 an officer aft at the taffrail, watching the following sea, which is the whole business of running before a gale |
 | `crew_rail_inset` | 0.62 | — | RECONSTRUCTED | §9 how far out toward the ship's side a man stands, as a fraction of the half-breadth at his station. He stands by the rail, not on the centreline |
 | `crew_top_inset` | 0.55 | — | RECONSTRUCTED | §9 how far out on the top platform a man stands, as a fraction of its half-breadth |
+| `crew_coat_tail_drop` | 0.34 | — | RECONSTRUCTED | §9 how far an officer's coat tails hang below his waist, as a fraction of his leg. The tailed coat is the officer silhouette — take it away and he is a seaman in better cloth |
+| `crew_jacket_drop` | 0.1 | — | RECONSTRUCTED | §9 a seaman's jacket ends just below the hip and no lower. It is cut short so that it does not foul him when he goes aloft |
+| `crew_hat_brim` | 0.1143 | — | RECONSTRUCTED | §9 the brim of a round hat, beyond the crown all round. It is the widest thing about a man's head and the part that survives being three hundred pixels away |
+| `crew_hat_crown` | 0.0889 | — | RECONSTRUCTED | §9 the crown of a low round hat, tarred against the weather |
+| `crew_cocked_hat_span` | 0.381 | — | RECONSTRUCTED | §9 across a cocked hat from point to point. Worn athwartships by an officer of this date, it is a wider mark than his shoulders and it is how he is known at a distance |
+| `crew_neck_height` | 0.0635 | 0 ft 2.5 in | RECONSTRUCTED | §9 the neck, which is small and matters: without one the head sits on the shoulders like a ball on a wall |
+| `crew_hand_length` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §9 the hand at the end of the sleeve. Bare skin at the end of a dark arm is what says the arm is an arm |
+| `crew_queue_length` | 0.1778 | 0 ft 7 in | RECONSTRUCTED | §9 the tarred pigtail every seaman of this date wore down his back, and one of the few silhouette details that is unmistakably of the period rather than of any century |
+| `crew_build_variation` | 0.05 | — | RECONSTRUCTED | §9 how much the height and breadth of a figure vary from man to man, as a fraction. Small — but thirteen men of exactly one height read as thirteen prints of one man, which is worse than any of them looking wrong |
 | `crew_upper_arm_fraction` | 0.46 | — | RECONSTRUCTED | §9 shoulder to elbow as a fraction of the whole arm; the forearm and hand make up the rest |
 | `crew_elbow_deg` | 24 | — | RECONSTRUCTED | §9 how far the forearm is carried in from the line of the upper arm when a man is simply standing. Nobody stands with a straight arm |
 | `crew_elbow_helm_deg` | 52 | — | RECONSTRUCTED | §9 at the wheel his elbows are well bent, because the spokes are close in front of him |
@@ -1136,7 +1145,13 @@ and the ochre strake follow the sheer.
 | `ensign_red` | #A32D34 | 0.9 | 0 | SECONDARY §8 bunting red |
 | `ensign_white` | #E8E2D4 | 0.9 | 0 | SECONDARY §8 bunting white |
 | `slop_tarpaulin` | #3A342B | 0.88 | 0 | RECONSTRUCTED §9 a seaman's foul-weather rig is canvas soaked in tar and oil: near-black, and darker still when it is wet, which on this ship it always is |
+| `slop_jacket` | #2E3A46 | 0.86 | 0 | RECONSTRUCTED §9 the short blue jacket of the purser's slop issue — "jackets, blue cloth" — which ends at the hip and is the seaman's own silhouette, quite unlike an officer's tailed coat |
+| `slop_duck` | #C6C0AC | 0.9 | 0 | RECONSTRUCTED §9 trousers and shirt of white duck, greyed by salt and wear. It is the pale half of every figure on deck and it is what makes them read as people rather than as posts |
+| `slop_wet_duck` | #8C8879 | 0.92 | 0 | RECONSTRUCTED §9 duck trousers soaked through under a tarpaulin jacket: much darker than dry, but nothing like as dark as the tar. A man dressed in one tone from hat to heel is a silhouette and not a person, and in this weather the trousers are the only light left on him |
+| `slop_red` | #7C3B32 | 0.88 | 0 | RECONSTRUCTED §9 the red waistcoat of the slop list, worn by perhaps one man in four and worth having for that reason: thirteen men dressed alike are thirteen copies of one man |
+| `crew_skin` | #A97D5E | 0.72 | 0 | RECONSTRUCTED §9 a seaman's face and hands after a year in the open: weathered a long way past whatever he started as |
 | `officer_coat` | #1E2A44 | 0.82 | 0 | RECONSTRUCTED §9 undress blue coat, faded by sun and salt from the deep indigo of a new one |
+| `officer_facing` | #D8D2C2 | 0.84 | 0 | RECONSTRUCTED §9 white lapels, waistcoat and breeches. On a dark coat they are what says "officer" from clear across the deck, before any detail of the man is visible at all |
 | `weather_rust` | #7A3A18 | — | 0 | RECONSTRUCTED §8 wet iron oxide on paint: redder and darker than dry rust, which is what runs from a chain bolt in a seaway |
 | `weather_rust_alpha` | 0.42 | — | — | RECONSTRUCTED §8 strong enough to read on a black topside at gameplay range; above about 0.55 the ship looks derelict rather than used |
 | `weather_salt` | #C6C2B4 | — | 0 | RECONSTRUCTED §8 dried salt: not white, but a grey-buff bloom that takes the depth out of black paint |

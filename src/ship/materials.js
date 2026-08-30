@@ -270,11 +270,24 @@ function buildMaterials(cfg) {
       emissiveIntensity: PAINT.sail_glow.value,
     }),
 
-    // The watch. Slop clothing takes the same painted-timber modulation as everything
-    // else, which sounds wrong and is not: what that map actually does is break up a
-    // flat colour, and wet tarpaulin needs it as much as a port lid does.
-    crewSlop: painted('slop_tarpaulin'),
-    crewCoat: painted('officer_coat'),
+    // The watch, in one material.
+    //
+    // A figure needs five or six colours about him — dark jacket, pale trousers, skin,
+    // hat, a neckerchief — and a material for each would be six draw calls a man and
+    // seventy-eight for the watch. So there is one material, and the colours are painted
+    // into the vertices: crew.js writes each part's own colour as it builds it. One draw
+    // call for a man's whole body, and no limit on how many colours are in him.
+    //
+    // The map is the same painted-timber modulation everything else uses, which sounds
+    // wrong for cloth and is not: what it actually does is break up a flat colour, and
+    // wet slop clothing needs that as much as a port lid does.
+    crew: std({
+      map: paintedTex,
+      vertexColors: true,
+      color: 0xffffff,
+      roughness: PAINT.slop_tarpaulin.roughness,
+      metalness: 0,
+    }),
 
     standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness, metalness: 0 }),
     runningRigging: std({ color: col('rigging_hemp'), roughness: PAINT.rigging_hemp.roughness, metalness: 0 }),

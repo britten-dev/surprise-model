@@ -237,8 +237,19 @@ export const PAINT = {
   // Slop clothing, issued from the purser's store, and an officer's coat. Both are dull
   // on purpose. Twelve figures in bright colours would be the first thing seen of the
   // whole ship, and what they are for is scale, not decoration.
+  // The strongest thing about a figure at this size is not its shape but where it is
+  // light and where it is dark. A man in one colour from hat to heel is a silhouette; the
+  // same man with a dark jacket over white trousers is a person, and the eye reads him
+  // as one at three times the distance. So every figure carries four or five of these,
+  // painted into his vertices, and it costs no extra draw call to do it.
   slop_tarpaulin: { hex: '#3A342B', roughness: 0.88, source: 'RECONSTRUCTED §9 a seaman\'s foul-weather rig is canvas soaked in tar and oil: near-black, and darker still when it is wet, which on this ship it always is' },
+  slop_jacket: { hex: '#2E3A46', roughness: 0.86, source: 'RECONSTRUCTED §9 the short blue jacket of the purser\'s slop issue — "jackets, blue cloth" — which ends at the hip and is the seaman\'s own silhouette, quite unlike an officer\'s tailed coat' },
+  slop_duck: { hex: '#C6C0AC', roughness: 0.90, source: 'RECONSTRUCTED §9 trousers and shirt of white duck, greyed by salt and wear. It is the pale half of every figure on deck and it is what makes them read as people rather than as posts' },
+  slop_wet_duck: { hex: '#8C8879', roughness: 0.92, source: 'RECONSTRUCTED §9 duck trousers soaked through under a tarpaulin jacket: much darker than dry, but nothing like as dark as the tar. A man dressed in one tone from hat to heel is a silhouette and not a person, and in this weather the trousers are the only light left on him' },
+  slop_red: { hex: '#7C3B32', roughness: 0.88, source: 'RECONSTRUCTED §9 the red waistcoat of the slop list, worn by perhaps one man in four and worth having for that reason: thirteen men dressed alike are thirteen copies of one man' },
+  crew_skin: { hex: '#A97D5E', roughness: 0.72, source: 'RECONSTRUCTED §9 a seaman\'s face and hands after a year in the open: weathered a long way past whatever he started as' },
   officer_coat: { hex: '#1E2A44', roughness: 0.82, source: 'RECONSTRUCTED §9 undress blue coat, faded by sun and salt from the deep indigo of a new one' },
+  officer_facing: { hex: '#D8D2C2', roughness: 0.84, source: 'RECONSTRUCTED §9 white lapels, waistcoat and breeches. On a dark coat they are what says "officer" from clear across the deck, before any detail of the man is visible at all' },
 
   // ------------------------------------------------------------------ weathering
   // What the sea does to her. These are not evidence in the way the rows above are —
