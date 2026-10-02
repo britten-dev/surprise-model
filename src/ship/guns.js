@@ -19,6 +19,7 @@
 // geometry and one carriage geometry per nature, and every piece is an instance of it.
 // The ropes, which are all different, are merged into a single mesh apiece.
 import * as THREE from 'three';
+import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { ropeTube } from '../util/solids.js';
@@ -373,14 +374,13 @@ function deckEdgeX(model, z, rise) {
   const f = model.featureYAt(z);
   return rise === 0
     ? model.halfBreadthAt(z, f.deck)
-    : Math.max(0.05, model.halfBreadthAt(z, f.deck + rise));
+    : Math.max(0.05, model.halfBreadthAt(z, deckEdgeHeight(model, z, true)));
 }
 
 /** The deck surface, cambered, at a station and a distance off the centreline. */
 function deckYAt(model, z, x, rise) {
-  const f = model.featureYAt(z);
   const t = clamp(Math.abs(x) / deckEdgeX(model, z, rise), 0, 1);
-  return f.deck + rise + SPEC.deck_camber.value * (1 - t * t);
+  return deckEdgeHeight(model, z, rise !== 0) + SPEC.deck_camber.value * (1 - t * t);
 }
 
 /**
@@ -678,7 +678,7 @@ function sideBolt(model, g, z) {
   const zz = g.z + z;
   const f = model.featureYAt(zz);
   const above = SPEC.gun_breeching_bolt_above_sill.value;
-  const y = g.rise === 0 ? f.port_sill + above : f.deck + g.rise + above;
+  const y = g.rise === 0 ? f.port_sill + above : deckEdgeHeight(model, zz, true) + above;
   const x = g.rise === 0
     ? model.halfBreadthAt(zz, y) - SPEC.side_thickness.value
     : deckEdgeX(model, zz, g.rise) - SPEC.gun_deck_inset.value;

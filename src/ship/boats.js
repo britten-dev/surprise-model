@@ -475,7 +475,7 @@ export function buildBoats(cfg, mats, model, ctx) {
   const heads = [];
   for (const z of [zDavit - half, zDavit + half]) {
     const rail = model.pointAt(z, 'rail', side);
-    const deckY = model.featureYAt(z).deck + SPEC.quarterdeck_above_gundeck.value;
+    const deckY = model.standingDeckAt(z);
     const head = new THREE.Vector3(rail.x + out * side, rail.y + rise * 0.92, z);
     heads.push(head);
     davitGeoms.push(new THREE.TubeGeometry(

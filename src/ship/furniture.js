@@ -17,6 +17,7 @@
 // merged into one mesh at the end. The whole of the deck furniture is a dozen draw
 // calls.
 import * as THREE from 'three';
+import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { block, post, spar, ropeCurve, ropeTube, ropeLines } from '../util/solids.js';
@@ -179,7 +180,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
 
   // --------------------------------------------------------------- siting helpers
   /** Half-breadth of a deck at a station, at the height that deck sits. */
-  const deckHalfBreadth = (z, rise) => Math.max(0.05, model.halfBreadthAt(z, model.featureYAt(z).deck + rise));
+  const deckHalfBreadth = (z, rise) => Math.max(0.05, model.halfBreadthAt(z, deckEdgeHeight(model, z, rise !== 0)));
 
   /**
    * The height of a deck at a station and a distance off the centreline. A deck is
@@ -188,9 +189,8 @@ export function buildFurniture(cfg, mats, model, ctx) {
    * same arithmetic, so a fitting lands on the planking rather than above or below it.
    */
   const deckY = (z, rise, x = 0) => {
-    const f = model.featureYAt(z);
     const t = clamp(x / deckHalfBreadth(z, rise), -1, 1);
-    return f.deck + rise + camber * (1 - t * t);
+    return deckEdgeHeight(model, z, rise !== 0) + camber * (1 - t * t);
   };
 
   /** The rise of the gangway, which climbs from the forecastle to the quarterdeck. */
