@@ -280,6 +280,25 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
     g.globalAlpha = 1;
     if (stain) stain(g, { size, seed: seed + 3, stage: 'patches', rg });
     // Tabling: the doubled hem all round.
+    // Broad corner reinforcing cloths take the load from the clews. Their
+    // stitched edges remain visible on a backlit sail without a dark outline.
+    for (const [cx, cy] of [[0,0], [size,0], [0,size], [size,size]]) {
+      const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1;
+      g.fillStyle = seam; g.globalAlpha = .22;
+      g.beginPath(); g.moveTo(cx,cy);
+      g.lineTo(cx+sx*size*.13,cy); g.lineTo(cx,cy+sy*size*.18);
+      g.closePath(); g.fill();
+      g.strokeStyle = seam; g.lineWidth = .8; g.globalAlpha = .45;
+      g.setLineDash([Math.max(1,size*.0025), Math.max(1,size*.003)]); g.stroke(); g.setLineDash([]);
+    }
+    g.globalAlpha = .35; g.strokeStyle = seam; g.lineWidth = .6;
+    g.setLineDash([1.5,2]);
+    for (let i=1;i<cloths;i++) {
+      for (const off of [-2,2]) {
+        g.beginPath();g.moveTo(i*step+off,0);g.lineTo(i*step+off,size);g.stroke();
+      }
+    }
+    g.setLineDash([]);
     g.globalAlpha = 0.5;
     g.strokeStyle = seam;
     g.lineWidth = size * 0.018;

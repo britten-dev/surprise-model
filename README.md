@@ -3,7 +3,7 @@
 A reusable 3-D asset project: a parametric generator that builds the Royal Navy frigate
 **HMS Surprise** — historically the French corvette **Unité**, launched 1794, captured
 by HMS Inconstant in April 1796 and taken into the Royal Navy — and exports her as glTF
-at three levels of detail and four states of canvas.
+at four levels of detail and four states of canvas.
 
 This is an asset project, not a game. The hull is lofted from an offset table and
 the fittings are generated. Textures are procedural by default; awaiting
@@ -29,17 +29,16 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
-| `cinematic` | 380–500 k | A camera that can go anywhere. Round spars and ropes, 2048 maps. **Not exported** — see below. |
-| `hero` | 200–500 k | Close inspection. Every ratline, gun, port lid and gallery light. |
+| `cinematic` | 380–1,000 k | Desktop deck cameras. Round spars and ropes, 2048 maps, authored fittings and crew. |
+| `hero` | 200–800 k | Close inspection with 1024 maps and authored detail. |
 | `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
 
-`cinematic` exists because `hero` still shows its budget when the camera comes close: ropes
-are a few sides, lathe work is coarse, textures stop at 1024. It builds in about three and a
-half seconds — nearly all of it drawing 2048-pixel textures rather than geometry — and it is
-**deliberately absent from the GLB export matrix**, which stays at exactly ten files. A
-2048-map level would be an enormous download and no host game wants one. It is for the
-viewer and for still renders.
+`cinematic` gives the desktop experience smoother geometry and larger surface maps.
+The browser generates the main ship and downloads a shared 6.3 MB library of Blender
+detail. Phone quality uses `game` and skips that library. The standard GLB export
+matrix remains ten files; `tools/export-blender.mjs` separately exports the cinematic
+ship for the editable workshop. Counts depend on canvas, weather and loaded assets.
 
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
@@ -319,3 +318,26 @@ Shipyard, and is itself an interpretation: published plans decide dimensions, th
 photograph decides paint and character. The photograph is their work and is not
 redistributed here — `docs/PHOTO-ANALYSIS.md` records what it shows, with the colours
 sampled from it, so the reading survives without the image. See `reference/README.md`.
+
+## Authored quarterdeck detail
+
+The `cinematic` and `hero` tiers can load `src/assets/quarterdeck-detail.glb`
+through `await preloadSurfaceAssets()`. It contains Blender-built helm fittings
+and three articulated crew templates, placed as eleven deck figures. `game` and `distant` keep the procedural
+fallback; a failed asset download also leaves the original model usable. Hosts
+should call `preloadSurfaceAssets({ detail: false })` for those smaller tiers.
+
+The wheel's barrel runs fore-and-aft, with the wheel at its forward end, matching
+the existing research in `docs/research/06-deck-layout.md`. Hand grips are solved
+against the rim and the men stand clear of the skylight. Nearby guns now have
+bevelled carriage cheeks and separate instanced iron straps and cap-squares.
+Canvas includes corner reinforcement, stitching, edge ropes and paired reef
+points which share the sail's deformation shader.
+
+Rebuild the original fittings, garments, surface maps and fitted anatomical heads
+with `node tools/build-authored.mjs` (set `BLENDER_BIN` outside macOS). It writes
+the browser GLB and `build/HMS Surprise - Authored Detail.blend`. Head topology
+comes from the MakeHuman CC0 asset; see `tools/vendor/makehuman/README.md` and
+its preserved licence. Faces, clothes and weathering are artistic reconstruction,
+not portraits or claims of exact historical dress. No third-party application
+code is included in the asset.

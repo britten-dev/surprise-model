@@ -19,6 +19,7 @@
 // the mast, and everyone leans against the heel. A figure merged into the deck could not
 // do any of that.
 import * as THREE from 'three';
+import { authoredFigure } from './authored-assets.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -72,7 +73,9 @@ const DRESS = {
  * Colour is written into the vertices rather than carried by materials, so a man can have
  * six colours about him and still be one draw call. See `mats.crew`.
  */
-function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0, detail = false } = {}) {
+function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0, detail = false, cfg } = {}) {
+  const authored = cfg && authoredFigure(cfg, { rank, pose, seed });
+  if (authored) return authored;
   const group = new THREE.Group();
   const dress = DRESS[rank] ?? DRESS.seaman;
   const r = rng(seed * 7 + 3);
@@ -340,7 +343,7 @@ function station(model, { fromStem, side = 1, out = 0.6, facing = Math.PI }) {
   const z = model.fromStem(fromStem);
   const y = model.standingDeckAt(z);
   const x = side * model.halfBreadthAt(z, y) * out;
-  return { position: new THREE.Vector3(x, y, z), facing };
+  return { position: new THREE.Vector3(x, y + S('deck_camber') * (1 - out * out), z), facing };
 }
 
 export function buildCrew(cfg, mats, model, ctx) {
@@ -357,7 +360,7 @@ export function buildCrew(cfg, mats, model, ctx) {
   // Every man gets a seed of his own, so that no two are the same height or build.
   let seed = 0;
   const place = (name, at, opts) => {
-    const f = figure(mats, { seed: seed++, detail: cfg.surfaceDetail, ...opts });
+    const f = figure(mats, { seed: seed++, detail: cfg.textureSize >= 1024, cfg, ...opts });
     f.position.copy(at.position);
     // Heading first, then the lean of the pose about his own athwartships axis. YXZ
     // order is what makes that read the way it is written: turn him, then tip him.
@@ -373,16 +376,19 @@ export function buildCrew(cfg, mats, model, ctx) {
   };
 
   // ------------------------------------------------------------------- the wheel
-  // Two men at a double wheel, one at each of them, facing forward at the spokes. This
+  // Two men share the single wheel, standing either side and facing the spokes. This
   // is the pair that carries the whole scene: they are the tallest thing on the after
   // deck that is not a mast, and everything else on board is measured off them.
   {
     const zWheel = model.fromStem(SPEC.wheel_station_from_stem.value);
     const y = model.standingDeckAt(zWheel);
-    const spread = S('crew_helm_spread') / 2;
     for (const sx of [-1, 1]) {
-      const f = figure(mats, { pose: 'helm', rank: heavy ? 'oilskin' : 'seaman', seed: seed++, detail: cfg.surfaceDetail });
-      f.position.set(sx * spread, y, zWheel + S('crew_helm_abaft_wheel'));
+      const f = figure(mats, { pose: 'helm', rank: heavy ? 'oilskin' : 'seaman', seed: seed++, detail: cfg.textureSize >= 1024, cfg });
+      f.position.x = sx * .68;
+      f.position.z = zWheel - S('wheel_barrel_length') / 2 - .05 + .40;
+      const halfBeam = model.halfBreadthAt(f.position.z, y);
+      f.position.y = model.standingDeckAt(f.position.z)
+        + S('deck_camber') * (1 - (f.position.x / halfBeam) ** 2);
       f.rotation.order = 'YXZ';
       f.rotation.y = Math.PI;                       // facing forward, at the wheel
       f.rotation.x = f.userData.crew.lean;
@@ -400,8 +406,8 @@ export function buildCrew(cfg, mats, model, ctx) {
   {
     const zBin = SPEC.binnacle_station_from_stem.value + S('crew_con_abaft_binnacle');
     place('officer_of_the_watch',
-      station(model, { fromStem: zBin, side: 1, out: 0.30, facing: Math.PI }),
-      { rank: 'officer', pose: 'watch' });
+      station(model, { fromStem: zBin - .45, side: 1, out: 0.58, facing: Math.PI + .25 }),
+      { rank: 'officer', pose: 'stand' });
     // The captain, aft at the taffrail with his eye on the following sea, which running
     // before a gale is the whole of the ship's business. He is the tallest figure on
     // board, in a tailed coat and a cocked hat, and he is the one the eye finds first.

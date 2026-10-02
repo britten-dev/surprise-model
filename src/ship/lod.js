@@ -1,32 +1,11 @@
-// What each level of detail contains. Every part of the generator asks this module
-// what it is allowed to spend, rather than deciding for itself, so the triangle budget
-// is set in one readable place instead of being scattered through the build.
-//
-//   cinematic 380-500k tris — the interactive viewer and stills, never exported
-//   hero      200-500k tris — close inspection, every ratline, every gun, every light
-//   game      30-60k        — the host game's ship at normal viewing range
-//   distant   under 5k      — a silhouette on the horizon
-//
-// `cinematic` is listed first because it is the top of the ladder every other level is
-// judged against, not because anything iterates this array in that order. Note well: it
-// is a viewer-and-stills level only. `tools/build.js` keeps its own list of exported
-// LODs and does not read this array, precisely so that adding a level here can never by
-// itself add a file to the GLB matrix.
+// Geometry tiers used by the browser and asset tools. Cinematic includes the
+// Blender-authored fittings and eleven close-range crew; phones keep game.
+// The desktop ceiling is one million ship triangles, measured separately from
+// ocean, reflection and shadow passes. tools/check-authored-detail.mjs exercises
+// every sail/weather combination; actual frame timing is checked in Chromium.
 export const LODS = ['cinematic', 'hero', 'game', 'distant'];
 
 const CONFIG = {
-  // The level above hero. Nobody ships this: it exists because "close inspection" at
-  // hero still shows a budget the moment the camera stops moving. A rope is a 5-sided
-  // tube with a visible flat running down it, a spar is a decagon you can count the
-  // sides of, and a lathe-turned truck or cap-square is coarse enough to look faceted
-  // rather than turned. None of that matters to a host game, which never gets this
-  // close and never gets this level — see `tools/build.js`, which has its own list of
-  // exported LODs and does not read this file's `LODS` array, so a still or a viewer
-  // session can spend here without a host ever downloading the bill. Every switch below
-  // that is an on/off or an enum is already at hero's maximum, because hero already
-  // turns everything on; what changes here is purely resolution — more sides on every
-  // round thing, more stations down the hull and the stern and the head, more segments
-  // in every sail, and a texture atlas at twice hero's edge.
   cinematic: {
     // Hull surface resolution. Half again more stations down her length, and a third
     // more girth points at each one, so the turn of the bilge and the tumblehome read
@@ -398,14 +377,8 @@ export function lodConfig(lod) {
 // the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
 // 'none' — in that order.
 export const TRI_BUDGET = {
-  // Measured at 418k-421k across the four sail states — the resolution bumps above are
-  // all in things that are a small fraction of the ship (ropes, spar rings, lathe
-  // stages, sweep steps), so the total moved from hero's measured 244k by about
-  // three-quarters rather than by the sum of every individual multiplier. Not exported,
-  // and not read by `tools/build.js`, but kept honest rather than left as a guess: a
-  // future change to this level should still have something real to be checked against.
-  cinematic: [380000, 500000],
-  hero: [200000, 500000],
+  cinematic: [380000, 1000000],
+  hero: [200000, 800000],
   game: [30000, 80000],
   distant: [1500, 5000],
 };

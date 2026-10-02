@@ -4,6 +4,10 @@ node_modules/
 build/*.glb
 build/*.blend*
 build/*-reference.png
+build/* colour.png
+build/* normal.png
+build/* roughness-metal.png
+build/hero-dimensions.json
 renders/*.png
 !build/.gitkeep
 !renders/.gitkeep

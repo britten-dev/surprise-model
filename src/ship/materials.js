@@ -622,6 +622,7 @@ function buildMaterials(cfg) {
     // from any angle because it never reads the frame buffer at all. The glow through
     // the cloth is still the same faint emission it always was, for the same reason: it
     // cannot go black either, and it is core glTF where transmission is an extension.
+    sailCord: new THREE.MeshStandardMaterial({ color: 0x92836a, roughness: .94, side: THREE.DoubleSide }),
     sail: new THREE.MeshPhysicalMaterial({
       map: sailTex,
       // The map already carries the cloth colour. Tinting it again with the same value

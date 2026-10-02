@@ -17,6 +17,7 @@
 // merged into one mesh at the end. The whole of the deck furniture is a dozen draw
 // calls.
 import * as THREE from 'three';
+import { authoredPart } from './authored-assets.js';
 import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -210,15 +211,41 @@ export function buildFurniture(cfg, mats, model, ctx) {
   const canvasWork = [];
   const netting = [];
 
+  const detailWheel = authoredPart('authored_wheel', cfg);
+  if (detailWheel) {
+    const z = at(SPEC.wheel_station_from_stem.value);
+    const y = deckY(z, qdRise, 0);
+    const stand = authoredPart('authored_wheel_stand', cfg);
+    stand.position.set(0, y, z);
+    stand.rotation.y = -Math.PI / 2;
+    stand.name = 'wheel_stand';
+    group.add(stand);
+    const wheel = new THREE.Group();
+    wheel.name = 'ships_wheel';
+    wheel.position.set(0, y + SPEC.wheel_axle_above_deck.value,
+      z - SPEC.wheel_barrel_length.value / 2 - .05);
+    detailWheel.rotation.y = -Math.PI / 2;
+    wheel.add(detailWheel);
+    wheel.userData = { count: SPEC.wheel_count.value, axis: 'z', authored: true };
+    audits(wheel,
+      ['wheel_swept_diameter', 'extent_y'], ['wheel_count', 'count', { tolerance: .001 }]);
+    group.add(wheel);
+    const binnacle = authoredPart('authored_binnacle', cfg);
+    const bz = at(SPEC.binnacle_station_from_stem.value);
+    binnacle.position.set(0, deckY(bz, qdRise, 0), bz);
+    binnacle.name = 'binnacle';
+    group.add(binnacle);
+  }
+
   // ------------------------------------------------------------ the ship's wheel
-  // The barrel lies athwartships between two stanchions and the wheel turns in the
-  // fore-and-aft plane, which is why a double wheel needs a wheel at each end of the
-  // barrel. Steel's 32-gun barrel is only 2 ft 3 in long, so this ship carries one.
-  {
+  // The barrel runs fore-and-aft; the wheel crosses the ship at its forward end
+  // (research 06 §2.1). The helmsmen stand abaft it, clear of the cabin skylight.
+  if (!detailWheel) {
     const z = at(SPEC.wheel_station_from_stem.value);
     const y0 = deckY(z, qdRise, 0);
     const axle = y0 + SPEC.wheel_axle_above_deck.value;
     const half = SPEC.wheel_barrel_length.value / 2;
+    const supportStart = timber.length;
     const sb = SPEC.wheel_stanchion_broad.value, st = SPEC.wheel_stanchion_thick.value;
 
     for (const sx of [-1, 1]) {
@@ -229,6 +256,9 @@ export function buildFurniture(cfg, mats, model, ctx) {
     const rMid = SPEC.wheel_barrel_diameter_mid.value / 2;
     timber.push(cylX(rEnd, 2 * half, lathe, { y: axle, z }));
     timber.push(cylX(rMid, half, lathe, { y: axle, z }));
+    for (const g of timber.slice(supportStart)) {
+      g.translate(0,-axle,-z); g.rotateY(-Math.PI/2); g.translate(0,axle,z);
+    }
 
     // The wheel itself: rim, spokes and the turned handles beyond the rim. Kept as its
     // own mesh, because the diameter it sweeps is what the audit measures.
@@ -259,9 +289,11 @@ export function buildFurniture(cfg, mats, model, ctx) {
       wheels.push(g);
     }
     const wheelMesh = new THREE.Mesh(mergeGeometries(wheels), mats.timber);
+    wheelMesh.geometry.rotateY(-Math.PI/2);
     wheelMesh.name = 'ships_wheel';
-    wheelMesh.position.set(0, axle, z);
+    wheelMesh.position.set(0, axle, z - half - .05);
     wheelMesh.userData.count = n;
+    wheelMesh.userData.axis = 'z';
     audits(wheelMesh,
       ['wheel_swept_diameter', 'extent_y'],
       ['wheel_count', 'count', { tolerance: 0.001 }],
@@ -270,7 +302,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
   }
 
   // ------------------------------------------------------------------ the binnacle
-  {
+  if (!detailWheel) {
     const z = at(SPEC.binnacle_station_from_stem.value);
     const w = SPEC.binnacle_length.value, d = SPEC.binnacle_depth.value;
     const h = SPEC.binnacle_height.value;
@@ -651,9 +683,9 @@ export function buildFurniture(cfg, mats, model, ctx) {
           const yBase = onRail ? p.y + capT : yDeck;
           // The crane itself: an upright with the crutch at its head that carries the
           // netting out over the ship's side.
-          timber.push(cyl(r, r, h, 5, { x, y: yBase, z }));
+          timber.push(cyl(r, r, h, cfg.sparRadial, { x, y: yBase, z }));
           if (cfg.hammockCranes === 'full') {
-            timber.push(cylX(r * 0.8, spread, 5, { x: x + side * spread * 0.15, y: yBase + h, z }));
+            timber.push(cylX(r * 0.8, spread, cfg.sparRadial, { x: x + side * spread * 0.15, y: yBase + h, z }));
           }
           heads.push({ x, y: yBase, z, side });
         }
@@ -665,7 +697,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
           timber.push(rod(
             new THREE.Vector3(a.x + a.side * off, a.y + h, a.z),
             new THREE.Vector3(b.x + b.side * off, b.y + h, b.z),
-            SPEC.hammock_rail_diameter.value / 2, 4,
+            SPEC.hammock_rail_diameter.value / 2, cfg.sparRadial,
           ));
         }
         // The netting between the heads: a few fore-and-aft rows and a diagonal in
@@ -699,7 +731,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
     for (const side of [1, -1]) {
       for (let i = 1; i < n; i++) {
         const p = model.pointAt(lerp(zFcBreak, zQdBreak, i / n), 'rail', side);
-        timber.push(cyl(pr, pr * 0.7, pl, 5,
+        timber.push(cyl(pr, pr * 0.7, pl, cfg.sparRadial,
           { x: p.x - side * SPEC.side_thickness.value * 0.5, y: p.y - pl * 0.35, z: p.z }));
       }
     }
@@ -723,7 +755,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
       timber.push(bx(2 * half + rt, rt * 0.7, rt, { y: yRail - rt * 0.7, z }));
       const nPin = Math.max(4, Math.round(2 * half / spacing));
       for (let i = 0; i < nPin; i++) {
-        timber.push(cyl(pr, pr * 0.7, pl, 5,
+        timber.push(cyl(pr, pr * 0.7, pl, cfg.sparRadial,
           { x: lerp(-half, half, (i + 0.5) / nPin), y: yRail - pl * 0.5, z }));
       }
     }

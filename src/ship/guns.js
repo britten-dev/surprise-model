@@ -19,6 +19,7 @@
 // geometry and one carriage geometry per nature, and every piece is an instance of it.
 // The ropes, which are all different, are merged into a single mesh apiece.
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -150,8 +151,9 @@ function roller(radius, length, radial) {
 }
 
 /** A box centred on the origin, sized along the gun axis, up, and fore and aft. */
-function bar(lx, ly, lz) {
-  return new THREE.BoxGeometry(lx, ly, lz);
+function bar(lx, ly, lz, detailed = false) {
+  return detailed ? new RoundedBoxGeometry(lx, ly, lz, 2, Math.min(.006, lx*.12, ly*.12, lz*.12))
+    : new THREE.BoxGeometry(lx, ly, lz);
 }
 
 /**
@@ -277,8 +279,10 @@ function truckCarriage(cfg, { length, width, axisH, truckFore, truckRear, trunni
   shape.lineTo(xR, yAft);
   shape.closePath();
   for (const z of [cheekZ, -cheekZ]) {
-    const c = new THREE.ExtrudeGeometry(shape, { depth: th, bevelEnabled: false, curveSegments: 1 });
-    c.translate(0, 0, z - th * HALF);
+    const bevel = cfg.textureSize >= 1024 ? .004 : 0;
+    const c = new THREE.ExtrudeGeometry(shape, { depth: th - bevel*2, bevelEnabled: bevel > 0,
+      bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 1 });
+    c.translate(0, 0, z - th * HALF + bevel);
     parts.push(c);
   }
 
@@ -307,7 +311,7 @@ function truckCarriage(cfg, { length, width, axisH, truckFore, truckRear, trunni
 
   // The cap-squares: the iron clamps that hold the trunnions down in their notches.
   const capT = SPEC.gun_cap_square_thickness.value;
-  for (const z of [cheekZ, -cheekZ]) {
+  for (const z of cfg.textureSize >= 1024 ? [] : [cheekZ, -cheekZ]) {
     const cap = bar(trunnionR * 2.6, capT, th * 1.6);
     cap.translate(0, axisH + trunnionR + capT * HALF, z);
     parts.push(cap);
@@ -610,6 +614,32 @@ export function buildGuns(cfg, mats, model, ctx) {
     carr.instanceMatrix.needsUpdate = true;
     audit(barrels, name === 'nine' ? 'gun_9pdr_count' : 'gun_4pdr_count', 'count');
     group.add(barrels, carr);
+    if (cfg.textureSize >= 1024) {
+      const hardware = [];
+      const width = nat.carriageWidth, length = nat.carriageLength;
+      const tw = SPEC.gun_truck_thickness.value, th = SPEC.gun_carriage_cheek_thickness.value;
+      const cheek = width/2-tw-th/2;
+      const tr = calR*nat.bore, capT = SPEC.gun_cap_square_thickness.value;
+      for (const z of [-cheek, cheek]) {
+        const cap = bar(tr*2.6,capT,th*1.6,true);
+        cap.translate(0,nat.axis+tr+capT/2,z);hardware.push(cap);
+        for (const x of [-length*.60,-length*.24,.12]) {
+          const strap = bar(.029,.21,.008,true);
+          strap.translate(x,nat.axis*.61,z+Math.sign(z)*(th/2+.005));hardware.push(strap);
+          for (const dy of [-.073,.073]) {
+            const bolt=roller(.010,.016,12);
+            bolt.translate(x,nat.axis*.61+dy,z+Math.sign(z)*(th/2+.013));hardware.push(bolt);
+          }
+        }
+        const eye=new THREE.TorusGeometry(.035,.008,8,20);
+        eye.translate(-length*.46,nat.axis*.53,z+Math.sign(z)*(th/2+.025));hardware.push(eye);
+      }
+      const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.iron,nat.at.length);
+      fittings.name=`${name}_pounder_ironwork`;
+      nat.at.forEach((g,i)=>fittings.setMatrixAt(i,placement(g)));
+      fittings.instanceMatrix.needsUpdate=true;
+      group.add(fittings);
+    }
     carriages.push(carr);
   }
   // One tag for the whole battery of carriages, carried on the larger of the two meshes.

@@ -54,6 +54,7 @@
 // whatever transform a mesh happens to carry, and keeps working when the host rolls the
 // whole ship over forty degrees.
 import * as THREE from 'three';
+import { holdWheel } from './crew-ik.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { poseFlag } from './flags.js';
 import { clamp, deg } from '../util/math.js';
@@ -149,11 +150,11 @@ const SAIL_BODY = `
     float freedom = pow(across, 0.7) * pow(down, 0.55) * leech;
 
     float k = 6.28318 / max(0.5, uWaveLength);
-    float phase = k * (suv.x * 8.0) - uTime * uWaveSpeed * 6.28318;
+    float phase = k * (suv.x * 8.0) - uTime * uWaveSpeed * 2.4;
     float ripple = sin(phase) + 0.42 * sin(phase * 1.9 + suv.y * 4.0);
-    float breath = uBreathe * sin(uTime * 0.55 + suv.y * 1.3);
+    float breath = uBreathe * 2.0 * sin(uTime * 0.48 + suv.y * 1.3);
 
-    transformed += objectNormal * (uFlutter * uWind * freedom * (ripple * 0.5 + breath));
+    transformed += objectNormal * (uFlutter * uWind * freedom * (ripple * 0.22 + breath));
 
     // The bent surface's normal. There is no tangent frame on this geometry, so one is
     // built from the sail's own normal and the vertical — close enough on a sail, whose
@@ -162,8 +163,8 @@ const SAIL_BODY = `
     // and canvas that shivers under perfectly even light reads as moving plastic.
     vec3 tU = normalize(cross(objectNormal, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
     vec3 tV = cross(objectNormal, tU);
-    float dU = uFlutter * uWind * freedom * cos(phase) * k * 3.0;
-    float dV = uFlutter * uWind * freedom * 0.3 * cos(phase * 1.9 + suv.y * 4.0);
+    float dU = uFlutter * uWind * freedom * cos(phase) * k * 1.3;
+    float dV = uFlutter * uWind * freedom * 0.13 * cos(phase * 1.9 + suv.y * 4.0);
     vNormal = normalize(normalMatrix * normalize(objectNormal - tU * dU - tV * dV));
   }
 `;
@@ -368,6 +369,7 @@ export function createMotion(ship, opts = {}) {
         pose: info.pose ?? 'stand',
         arms,
         armHome: arms.map((a) => a.rotation.clone()),
+        head: f.getObjectByName('head'),
         // Each man has a phase of his own, so that thirteen of them do not sway as one.
         phase: i * 1.37,
         f: whipAt(f.position.y, deckY, truckY, uniforms.uWhipExp.value),
@@ -472,7 +474,7 @@ export function createMotion(ship, opts = {}) {
     for (const y of parts.yards) y.node.rotation.y = brace;
 
     // ------------------------------------------------------------------- the wheel
-    if (parts.wheel) parts.wheel.rotation.x = -helm * deg(S('motion_helm_throw_deg'));
+    if (parts.wheel) parts.wheel.rotation[parts.wheel.userData.axis ?? 'x'] = -helm * deg(S('motion_helm_throw_deg'));
 
     // -------------------------------------------------------------------- the watch
     const swayAmp = deg(S('motion_crew_sway_deg'));
@@ -487,6 +489,14 @@ export function createMotion(ship, opts = {}) {
       const cy = Math.cos(c.home.y), sy = Math.sin(c.home.y);
       c.node.rotation.x = tiltX * cy - tiltZ * sy;
       c.node.rotation.z = tiltX * sy + tiltZ * cy;
+      if (c.node.userData.crew?.authored) {
+        c.node.rotation.x = clamp(c.node.rotation.x, -.16, .16);
+        c.node.rotation.z = clamp(c.node.rotation.z, -.20, .20);
+        if (c.head) {
+          c.head.rotation.y = .055 * Math.sin(time * .29 + c.phase);
+          c.head.rotation.x = .018 * Math.sin(time * 1.25 + c.phase);
+        }
+      }
 
       if (c.role === 'aloft') {
         // A topman goes where the mast goes: he is standing on the thing that is
@@ -509,6 +519,14 @@ export function createMotion(ship, opts = {}) {
         c.node.rotation.x += swing * 0.35;
       }
       if (c.role === 'helm') {
+        if (c.node.userData.crew?.authored) {
+          // The wheel supports a helmsman's upper body. Most balancing happens
+          // through bent knees; a full free-standing lean would pull him off it.
+          c.node.rotation.x *= .28;
+          c.node.rotation.z *= .28;
+          holdWheel(c.node, parts.wheel, time, helm);
+          continue;
+        }
         // His hands go round with the spokes; his feet do not.
         const reach = -helm * deg(S('motion_helmsman_reach_deg'));
         for (const [i, a] of c.arms.entries()) {

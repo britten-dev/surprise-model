@@ -20,7 +20,7 @@ scene.unit_settings.scale_length = 1
 # on furniture acquire a small chamfer; rigging, sails and lofted hull are spared.
 refined = []
 for obj in list(scene.objects):
-    if obj.type != 'MESH':
+    if obj.type != 'MESH' or obj.name.startswith('authored_'):
         continue
     if any(key in obj.name.lower() for key in ('furniture_timber', 'binnacle', 'bitt', 'hatch', 'companion', 'coaming')):
         mod = obj.modifiers.new('Timber edge · 8 mm', 'BEVEL')
