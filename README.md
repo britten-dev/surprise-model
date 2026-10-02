@@ -35,7 +35,7 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 | `distant` | under 5 k | A silhouette on the horizon. |
 
 `cinematic` gives the desktop experience smoother geometry and larger surface maps.
-The browser generates the main ship and downloads a shared 7.2 MB library of Blender
+The browser generates the main ship and downloads a shared 7.6 MB library of Blender
 detail. Phone quality uses `game` and skips that library. The standard GLB export
 matrix remains ten files; `tools/export-blender.mjs` separately exports the cinematic
 ship for the editable workshop. Counts depend on canvas, weather and loaded assets.
@@ -343,7 +343,8 @@ not portraits or claims of exact historical dress. No third-party application
 code is included in the asset.
 
 The crew now use a registered photographic-style face texture, continuous upper
-necks, rounded cloth folds, flat folded lapels, tied hair, shaded eye sockets,
+necks, rounded cloth folds, flat folded lapels, fitted hair with fine strands and
+a tied queue, shaded eye sockets,
 separate irises and animated eyelids. Head proportions, complexion and blink
 timing vary across the watch. Short-range contact occlusion is ray-cast in Blender
 and exported as vertex colours; it adds no runtime occlusion pass. The binnacle

@@ -45,7 +45,7 @@ def image(name, rgb, data=False):
 
 def material(name, base, kind='cloth', metal=0, rough=.78):
     # UV image maps, not procedural shader nodes that disappear on glTF export.
-    n = 512 if kind in ('wood', 'cloth') else 256
+    n = 512 if kind in ('wood', 'cloth', 'hair') else 256
     y, x = np.mgrid[0:n, 0:n].astype(np.float32) / n
     r = np.random.default_rng(441 + len(bpy.data.materials))
     grit = r.random((n, n)) - .5
@@ -62,6 +62,11 @@ def material(name, base, kind='cloth', metal=0, rough=.78):
         weave = warp*weft
         h = weave * .045 + grit * .025
         tone = .95 + .023*np.sin(x*19+y*11)*np.sin(y*31-x*7) + grit*.065
+    elif kind == 'hair':
+        strand = np.sin(x*math.tau*113 + np.sin(y*8)*.14)
+        fine = np.sin(x*math.tau*239 + np.sin(y*13)*.28)
+        h = strand*.045 + fine*.012 + grit*.01
+        tone = .9 + strand*.10 + fine*.025 + grit*.025
     elif kind == 'skin':
         h = grit * .018
         tone = .96 + .03 * np.sin(x * 16) * np.cos(y * 21) + grit * .035
@@ -111,6 +116,7 @@ duck = material('Unbleached duck', (.55, .53, .44), 'cloth', rough=.94)
 oilskin = material('Tarred cloth', (.055, .068, .065), 'cloth', rough=.48)
 skin = material('Weathered skin', (.64, .40, .29), 'skin', rough=.64)
 hair = material('Hair and leather', (.047, .032, .023), 'cloth', rough=.85)
+scalp_hair = material('Combed brown hair', (.14, .091, .055), 'hair', rough=.74)
 white = material('Warm ivory', (.76, .74, .63), 'cloth', rough=.72)
 black = material('Compass ink', (.012, .013, .011), 'metal', rough=.83)
 sclera = material('Eye moisture', (.72,.70,.64), 'skin', rough=.19)
@@ -389,6 +395,7 @@ def human_head(parent):
     bm=bmesh.new();bm.from_mesh(obj.data)
     bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.000001)
     bm.to_mesh(obj.data);bm.free();obj.data.update()
+    fitted_hair(obj,parent)
     # The base has eyelids but its eyeballs are separate helpers. Add only the
     # visible sclera/iris inside the sockets, at the source's eye joint centres.
     for side in (-1,1):
@@ -409,6 +416,39 @@ def human_head(parent):
         lid.scale.z=.001 # Blender Z is browser Y; opening/closing happens at runtime.
         # Eyebrow hairs are in the registered photographic albedo; a separate
         # thick triangular tube would make the face read as a drawn expression.
+
+def fitted_hair(head,parent):
+    """A close scalp shell fitted to the anatomical surface, clear of the ears."""
+    def margin(p):
+        x,y,z=p.x,p.z,-p.y
+        front=max(0,min(1,(z+.025)/.085))
+        hairline=.045+.128*front+.0025*math.sin(x*126+z*39)
+        # Ears project sideways from the cranium; leave them uncovered.
+        ear_clearance=.069-abs(x) if y<.158 else 1
+        return min(y-hairline,ear_clearance)
+    verts=[];faces=[];uv=[]
+    for polygon in head.data.polygons:
+        corners=[(head.data.vertices[i].co.copy(),head.data.vertices[i].normal.copy())
+            for i in polygon.vertices]
+        clipped=[]
+        for a,b in zip(corners,corners[1:]+corners[:1]):
+            da,db=margin(a[0]),margin(b[0])
+            if da>=0: clipped.append(a)
+            if (da>=0)!=(db>=0):
+                t=da/(da-db)
+                clipped.append((a[0].lerp(b[0],t),a[1].lerp(b[1],t).normalized()))
+        if len(clipped)<3: continue
+        start=len(verts)
+        us=[.5+math.atan2(p.x,-p.y+.015)/math.tau for p,n in clipped]
+        if max(us)-min(us)>.5: us=[u+1 if u<.5 else u for u in us]
+        for (p,n),u in zip(clipped,us):
+            verts.append(p+n*.0013)
+            uv.append((u,(.24-p.z)/.19))
+        faces.append(tuple(range(start,len(verts))))
+    obj=mesh('Fitted scalp hair',verts,faces,uv,scalp_hair,parent)
+    bm=bmesh.new();bm.from_mesh(obj.data)
+    bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.000001)
+    bm.to_mesh(obj.data);bm.free();obj.data.update()
 
 # ------------------------------------------------------------ helm furniture
 wheel=empty('authored_wheel')
@@ -531,14 +571,10 @@ def sailor(name, officer=False, heavy=False):
     for side in (-1,1): tube('Neckerchief end',[(0,1.385,.077),(side*.026,1.31,.13),(side*.023,1.26,.12)],.009,hair,root)
     head=empty('head',root,(0,1.485,0))
     human_head(head)
-    # Hair behind the ears and a queue; brim shades the face naturally.
-    profile('Hair',[(.17,.076,.077,0,-.006),(.205,.065,.065,0,-.005),(.23,.018,.018,0,0)],hair,head,32,.04)
-    # Hair behind the temples and a tied queue, with an irregular rounded tip.
-    for side in (-1,1):
-        tube('Side hair',[(side*.067,.168,-.028),(side*.071,.121,-.047),(side*.064,.079,-.050)],.009,hair,head)
-    tube('Queue',[(0,.16,-.074),(0,.11,-.087),(.006,.056,-.085),(.004,.010,-.080)],.011,hair,head,12)
+    # The fitted scalp continues behind the ears into a tied queue.
+    tube('Queue',[(0,.16,-.080),(0,.11,-.093),(.006,.056,-.091),(.004,.010,-.082)],.011,scalp_hair,head,12)
     ring('Queue ribbon',(.004,.03,-.083),.012,.0025,'y',navy,head,20)
-    ellipsoid('Queue tip',(.004,.005,-.079),(.011,.016,.010),hair,head,12,8)
+    ellipsoid('Queue tip',(.004,.005,-.081),(.011,.016,.010),scalp_hair,head,12,8)
     if officer:
         hat_brim(head,True)
         # Cocked hat with a shaped brim, crown and bound edge.
