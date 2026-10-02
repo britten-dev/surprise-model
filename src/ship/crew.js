@@ -406,7 +406,7 @@ export function buildCrew(cfg, mats, model, ctx) {
   {
     const zBin = SPEC.binnacle_station_from_stem.value + S('crew_con_abaft_binnacle');
     place('officer_of_the_watch',
-      station(model, { fromStem: zBin - .45, side: 1, out: 0.58, facing: Math.PI + .25 }),
+      station(model, { fromStem: zBin - .45, side: -1, out: 0.58, facing: Math.PI - .25 }),
       { rank: 'officer', pose: 'stand' });
     // The captain, aft at the taffrail with his eye on the following sea, which running
     // before a gale is the whole of the ship's business. He is the tallest figure on
