@@ -350,6 +350,7 @@ export function createMotion(ship, opts = {}) {
       parts.flags.push({
         node: o,
         phase: o.geometry.userData.flag.phase,
+        stream: o.geometry.userData.flag.dir.clone(),
         home: o.position.clone(),
         f: whipAt(new THREE.Box3().setFromObject(o).max.y, deckY, truckY, uniforms.uWhipExp.value),
       });
@@ -405,6 +406,7 @@ export function createMotion(ship, opts = {}) {
   function update(time, state = {}) {
     const {
       windSpeed = 12,       // metres per second
+      apparentWind = null, // optional air velocity in the ship's local frame
       windDeg = 150,        // where the wind is going, from dead ahead, turning to starboard
       heel = 0,             // radians, positive to starboard
       pitch = 0,            // radians, positive bow up
@@ -450,9 +452,15 @@ export function createMotion(ship, opts = {}) {
     // ------------------------------------------------------------------ the flags
     for (const f of parts.flags) {
       f.node.position.set(f.home.x + whip.x * f.f, f.home.y, f.home.z + whip.z * f.f);
-      // A flag flies at the wind's speed and not the ship's, so its wave runs on
-      // whatever she is doing.
-      poseFlag(f.node.geometry, f.phase + time * S('motion_flag_wave_speed') * (0.4 + w));
+      // Cloth follows the air passing the ship. Integrate phase so changing weather
+      // changes the flutter rate without jumping to a different pose.
+      const flagWind = apparentWind ? clamp(apparentWind.length() / 22, 0, 1.6) : w;
+      if (apparentWind && apparentWind.lengthSq() > 0.01) {
+        f.stream.lerp(apparentWind.clone().setY(0).normalize(), 1 - Math.exp(-dt / 0.65));
+        if (f.stream.lengthSq() > 0.001) f.stream.normalize();
+      }
+      f.phase += dt * S('motion_flag_wave_speed') * (0.4 + flagWind);
+      poseFlag(f.node.geometry, f.phase, { direction: f.stream, wind: flagWind });
     }
 
     // ------------------------------------------------------------------- the yards

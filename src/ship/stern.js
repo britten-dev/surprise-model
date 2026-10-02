@@ -240,7 +240,7 @@ function carved(at, uc, halfU, vc, halfV, { crown, bevel, corner = 2, nu = 12, n
 }
 
 /** A patch lying on a parametric surface — the glazing, its frames, the carved panels. */
-function patch(pointAt, u0, u1, v0, v1, nu = 2, nv = 2) {
+function patch(pointAt, u0, u1, v0, v1, nu = 2, nv = 2, flip = false) {
   const pos = [], uvs = [], idx = [];
   for (let i = 0; i <= nv; i++) {
     for (let j = 0; j <= nu; j++) {
@@ -253,7 +253,8 @@ function patch(pointAt, u0, u1, v0, v1, nu = 2, nv = 2) {
   for (let i = 0; i < nv; i++) {
     for (let j = 0; j < nu; j++) {
       const a = i * w + j, b = a + 1, c = a + w, d = c + 1;
-      idx.push(a, b, c, b, d, c);
+      if (flip) idx.push(a, c, b, b, c, d);
+      else idx.push(a, b, c, b, d, c);
     }
   }
   const g = new THREE.BufferGeometry();
@@ -500,19 +501,25 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
 // ---------------------------------------------------------------------------
 function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const len = SPEC.quarter_gallery_length.value;
-  // The badge finishes against the quarter piece rather than at the transom corner, so
-  // that the joint between the two is covered by the quarter piece as it is on a ship.
-  const z1 = model.zAft - SPEC.stern_quarter_piece_width.value;
+  // Follow the cabin lights and the raked transom, not the tuck at the waterline.
+  // Anchoring to the tuck put the gallery over the last gun; spanning wale-to-rail
+  // stretched its windows across two decks.
+  const sill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
+  const yBot = sill - SPEC.quarter_gallery_rim_depth.value;
+  const yTop = sill + SPEC.stern_light_height.value + SPEC.quarter_gallery_hood_depth.value;
+  const z1 = Math.min(sp.surface(yBot, 1).z, sp.surface(yTop, 1).z)
+    - SPEC.stern_quarter_piece_width.value * 0.5;
   const z0 = z1 - len;
   const proj = SPEC.quarter_gallery_projection.value;
 
-  // The badge is sited on the ship's own lines, not on a height above the waterline: its
-  // lower stool sits on the top of the main wale and its bell-top dies into the rail, so
-  // it fills the topside exactly as it does in the reference photograph. Steel wants the
-  // lower rim "as long as possible", and on this hull that is the full run from the wale
-  // to the rail — about 5 ft, which is the height 06 §12.3 reconstructs.
-  const yBotAt = (z) => model.featureYAt(z).wale_top;
-  const yTopAt = (z) => model.featureYAt(z).rail;
+  const yBotAt = () => yBot;
+  const yTopAt = () => yTop;
+  const sideAt = (z, y) => {
+    if (z <= model.zAft) return model.halfBreadthAt(z, y);
+    const corner = sp.surface(y, 1);
+    const t = clamp((z - model.zAft) / Math.max(0.01, corner.z - model.zAft), 0, 1);
+    return lerp(model.halfBreadthAt(model.zAft, y), corner.x, t);
+  };
 
   // How far the badge stands off the ship's side at a station: nothing at the forward
   // end, where it dies into the planking, full projection at the after end.
@@ -524,7 +531,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   /** A point on the badge. `z` runs aft, `p` runs up the section from rim to hood. */
   const at = (z, p) => {
     const y = lerp(yBotAt(z), yTopAt(z), p);
-    const x = model.halfBreadthAt(z, y) + proj * bulge(p) * spread(z);
+    const x = sideAt(z, y) + proj * bulge(p) * spread(z);
     return new THREE.Vector3(x * side, y, z);
   };
 
@@ -553,7 +560,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const cap = [];
   for (let i = 0; i < np - 1; i++) {
     const a = at(z1, i / (np - 1)), b = at(z1, (i + 1) / (np - 1));
-    const ha = model.halfBreadthAt(z1, a.y) * side, hb = model.halfBreadthAt(z1, b.y) * side;
+    const ha = sideAt(z1, a.y) * side, hb = sideAt(z1, b.y) * side;
     const g = new THREE.BufferGeometry();
     const tri = side > 0
       ? [a.x, a.y, a.z, b.x, b.y, b.z, ha, a.y, a.z, b.x, b.y, b.z, hb, b.y, b.z, ha, a.y, a.z]
@@ -574,7 +581,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const p0 = SPEC.quarter_gallery_rim_depth.value / span;
   const p1 = 1 - SPEC.quarter_gallery_hood_depth.value / span;
   const n = SPEC.quarter_gallery_light_count.value;
-  const glass = [], frames = [];
+  const glass = [], frames = [], glazingBars = [];
   const fz = (u, v) => at(lerp(z0, z1, u), v);
   const bar = SPEC.stern_glazing_bar.value / SPEC.quarter_gallery_length.value;
   // The badge's own outward normal, which is what the joinery on it has to be set off.
@@ -605,20 +612,33 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   // past u = 1 makes `at()` extrapolate abaft the badge and throws a great sheet of ochre
   // out over the quarter.
   const margin = 0.08, slot = (1 - 2 * margin) / n;
+  // Tessellate the glazing closely enough to follow the curved wall behind it.
+  // Coarse flat triangles cut through the badge and produced black reflected bands.
+  const badgePatch = (surface, u0, u1, v0, v1, nu = 8, nv = 12) =>
+    patch(surface, u0, u1, v0, v1, nu, nv, side > 0);
   for (let i = 0; i < n; i++) {
     const c = margin + slot * (i + 0.5);
     const half = slot * 0.34;
     const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
     const q0 = p0 - 0.04, q1 = p1 + 0.04;
-    frames.push(patch(inFrame, f0, c - half, q0, q1, 1, 3));
-    frames.push(patch(inFrame, c + half, f1, q0, q1, 1, 3));
-    frames.push(patch(inFrame, c - half, c + half, q0, p0, 3, 1));
-    frames.push(patch(inFrame, c - half, c + half, p1, q1, 3, 1));
-    glass.push(patch(inGlass, c - half, c + half, p0, p1, 3, 3));
+    frames.push(badgePatch(inFrame, f0, c - half, q0, q1, 1, 12));
+    frames.push(badgePatch(inFrame, c + half, f1, q0, q1, 1, 12));
+    frames.push(badgePatch(inFrame, c - half, c + half, q0, p0, 8, 1));
+    frames.push(badgePatch(inFrame, c - half, c + half, p1, q1, 8, 1));
+    glass.push(badgePatch(inGlass, c - half, c + half, p0, p1));
+    glazingBars.push(badgePatch(inFrame, c-bar/2, c+bar/2, p0, p1, 1, 12));
+    const vb = SPEC.stern_glazing_bar.value / span;
+    for (let j = 1; j < 3; j++) {
+      const v = lerp(p0, p1, j / 3);
+      glazingBars.push(badgePatch(inFrame, c-half, c+half, v-vb/2, v+vb/2, 8, 1));
+    }
   }
   const gf = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
   gf.name = 'quarter_gallery_frames';
   group.add(gf);
+  const gb = new THREE.Mesh(mergeGeometries(glazingBars), mats.ochre);
+  gb.name = 'quarter_gallery_glazing_bars';
+  group.add(gb);
   if (cfg.galleryGlazing) {
     const gg = new THREE.Mesh(mergeGeometries(glass), mats.glass);
     gg.name = 'quarter_gallery_glazing';
@@ -656,7 +676,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const bevel = SPEC.stern_carving_bevel.value;
   const nu = Math.max(8, Math.round(cfg.sternStations * 0.75));
   const nv = Math.max(3, Math.round(cfg.sternStations * 0.28));
-  const onSide = (z, y, out) => new THREE.Vector3((model.halfBreadthAt(z, y) + out) * side, y, z);
+  const onSide = (z, y, out) => new THREE.Vector3((sideAt(z, y) + out) * side, y, z);
   const panel = SPEC.stern_carving_panel_corner.value;
   const carvings = [];
   for (const u of [0.20, 0.80]) {

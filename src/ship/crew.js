@@ -447,8 +447,11 @@ export function buildCrew(cfg, mats, model, ctx) {
       const p = m.along(m.houndsH);
       const half = (m.topBreadth ?? 3.4) / 2;
       for (const [i, sx] of [-1, 1].entries()) {
-        const f = figure(mats, { pose: i ? 'haul' : 'hold', rank: hand, seed: seed++ });
-        f.position.set(sx * half * S('crew_top_inset'), p.y + SPEC.top_platform_thickness.value, p.z);
+        const f = figure(mats, { pose: i ? 'haul' : 'hold', rank: hand, seed: seed++, detail: cfg.textureSize >= 1024 });
+        // Stand on the forward part of the top, clear of the topsail's belly aft.
+        // At the mast centre the moving cloth sliced through their heads and torsos.
+        f.position.set(sx * half * Math.min(S('crew_top_inset'), 0.36), p.y + SPEC.top_platform_thickness.value,
+          p.z - m.topLength * 0.22);
         f.rotation.order = 'YXZ';
         f.rotation.y = i ? Math.PI * 0.9 : Math.PI * 1.1;
         f.rotation.x = f.userData.crew.lean;

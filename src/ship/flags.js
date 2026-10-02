@@ -239,14 +239,18 @@ function flagGeometry(params) {
  * than the microsecond: a shader approximation of this would have to guess at the sag and
  * the shortening, and both of them are what make a flag read as cloth.
  */
-export function poseFlag(geometry, phase) {
+export function poseFlag(geometry, phase, { direction, wind = 1 } = {}) {
   const { dir, fly, hoist, tipHoist, segsU, segsV } = geometry.userData.flag;
-  const ef = dir.clone().setY(0).normalize();
+  const ef = (direction ?? dir).clone().setY(0).normalize();
   const eh = new THREE.Vector3(0, -1, 0);
   const en = new THREE.Vector3().crossVectors(ef, eh).normalize();
 
-  const droop = S('flag_droop_frac');
-  const amp = S('flag_wave_amplitude_frac') * hoist;
+  const strength = Math.max(0, Math.min(1.6, wind));
+  const droop = S('flag_droop_frac') / (0.65 + strength * 0.65);
+  // A long pennant bends along its length as well as rippling across its width.
+  // Hoist-only amplitude made it look like a rigid strip from astern.
+  const amp = S('flag_wave_amplitude_frac') * Math.max(hoist, fly * 0.16)
+    * (0.18 + 0.82 * Math.min(1.2, strength));
   const k = (Math.PI * 2) / (S('flag_wave_length_frac') * fly);
   const skew = S('flag_wave_skew');
   const slack = S('flag_stream_slack');
@@ -265,10 +269,12 @@ export function poseFlag(geometry, phase) {
     const swell = Math.pow(u, grow);
     for (let j = 0; j <= segsV; j++) {
       const v = j / segsV;
-      const across = inset + v * width + droop * fly * u * u;
+      const lift = amp * swell * 0.72
+        * Math.sin(k * along - phase * 0.87 + v * 0.6);
+      const across = inset + v * width + droop * fly * u * u + lift;
       const wave = amp * swell * (
-        Math.sin(k * along + skew * v * Math.PI * 2 + phase)
-        + harm * Math.sin(2 * k * along + phase)
+        Math.sin(k * along + skew * v * Math.PI * 2 - phase)
+        + harm * Math.sin(2 * k * along - phase * 1.7)
       );
       p.set(0, 0, 0)
         .addScaledVector(ef, along)
@@ -279,6 +285,7 @@ export function poseFlag(geometry, phase) {
   }
   pos.needsUpdate = true;
   geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
   return geometry;
 }
 
