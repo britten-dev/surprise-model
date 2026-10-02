@@ -1,11 +1,14 @@
-// Load every exported GLB back and check it. An export that writes a file is not the
+// Load every exported full-ship GLB back and check it. An export that writes a file is not the
 // same as an export that produced a usable asset: this reads each one with the same
 // loader a consumer would use, and reports what actually came back.
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { openHarness, ROOT } from './harness.js';
 
-const files = (await fs.readdir(path.join(ROOT, 'build'))).filter((f) => f.endsWith('.glb'));
+// Authored fittings/crew are a separate asset library with their own export checks;
+// they cannot meet the dimensions of a complete frigate.
+const files = (await fs.readdir(path.join(ROOT, 'build'))).filter((f) => /^surprise-.*\.glb$/.test(f));
+if (!files.length) throw new Error('No exported ships found in build/');
 const h = await openHarness();
 
 const rows = await h.page.evaluate(async (names) => {

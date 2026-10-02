@@ -24,3 +24,24 @@ The source, original copyright header and full CC0 licence are preserved in
 The crew are fictional artistic reconstructions. No named person's likeness is
 represented. This GLB is rendered interactively in the browser; it is not an
 offline render used as a backdrop.
+
+# Photographic facial projection
+
+`sailor-face-projection-v1.png` was made with the built-in image generation tool
+on 2 October 2026. It depicts a fictional face. The exact input alignment image
+is preserved at `tools/assets/portrait-alignment-v1.png`; it was rendered from
+the credited CC0 head using `tools/portrait-reference.py`. The output is 1254 ×
+1254 pixels. The requested alignment is converted to UV space by the Blender
+asset builder and blended into the sides and back of the head. Eyes remain
+separate movable geometry. This is an artistic texture, not a historical scan.
+
+Exact prompt:
+
+> Use case: precise-object-edit. Asset type: front orthographic photographic facial ALBEDO projection texture for an existing 3D sailor model. The attached image is a strict pixel alignment guide, not a style reference. Keep the face, ears, eye centers, nose tip, nostrils, mouth and chin in exactly the same pixel positions and preserve the original head silhouette and scale on the square canvas. Replace the plain synthetic skin with the photographic skin colour of a fictional 40-year-old male sailor in 1805: sun-weathered light-to-medium tan skin, natural pores, faint freckles and sun spots, restrained salt-and-pepper stubble on chin and upper lip, subtle cheek redness, fine crow's feet and forehead creases, slightly chapped natural lips. Replace the sharply triangular painted eyebrows with soft natural hair eyebrows just above the eye sockets, preserving the eye positions. No stylization, no makeup, no idealized beauty. Flat diffuse cross-polarized scan lighting: remove cast shadows and specular highlights; texture detail should come from pigment and skin, not dark lighting. Keep the neutral relaxed expression and mouth closed. Remove the malformed dark hat/hair column above the head and the stray fragments below the chin; finish a natural bald scalp within the existing cranium silhouette. Fill all non-head pixels with a uniform warm medium skin-tan colour, no alpha needed. No neck, shoulders, clothes, text, logo, watermark, border, perspective, framing shift or enlarged face. 1024 by 1024 pixels. This is a technical aligned texture, not a portrait composition.
+
+The browser GLB is compressed by `tools/compress-authored.mjs`. Meshopt encodes
+the geometry without a quantization step; the build checks every decoded vertex
+position against the original. Base-colour maps use JPEG quality 94 with 4:4:4
+chroma; normal and roughness data remain PNG. The uncompressed source is kept
+in `build/quarterdeck-detail-uncompressed.glb`, and the editable Blender file
+retains its original packed image maps.

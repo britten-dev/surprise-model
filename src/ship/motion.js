@@ -370,6 +370,8 @@ export function createMotion(ship, opts = {}) {
         arms,
         armHome: arms.map((a) => a.rotation.clone()),
         head: f.getObjectByName('head'),
+        eyes: ['eye_port','eye_starboard'].map(n=>f.getObjectByName(n)).filter(Boolean),
+        lids: ['lid_port','lid_starboard'].map(n=>f.getObjectByName(n)).filter(Boolean),
         // Each man has a phase of his own, so that thirteen of them do not sway as one.
         phase: i * 1.37,
         f: whipAt(f.position.y, deckY, truckY, uniforms.uWhipExp.value),
@@ -495,6 +497,18 @@ export function createMotion(ship, opts = {}) {
         if (c.head) {
           c.head.rotation.y = .055 * Math.sin(time * .29 + c.phase);
           c.head.rotation.x = .018 * Math.sin(time * 1.25 + c.phase);
+        }
+        const period=4.1+(c.phase*1.7)%3.2;
+        const blinkTime=(time+c.phase*1.83)%period;
+        const blink=blinkTime<.17 ? Math.sin(blinkTime/.17*Math.PI) : 0;
+        for(const lid of c.lids) {
+          lid.visible=blink>.005;
+          lid.scale.y=Math.max(.001,blink);
+          lid.position.y=(lid.userData.restY ?? .108415)+.007*(1-blink);
+        }
+        for(const eye of c.eyes) {
+          eye.rotation.y=.055*Math.sin(time*.43+c.phase);
+          eye.rotation.x=.018*Math.sin(time*.31+c.phase*2);
         }
       }
 

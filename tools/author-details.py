@@ -6,10 +6,12 @@ Blender authors the geometry, UVs, bevels and packed PBR images. The web rendere
 loads the exported meshes; it does not substitute a picture of a Blender render.
 """
 from pathlib import Path
-import json, math
-import bpy
+import json, math, sys
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import bpy, bmesh
 import numpy as np
 from mathutils import Vector
+from authored_occlusion import bake_contact_shadows, connect_vertex_colours
 
 ROOT = Path(__file__).resolve().parents[1]
 S = json.loads((ROOT / 'build/hero-dimensions.json').read_text())
@@ -43,7 +45,7 @@ def image(name, rgb, data=False):
 
 def material(name, base, kind='cloth', metal=0, rough=.78):
     # UV image maps, not procedural shader nodes that disappear on glTF export.
-    n = 512 if kind == 'wood' else 256
+    n = 512 if kind in ('wood', 'cloth') else 256
     y, x = np.mgrid[0:n, 0:n].astype(np.float32) / n
     r = np.random.default_rng(441 + len(bpy.data.materials))
     grit = r.random((n, n)) - .5
@@ -55,9 +57,11 @@ def material(name, base, kind='cloth', metal=0, rough=.78):
         h = grain * .025 + growth * .020 + grit * .025
         tone = .94 + .035 * growth + .020 * grain + .025 * grit
     elif kind == 'cloth':
-        weave = np.sin(x * n * math.pi * .5) * np.sin(y * n * math.pi * .5)
-        h = weave * .06 + grit * .06
-        tone = .94 + .045 * np.sin(x * 59 + y * 29) + grit * .055
+        warp = np.sin(x*n*math.pi*.5 + np.sin(y*17)*.10)
+        weft = np.sin(y*n*math.pi*.5 + np.sin(x*23)*.13)
+        weave = warp*weft
+        h = weave * .045 + grit * .025
+        tone = .95 + .023*np.sin(x*19+y*11)*np.sin(y*31-x*7) + grit*.065
     elif kind == 'skin':
         h = grit * .018
         tone = .96 + .03 * np.sin(x * 16) * np.cos(y * 21) + grit * .035
@@ -90,7 +94,10 @@ def material(name, base, kind='cloth', metal=0, rough=.78):
     normal = nodes.new('ShaderNodeNormalMap')
     links.new(texn.outputs['Color'], normal.inputs['Color'])
     links.new(normal.outputs['Normal'], bs.inputs['Normal'])
-    if kind == 'cloth': bs.inputs['Sheen Weight'].default_value = 0
+    if kind == 'cloth':
+        bs.inputs['Sheen Weight'].default_value = .14
+        bs.inputs['Sheen Tint'].default_value = (*[v*.65 for v in base],1)
+        bs.inputs['Sheen Roughness'].default_value = .75
     if kind == 'skin': bs.inputs['Subsurface Weight'].default_value = .035
     return m
 
@@ -102,10 +109,23 @@ rope = material('Laid hemp', (.41, .32, .19), 'cloth')
 navy = material('Indigo wool', (.048, .077, .11), 'cloth', rough=.91)
 duck = material('Unbleached duck', (.55, .53, .44), 'cloth', rough=.94)
 oilskin = material('Tarred cloth', (.055, .068, .065), 'cloth', rough=.48)
-skin = material('Weathered skin', (.49, .285, .18), 'skin', rough=.67)
+skin = material('Weathered skin', (.64, .40, .29), 'skin', rough=.64)
 hair = material('Hair and leather', (.047, .032, .023), 'cloth', rough=.85)
 white = material('Warm ivory', (.76, .74, .63), 'cloth', rough=.72)
 black = material('Compass ink', (.012, .013, .011), 'metal', rough=.83)
+sclera = material('Eye moisture', (.72,.70,.64), 'skin', rough=.19)
+sclera.node_tree.nodes.get('Principled BSDF').inputs['Coat Weight'].default_value=.5
+sclera.node_tree.nodes.get('Principled BSDF').inputs['Coat Roughness'].default_value=.12
+iris = material('Iris', (.18,.15,.092), 'skin', rough=.23)
+# Radial fibres and a dark pupil on a planar iris, rather than a black bead.
+iy,ix=np.mgrid[0:128,0:128].astype(np.float32)/127-.5
+ir=np.hypot(ix,iy);ia=np.arctan2(iy,ix)
+fibres=.7+.18*np.sin(ia*67+ir*74)+.1*np.sin(ia*117-ir*39)
+icol=np.asarray((.22,.18,.105))[None,None,:]*fibres[:,:,None]
+pupil=np.clip((ir-.18)/.045,0,1);icol=icol*pupil[:,:,None]+.009*(1-pupil[:,:,None])
+icol*=np.clip((.52-ir)/.06,.32,1)[:,:,None]
+inode=iris.node_tree.nodes.new('ShaderNodeTexImage');inode.image=image('Iris colour',icol)
+iris.node_tree.links.new(inode.outputs['Color'],iris.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
 
 def finish(o, name, mat, parent, bevel=0, smooth=True):
     o.name = name
@@ -130,6 +150,17 @@ def box(name, at, dims, mat, parent, bevel=.008):
     o.scale = (dims[0], dims[2], dims[1])
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     return finish(o, name, mat, parent, bevel)
+
+def cloth_panel(name, points, mat, parent):
+    if (Vector(points[1])-Vector(points[0])).cross(Vector(points[2])-Vector(points[0])).z<0:
+        points=list(reversed(points))
+    vertices=[V(p) for p in points]+[V((x,y,z-.003)) for x,y,z in points]
+    n=len(points);faces=[tuple(range(n)),tuple(range(2*n-1,n-1,-1))]
+    faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
+    x0=min(p[0] for p in points);x1=max(p[0] for p in points)
+    y0=min(p[1] for p in points);y1=max(p[1] for p in points)
+    uv=[((p[0]-x0)/max(.001,x1-x0),(p[1]-y0)/max(.001,y1-y0)) for p in points]*2
+    return mesh(name,vertices,faces,uv,mat,parent)
 
 def ellipsoid(name, at, dims, mat, parent, segments=20, rings=12):
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, radius=1, location=V(at))
@@ -166,8 +197,19 @@ def mesh(name, vertices, faces, uv, mat, parent):
     o = bpy.data.objects.new(name, data); scene.collection.objects.link(o)
     return finish(o, name, mat, parent)
 
-def profile(name, rings, mat, parent, sides=32, folds=0, phase=0):
+def profile(name, rings, mat, parent, sides=32, folds=0, phase=0, soften=False):
     # Elliptical cross sections [y, rx, rz, centreX, centreZ].
+    if soften:
+        source=[np.array(r,dtype=float) for r in rings]
+        rings=[]
+        for i in range(len(source)-1):
+            a,b,c,d=source[max(0,i-1)],source[i],source[i+1],source[min(len(source)-1,i+2)]
+            rings.append(b)
+            t=.5
+            middle=.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t)
+            middle[1:3]=np.maximum(middle[1:3],.004)
+            rings.append(middle)
+        rings.append(source[-1])
     vertices, faces, uv = [], [], []
     for j, (y, rx, rz, cx, cz) in enumerate(rings):
         for i in range(sides+1):
@@ -231,7 +273,7 @@ def human_head(parent):
         elif row[0]=='g': group=row[1]
         elif row[0]=='f' and group=='body':
             corners=[tuple(int(q)-1 for q in item.split('/')[:2]) for item in row[1:]]
-            if all(vertices[v][1]>6.13 for v,t in corners): selected.append(corners)
+            if all(vertices[v][1]>5.9 for v,t in corners): selected.append(corners)
     mapped={}; out=[]; uv=[]; faces=[]
     for face in selected:
         corners=[]
@@ -249,9 +291,39 @@ def human_head(parent):
     uv_array=np.asarray(uv,dtype=np.float32)
     lo=uv_array.min(axis=0); span=np.maximum(.001,uv_array.max(axis=0)-lo)
     uv_array=(uv_array-lo)/span*.96+.02
+    # Continue the actual anatomical boundary into the collar. A separate neck
+    # cylinder leaves the sloped cut edge exposed when the head turns.
+    edge_uses={}
+    for face in selected:
+        for a,b in zip(face,face[1:]+face[:1]):
+            edge_uses.setdefault(tuple(sorted((a[0],b[0]))),[]).append((a,b))
+    boundary=[uses[0] for uses in edge_uses.values() if len(uses)==1
+        and max(vertices[k[0]][1] for k in uses[0])<6.16]
+    assert len(boundary)==46, 'Expected the complete anatomical neck boundary'
+    uv_array[:,1]=.23+uv_array[:,1]*.75
+    uv=uv_array.tolist()
+    for a,b in boundary:
+        points=[out[mapped[k]] for k in (a,b)]
+        angles=[math.atan2(-p.y+.020,p.x) for p in points]
+        # Put the UV seam at the existing centre-back vertex, duplicating its
+        # texture coordinate on either side instead of interpolating across it.
+        uv_angles=[math.atan2(p.x,-p.y+.020) for p in points]
+        if abs(uv_angles[1]-uv_angles[0])>math.pi:
+            uv_angles=[v-math.tau if v>0 else v for v in uv_angles]
+        start=len(out)
+        for j in range(5):
+            t=j/4
+            for p,angle,uv_angle in zip(points,angles,uv_angles):
+                target=V((.053*math.cos(angle),-.095,-.012+.048*math.sin(angle)))
+                out.append(p.lerp(target,t))
+                uv.append((.02+.96*(uv_angle/math.tau+.5),.02+.18*(1-t)))
+            if j:
+                k=start+j*2
+                faces.append((k-1,k-2,k,k+1))
+    uv_array=np.asarray(uv,dtype=np.float32)
     mat=bpy.data.materials.get('Weathered face')
     if mat is None:
-        size=512
+        size=1024
         field=np.zeros((size,size,3),dtype=np.float32)
         covered=np.zeros((size,size),dtype=bool)
         points=np.asarray([(p.x,p.z,-p.y) for p in out])
@@ -277,24 +349,66 @@ def human_head(parent):
         cheeks=np.exp(-((np.abs(x)-.045)/.021)**2-((y-.075)/.025)**2)*front
         lips=np.exp(-(x/.026)**6-((y-.041)/.006)**2)*front
         tone=1-.16*jaw*(.45+.55*rand)-.05*np.clip((y-.14)/.08,0,1)
-        col=np.asarray((.49,.285,.18))[None,None,:]*tone[:,:,None]
+        col=np.asarray((.64,.40,.29))[None,None,:]*tone[:,:,None]
         col+=((rand-.5)*.018)[:,:,None]
         col[:,:,0]+=cheeks*.019+lips*.013
         col[:,:,1]-=cheeks*.008+lips*.020
         col[:,:,2]-=lips*.009
+        portrait_path=OUT/'sailor-face-projection-v1.png'
+        if portrait_path.exists():
+            portrait=bpy.data.images.load(str(portrait_path),check_existing=True)
+            portrait.colorspace_settings.name='Non-Color'
+            pw,ph=portrait.size
+            pixels=np.empty(pw*ph*4,dtype=np.float32);portrait.pixels.foreach_get(pixels)
+            pixels=pixels.reshape(ph,pw,4)[:,:,:3]
+            # Camera projection from portrait-reference.py: square 0.32 m field,
+            # centred 0.105 m above the head joint, looking along browser -Z.
+            px=np.clip((x/.32+.5)*(pw-1),0,pw-1.001)
+            py=np.clip(((y-.105)/.32+.5)*(ph-1),0,ph-1.001)
+            ix=px.astype(int);iy=py.astype(int);fx=(px-ix)[:,:,None];fy=(py-iy)[:,:,None]
+            sample=(pixels[iy,ix]*(1-fx)+pixels[iy,ix+1]*fx)*(1-fy)+(pixels[iy+1,ix]*(1-fx)+pixels[iy+1,ix+1]*fx)*fy
+            amount=np.clip((z-.008)/.05,0,1);amount=amount*amount*(3-2*amount)
+            col=col*(1-amount[:,:,None])+sample*amount[:,:,None]
+            # Pad UV islands using their own colours so mipmaps do not pull a
+            # different part of the face into the ear or the edge of the scalp.
+            for _ in range(8):
+                count=np.zeros((size,size));total=np.zeros_like(col)
+                for axis,shift in [(0,1),(0,-1),(1,1),(1,-1)]:
+                    neighbour=np.roll(covered,shift,axis)
+                    count+=neighbour;total+=np.roll(col,shift,axis)*neighbour[:,:,None]
+                fill=(~covered)&(count>0)
+                col[fill]=total[fill]/count[fill,None];covered[fill]=True
         mat=skin.copy();mat.name='Weathered face'
         texture=mat.node_tree.nodes.new('ShaderNodeTexImage')
         texture.image=image('Weathered face colour',col)
         bs=mat.node_tree.nodes.get('Principled BSDF')
         mat.node_tree.links.new(texture.outputs['Color'],bs.inputs['Base Color'])
     obj=mesh('Anatomical head - MakeHuman CC0',out,faces,uv_array.tolist(),mat,parent)
+    # Weld geometric seams while retaining per-corner UV islands. The head and
+    # its neck then share normals as well as the same surface and material.
+    bm=bmesh.new();bm.from_mesh(obj.data)
+    bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.000001)
+    bm.to_mesh(obj.data);bm.free();obj.data.update()
     # The base has eyelids but its eyeballs are separate helpers. Add only the
     # visible sclera/iris inside the sockets, at the source's eye joint centres.
     for side in (-1,1):
         x=side*.030775; y=.108415; z=.079535
-        ellipsoid('Eyeball',(x,y,z),(.0125,.0125,.0125),white,parent,20,12)
-        ellipsoid('Iris',(x,y,z+.012),(.0047,.0047,.0014),hair,parent,16,10)
-        tube('Eyebrow',[(side*.016,.135,.097),(side*.032,.142,.102),(side*.051,.133,.094)],.0018,hair,parent,6)
+        suffix='port' if side<0 else 'starboard'
+        eye=empty('eye_'+suffix,parent,(x,y,z))
+        ellipsoid('Eyeball',(0,0,0),(.0125,.0125,.0125),sclera,eye,20,12)
+        verts=[V((0,0,.0128))];uvs=[(.5,.5)];polys=[]
+        for k in range(33):
+            a=k/32*math.tau
+            verts.append(V((math.cos(a)*.0055,math.sin(a)*.0055,.0128)))
+            uvs.append((.5+.5*math.cos(a),.5+.5*math.sin(a)))
+            if k:polys.append((0,k,k+1))
+        mesh('Iris and pupil',verts,polys,uvs,iris,eye)
+        lid=empty('lid_'+suffix,parent,(x,y,z+.014))
+        ellipsoid('Upper eyelid',(0,0,0),(.0137,.008,.0023),skin,lid,20,10)
+        lid['restY']=y
+        lid.scale.z=.001 # Blender Z is browser Y; opening/closing happens at runtime.
+        # Eyebrow hairs are in the registered photographic albedo; a separate
+        # thick triangular tube would make the face read as a drawn expression.
 
 # ------------------------------------------------------------ helm furniture
 wheel=empty('authored_wheel')
@@ -367,6 +481,19 @@ for side in (-1,1):
     tube('Compass needle',[(x,h*.859,-w*.07),(x,h*.859,w*.07)],.003,black,bin,6)
 box('Central lamp locker',(0,h*.88,0),(w*.20,h*.16,d*.85),iron,bin,.007)
 ring('Locker handle',(0,h*.87,d*.45),.018,.0035,'z',brass,bin,24)
+lampglass=bpy.data.materials.new('Binnacle lamp glass');lampglass.use_nodes=True
+lampbs=lampglass.node_tree.nodes.get('Principled BSDF')
+lampbs.inputs['Base Color'].default_value=(.075,.028,.008,1)
+lampbs.inputs['Roughness'].default_value=.32
+lampbs.inputs['Emission Color'].default_value=(1,.24,.032,1)
+lampbs.inputs['Emission Strength'].default_value=.2
+box('Aft lamp window',(0,h*.885,d*.431),(w*.145,h*.09,.008),lampglass,bin,.002)
+for side in (-1,1):
+    box('Compass lamp window',(side*w*.103,h*.885,0),(.008,h*.09,d*.54),lampglass,bin,.002)
+for x in (-w*.049,0,w*.049):
+    box('Lamp window mullion',(x,h*.885,d*.439),(.004,h*.105,.006),brass,bin,.001)
+bin['lampHeight']=h*.885
+bin['lampAft']=d*.47
 
 # --------------------------------------------------------- articulated people
 def sailor(name, officer=False, heavy=False):
@@ -375,20 +502,23 @@ def sailor(name, officer=False, heavy=False):
     # Fit and cut of clothes are explicit surfaces rather than stacked primitives.
     profile('Jacket',[(.78,.155,.105,0,0),(.84,.173,.111,0,0),(.96,.164,.108,0,0),
         (1.10,.169,.110,0,0),(1.23,.192,.119,0,.005),(1.34,.212,.112,0,0),
-        (1.39,.18,.098,0,0),(1.425,.07,.065,0,0)],cloth,root,40,.027)
+        (1.39,.18,.098,0,0),(1.425,.07,.065,0,0)],cloth,root,40,.045,soften=True)
     profile('Trouser seat',[(.77,.139,.096,0,0),(.88,.157,.104,0,0),(.97,.148,.094,0,0)],duck,root,32,.035)
     for side in (-1,1):
         x=side*.115
         profile('Loose trouser leg',[(.09,.061,.063,x,.01),(.15,.072,.072,x,0),
             (.3,.081,.078,x,-.014),(.43,.092,.084,x,.038),(.50,.097,.085,x,.043),
-            (.58,.090,.087,x,.018),(.70,.10,.093,x,0),(.84,.098,.086,x,0)],duck,root,28,.07,side)
+            (.58,.090,.087,x,.018),(.70,.10,.093,x,0),(.84,.098,.086,x,0)],duck,root,28,.07,side,soften=True)
         ellipsoid('Leather shoe',(x,.068,.059),(.07,.065,.145),hair,root)
         box('Shoe sole',(x,.019,.06),(.14,.025,.26),hair,root,.016)
         tube('Trouser side seam',[(x+side*.078,.17,.01),(x+side*.086,.42,.025),(x+side*.087,.64,0),(x+side*.088,.82,0)],.0025,duck,root,6)
     # Open jacket lapels, centre waistcoat and buttons.
-    box('Waistcoat',(0,1.145,.130),(.105,.40,.018),duck if officer else cloth,root,.008)
+    cloth_panel('Waistcoat',[(-.083,1.37,.098),(-.058,.945,.117),
+        (.058,.945,.117),(.083,1.37,.098)],duck if officer else cloth,root)
     for side in (-1,1):
-        tube('Turned jacket lapel',[(side*.08,1.405,.069),(side*.116,1.31,.110),(side*.055,1.13,.126)],.014,duck if officer else cloth,root,8)
+        cloth_panel('Folded jacket lapel',[(side*.05,1.405,.073),
+            (side*.132,1.32,.108),(side*.053,1.123,.122),(side*.075,1.295,.124)],
+            duck if officer else cloth,root)
         tube('Jacket hem',[(side*.015,.798,.110),(side*.11,.795,.083),(side*.166,.81,0)],.003,cloth,root,6)
         box('Pocket flap',(side*.105,1.025,.11),(.076,.036,.018),cloth,root,.006)
         for y in (1.04,1.12,1.20,1.28):
@@ -399,12 +529,16 @@ def sailor(name, officer=False, heavy=False):
     # Neckerchief and its loose ends.
     ring('Neckerchief collar',(0,1.407,0),.065,.011,'y',hair,root,36)
     for side in (-1,1): tube('Neckerchief end',[(0,1.385,.077),(side*.026,1.31,.13),(side*.023,1.26,.12)],.009,hair,root)
-    profile('Neck',[(1.395,.048,.047,0,0),(1.49,.051,.049,0,0)],skin,root,24)
     head=empty('head',root,(0,1.485,0))
     human_head(head)
     # Hair behind the ears and a queue; brim shades the face naturally.
     profile('Hair',[(.17,.076,.077,0,-.006),(.205,.065,.065,0,-.005),(.23,.018,.018,0,0)],hair,head,32,.04)
-    tube('Queue',[(0,.145,-.079),(0,.05,-.087),(0,-.025,-.075)],.016,hair,head)
+    # Hair behind the temples and a tied queue, with an irregular rounded tip.
+    for side in (-1,1):
+        tube('Side hair',[(side*.067,.168,-.028),(side*.071,.121,-.047),(side*.064,.079,-.050)],.009,hair,head)
+    tube('Queue',[(0,.16,-.074),(0,.11,-.087),(.006,.056,-.085),(.004,.010,-.080)],.011,hair,head,12)
+    ring('Queue ribbon',(.004,.03,-.083),.012,.0025,'y',navy,head,20)
+    ellipsoid('Queue tip',(.004,.005,-.079),(.011,.016,.010),hair,head,12,8)
     if officer:
         hat_brim(head,True)
         # Cocked hat with a shaped brim, crown and bound edge.
@@ -422,9 +556,9 @@ def sailor(name, officer=False, heavy=False):
         ring('Hat band',(0,.23,0),.083,.004,'y',oilskin,head,48)
     for side, namearm in [(-1,'arm_port'),(1,'arm_starboard')]:
         arm=empty(namearm,root,(side*.205,1.35,0))
-        profile('Jacket sleeve',[(0,.072,.075,0,0),(-.065,.069,.072,side*.004,0),(-.16,.061,.061,0,0),(-.26,.052,.055,0,0),(-.295,.049,.051,0,0)],cloth,arm,28,.065,side)
+        profile('Jacket sleeve',[(0,.072,.075,0,0),(-.065,.069,.072,side*.004,0),(-.16,.061,.061,0,0),(-.26,.052,.055,0,0),(-.295,.049,.051,0,0)],cloth,arm,28,.065,side,soften=True)
         elbow=empty('elbow',arm,(0,-.295,0))
-        profile('Fore sleeve',[(0,.052,.051,0,0),(-.075,.054,.057,0,0),(-.16,.045,.048,0,0),(-.235,.035,.035,0,0)],cloth,elbow,28,.07,side)
+        profile('Fore sleeve',[(0,.052,.051,0,0),(-.075,.054,.057,0,0),(-.16,.045,.048,0,0),(-.235,.035,.035,0,0)],cloth,elbow,28,.07,side,soften=True)
         ring('Cuff seam',(0,-.223,0),.035,.003,'y',duck if officer else cloth,elbow,28)
         palm=empty('hand',elbow,(0,-.272,.007))
         ellipsoid('Palm',(0,0,0),(.035,.05,.017),skin,palm)
@@ -444,6 +578,9 @@ foul=sailor('authored_oilskin',heavy=True)
 
 # Merge only within one joint/material; independent arms and heads stay movable.
 roots=[wheel,stand,bin,seaman,officer,foul]
+for root in roots:
+    bake_contact_shadows(root,distance=.045 if root in (seaman,officer,foul) else .14)
+connect_vertex_colours()
 parents=[o for o in list(bpy.data.objects) if o.type=='EMPTY']
 for parent in parents:
     batches={}
@@ -460,6 +597,7 @@ for parent in parents:
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=str(OUT/'quarterdeck-detail.glb'),export_format='GLB',
     export_yup=True,export_apply=True,export_extras=True,export_animations=False,
+    export_vertex_color='NAME',export_vertex_color_name='Contact occlusion',export_all_vertex_colors=False,
     export_materials='EXPORT',export_texcoords=True,export_normals=True)
 
 # A useful editable workbench layout in the .blend, with all original components.

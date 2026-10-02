@@ -11,8 +11,11 @@ export async function preloadAuthoredAssets() {
       const response = await fetch(new URL('../assets/quarterdeck-detail.glb', import.meta.url), { signal: abort.signal });
       if (!response.ok) throw new Error(`Detailed ship assets: HTTP ${response.status}`);
       const bytes = await response.arrayBuffer();
-      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-      const gltf = await new GLTFLoader().parseAsync(bytes, '');
+      const [{ GLTFLoader },{ MeshoptDecoder }] = await Promise.all([
+        import('three/addons/loaders/GLTFLoader.js'),
+        import('three/addons/libs/meshopt_decoder.module.js'),
+      ]);
+      const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes, '');
       library = gltf.scene;
       library.traverse(o => {
         if (!o.isMesh) return;
@@ -51,7 +54,8 @@ export function authoredFigure(cfg, { rank, pose = 'stand', seed = 0 }) {
   // Blender disambiguates repeated joint names with suffixes. Each figure has its
   // own hierarchy, so restore the public names used by the animation layer.
   f.traverse(o => {
-    for (const name of ['arm_port', 'arm_starboard', 'elbow', 'hand', 'grip', 'head']) {
+    for (const name of ['arm_port', 'arm_starboard', 'elbow', 'hand', 'grip', 'head',
+      'eye_port', 'eye_starboard', 'lid_port', 'lid_starboard']) {
       if (new RegExp(`^${name}([._]?\\d+)?$`).test(o.name)) {
         if (!o.isMesh) o.name = name;
       }
@@ -60,6 +64,22 @@ export function authoredFigure(cfg, { rank, pose = 'stand', seed = 0 }) {
   const height = SPEC[officer ? 'crew_officer_height' : 'crew_figure_height'].value;
   const scale = height / 1.76 * (1 + Math.sin(seed * 7.19) * .025);
   f.scale.setScalar(scale);
+  const head=f.getObjectByName('head');
+  head.scale.set(1+Math.sin(seed*2.71)*.045,1+Math.cos(seed*1.91)*.018,1+Math.sin(seed*1.37)*.03);
+  // Texture detail stays shared; a little variation in complexion and cloth
+  // prevents eleven repeated instances from looking like one identical man.
+  const localMaterials=new Map();
+  f.traverse(o=>{
+    if(!o.isMesh || !/Weathered|Indigo|Unbleached/.test(o.material.name)) return;
+    if(!localMaterials.has(o.material)) {
+      const material=o.material.clone();
+      const s=Math.sin(seed*1.79);
+      if(/Weathered/.test(material.name)) material.color.setRGB(.97+s*.035,.96+s*.035,.95+s*.035);
+      else material.color.setScalar(.94+Math.sin(seed*3.13)*.055);
+      localMaterials.set(o.material,material);
+    }
+    o.material=localMaterials.get(o.material);
+  });
   const arms = [f.getObjectByName('arm_port'), f.getObjectByName('arm_starboard')];
   const angle = THREE.MathUtils.degToRad;
   const poses = {
