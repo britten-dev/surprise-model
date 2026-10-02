@@ -10,6 +10,8 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { buildShip, LODS, SAIL_STATES } from '/src/ship/index.js';
 import { measureShip } from '/src/audit/measure.js';
 import { createMotion } from '/src/ship/motion.js';
+import { preloadSurfaceAssets } from '/src/ship/surface-assets.js';
+await preloadSurfaceAssets();
 
 const log = (m) => { document.getElementById('log').textContent += '\n' + m; };
 

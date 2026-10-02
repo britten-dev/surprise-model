@@ -96,7 +96,10 @@ function railCap(model, cfg, zFrom, zTo, side) {
   const curve = model.featureCurve('rail', side, cfg.mouldingSweeps, zFrom, zTo);
   const w = SPEC.side_thickness.value * 1.5;
   const t = SPEC.rail_cap_thickness.value;
-  return sweep(curve, [[-w / 2, 0], [w / 2, 0], [w / 2, t], [-w / 2, t]], {
+  const b = cfg.surfaceDetail ? Math.min(t * 0.18, 0.012) : 0;
+  return sweep(curve, [[-w / 2 + b, 0], [w / 2 - b, 0], [w / 2, b],
+    [w / 2, t - b], [w / 2 - b, t], [-w / 2 + b, t],
+    [-w / 2, t - b], [-w / 2, b]], {
     steps: cfg.mouldingSweeps, closed: true,
   });
 }

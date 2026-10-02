@@ -5,8 +5,18 @@ A reusable 3-D asset project: a parametric generator that builds the Royal Navy 
 by HMS Inconstant in April 1796 and taken into the Royal Navy — and exports her as glTF
 at three levels of detail and four states of canvas.
 
-This is an asset project, not a game. Nothing here is downloaded: the hull is lofted
-from an offset table, every fitting is generated, and every texture is drawn in code.
+This is an asset project, not a game. The hull is lofted from an offset table and
+the fittings are generated. Textures are procedural by default; awaiting
+`preloadSurfaceAssets()` before `buildShip()` enables the included photographic-style
+deck texture, with a procedural fallback. Its generation prompt and provenance are
+in `src/assets/PROVENANCE.md`.
+
+For an editable Blender scene, run `node tools/export-blender.mjs`, then Blender
+in background mode with `--python-exit-code 1 --python tools/prepare-blender.py`.
+The files are written into `build/`: `HMS Surprise - Cinematic Workshop.blend` and
+an offline lighting reference PNG. The workshop preserves named parts, packs the
+textures, adds non-destructive furniture bevels, and saves helm/alongside cameras.
+The browser animation shaders are not baked into this static glTF/Blender export.
 
 She is built as a ship that has been at sea rather than one that has just left the
 dockyard, and that is a deliberate part of the brief: the sheathing is weathered, the

@@ -15,6 +15,7 @@ import {
   fineGrainHeight, blendNormalsWhiteout, roughnessFromLuminance,
 } from './textures.js';
 import { hullStains, deckStains, sailStains } from './weathering.js';
+import { getDeckImage } from './surface-assets.js';
 
 const col = (key) => new THREE.Color(PAINT[key].hex);
 
@@ -386,7 +387,7 @@ const materialCache = new Map();
 
 export function makeMaterials(cfg) {
   const key = [cfg.textureSize, cfg.copperNails, cfg.hullRelief, cfg.surfaceDetail,
-    cfg.mouldingSweeps].join(':');
+    cfg.mouldingSweeps, !!getDeckImage()].join(':');
   if (!materialCache.has(key)) materialCache.set(key, buildMaterials(cfg));
   return materialCache.get(key);
 }
@@ -441,17 +442,26 @@ function buildMaterials(cfg) {
   // the way this used to read, because the roughness map built below needs the plank
   // pattern for its own relief and the stain's `.roughCanvas` for its own weathering —
   // the same two ingredients the colour map uses, read a second way.
-  const deckPlank = planking({
+  let deckPlank = planking({
     base: PAINT.deck.hex, dark: '#a3937a', light: '#dccfb6', seam: PAINT.deck_seam.hex,
-    planks: 30, size: N, seed: 5,
+    planks: 24, size: N, seed: 5,
   });
+  const authoredDeck = getDeckImage();
+  if (authoredDeck) {
+    deckPlank = document.createElement('canvas');
+    deckPlank.width = deckPlank.height = N;
+    deckPlank.getContext('2d').drawImage(authoredDeck, 0, 0, N, N);
+  }
   const deckStainCanvas = deckStains({ size: N });
-  const deckTex = asTexture(stainOver(deckPlank, deckStainCanvas), { repeat: [1, 6] });
+  // Deck UVs use 2.4 m per unit. A 0.4 repeat gives a six-metre tile,
+  // with 24 boards across it (25 cm), rather than the former 13 mm stripes.
+  const deckRepeat = authoredDeck ? [0.4, 0.8] : [0.4, 0.4];
+  const deckTex = asTexture(authoredDeck ? deckPlank : stainOver(deckPlank, deckStainCanvas), { repeat: deckRepeat });
   const deckRough = capped(
     finishRoughness(
       roughnessFromLuminance(deckPlank, { baseRough: PAINT.deck.roughness, amplitude: PAINT.hull_rough_pattern_var.value }),
       {
-        overlay: deckStainCanvas.roughCanvas,
+        overlay: authoredDeck ? null : deckStainCanvas.roughCanvas,
         grainCanvas: fineGrainHeight(RN, { seed: 502, cell: PAINT.detail_normal_cell.value }),
         grainVar: PAINT.surface_roughness_grain.value,
       }
@@ -518,7 +528,7 @@ function buildMaterials(cfg) {
   // through the waist — reads as boards rather than as stretched bands; on the small
   // parts it lands as the fine tooth of paint, which is what those want anyway.
   const paintedGrain = paintedSurface({ size: Math.max(256, N / 2) });
-  const paintedTex = asTexture(paintedGrain, { repeat: [10, 10] });
+  const paintedTex = asTexture(paintedGrain, { repeat: [1, 1] });
   // The roughness and detail-normal companions to paintedTex, built once and shared the
   // same way the colour map is: a roughness *multiplier* (see the note over
   // paintWearRoughness for why it cannot be an absolute value here) for the sheen where
@@ -531,8 +541,10 @@ function buildMaterials(cfg) {
     normalFrom(flattenedHeight(paintedGrain, PAINT.hull_plank_relief.value, PS), PAINT.hull_normal_scale.value),
     cfg, 540
   );
-  const paintedRoughTex = asTexture(paintedRough, { repeat: [10, 10], srgb: false });
-  const paintedNormalTex = asTexture(paintedNormal, { repeat: [10, 10], srgb: false });
+  const paintedRoughTex = asTexture(paintedRough, { repeat: [1, 1], srgb: false });
+  const paintedNormalTex = asTexture(paintedNormal, { repeat: [1, 1], srgb: false });
+  const laidRopeNormal = fine ? asTexture(normalFrom(ropeTexture({ size: 128 }), 1.2),
+    { repeat: [2, 48], srgb: false }) : null;
 
   const std = (o) => new THREE.MeshStandardMaterial(o);
   // A painted surface: the sourced colour, modulated.
@@ -547,6 +559,7 @@ function buildMaterials(cfg) {
   const painted = (key, o = {}) => std({
     map: paintedTex, color: col(key), roughness: PAINT[key].roughness, metalness: 0,
     roughnessMap: fine ? paintedRoughTex : null, normalMap: fine ? paintedNormalTex : null,
+    normalScale: new THREE.Vector2(0.14, 0.14),
     vertexColors: true, ...o,
   });
 
@@ -561,13 +574,15 @@ function buildMaterials(cfg) {
       // carries that value as its own baseline — see roughnessFromLuminance — and the
       // scalar and the map would otherwise multiply together and darken the whole deck's
       // shine twice over.
-      roughnessMap: fine ? asTexture(deckRough, { repeat: [1, 6], srgb: false }) : null,
-      normalMap: fine ? asTexture(deckNormal, { repeat: [1, 6], srgb: false }) : null,
+      roughnessMap: fine ? asTexture(deckRough, { repeat: deckRepeat, srgb: false }) : null,
+      normalMap: fine ? asTexture(deckNormal, { repeat: deckRepeat, srgb: false }) : null,
+      normalScale: new THREE.Vector2(0.35, 0.35),
     }),
     timber: std({
       map: oak, color: 0xffffff, roughness: 1, metalness: 0, vertexColors: true,
       roughnessMap: fine ? asTexture(oakFinish.rough, { srgb: false }) : null,
       normalMap: fine ? asTexture(oakFinish.normal, { srgb: false }) : null,
+      normalScale: new THREE.Vector2(0.2, 0.2),
     }),
     // The bright-wood spars are the one painted surface left out of the baked contact
     // shadows: a mast or a yard is a smooth taper with nothing else built close against
@@ -577,6 +592,7 @@ function buildMaterials(cfg) {
       map: brightWood, color: 0xffffff, roughness: 1, metalness: 0,
       roughnessMap: fine ? asTexture(brightFinish.rough, { srgb: false }) : null,
       normalMap: fine ? asTexture(brightFinish.normal, { srgb: false }) : null,
+      normalScale: new THREE.Vector2(0.2, 0.2),
     }),
     mastBlack: painted('mast_black'),
     black: painted('topside_black'),
@@ -644,15 +660,16 @@ function buildMaterials(cfg) {
     // wrong for cloth and is not: what it actually does is break up a flat colour, and
     // wet slop clothing needs that as much as a port lid does.
     crew: std({
-      map: paintedTex,
       vertexColors: true,
       color: 0xffffff,
       roughness: PAINT.slop_tarpaulin.roughness,
       metalness: 0,
     }),
 
-    standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness, metalness: 0 }),
-    runningRigging: std({ color: col('rigging_hemp'), roughness: PAINT.rigging_hemp.roughness, metalness: 0 }),
+    standingRigging: std({ color: col('rigging_tarred'), roughness: PAINT.rigging_tarred.roughness,
+      metalness: 0, normalMap: laidRopeNormal, normalScale: new THREE.Vector2(0.25, 0.25) }),
+    runningRigging: std({ color: col('rigging_hemp'), roughness: PAINT.rigging_hemp.roughness,
+      metalness: 0, normalMap: laidRopeNormal, normalScale: new THREE.Vector2(0.3, 0.3) }),
 
     glass: new THREE.MeshPhysicalMaterial({
       color: col('glazing'),
@@ -668,6 +685,11 @@ function buildMaterials(cfg) {
       color: col(key), roughness: 0.9, metalness: 0, side: THREE.DoubleSide,
     }),
   };
+
+  // Spar UV.v follows the timber's length; the source grain is horizontal.
+  for (const texture of [mats.mast.map, mats.mast.normalMap, mats.mast.roughnessMap]) {
+    if (texture) { texture.center.set(0.5, 0.5); texture.rotation = Math.PI / 2; }
+  }
 
   // Rope lines for the distant LOD, where a tube is not worth its triangles.
   mats.ropeLine = new THREE.LineBasicMaterial({ color: col('rigging_tarred'), transparent: true, opacity: 0.85 });
@@ -712,7 +734,7 @@ function buildMaterials(cfg) {
         { srgb: false }
       )
       : null,
-    normalScale: new THREE.Vector2(PAINT.hull_normal_scale.value, PAINT.hull_normal_scale.value),
+    normalScale: new THREE.Vector2(0.3, 0.3),
   });
 
   return mats;

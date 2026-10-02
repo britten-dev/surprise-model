@@ -1,0 +1,7 @@
+# Holystoned deck
+
+`holystoned-deck-v1.png` was created using the built-in image-generation tool on 2 October 2026 for this project. It is an artistic material, not a scan of an authenticated historical deck. Twelve planks are mapped across three metres in the browser; the existing ship dimensions remain sourced separately.
+
+Prompt:
+
+Use case: historical-scene. Asset type: seamless square base-color texture for a physically based 3D ship deck, 2048 x 2048. Create a photorealistic flat orthographic overhead material scan of exactly twelve parallel long deck planks running HORIZONTALLY from the left edge to the right edge, filling the entire square. This is scrubbed, salt-weathered, holystoned pale oak from an 1805 Royal Navy frigate. Real fine straight wood fibres, restrained grain, very few small knots, subtle individual board differences, fine charcoal-brown caulk seams between the twelve planks. Several staggered butt joints and tiny wooden treenail plugs near some joints. Muted warm grey tan, neither orange nor white, medium-light albedo. Matte DRY timber; moisture and lighting will be added in the 3D engine. Seamless repeating pattern on all four edges, low contrast without obvious repeating stains. Entire image in focus. Uniform neutral diffuse illumination, no directional light, NO cast shadows, no ambient occlusion baked in, no perspective, no objects, no text, no border, no large black spots. It must look like real photographed naval deck wood, not an illustration or rendered room.

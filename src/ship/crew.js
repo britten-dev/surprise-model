@@ -19,6 +19,7 @@
 // the mast, and everyone leans against the heel. A figure merged into the deck could not
 // do any of that.
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { deg, rng } from '../util/math.js';
@@ -71,7 +72,7 @@ const DRESS = {
  * Colour is written into the vertices rather than carried by materials, so a man can have
  * six colours about him and still be one draw call. See `mats.crew`.
  */
-function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
+function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0, detail = false } = {}) {
   const group = new THREE.Group();
   const dress = DRESS[rank] ?? DRESS.seaman;
   const r = rng(seed * 7 + 3);
@@ -112,14 +113,15 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
 
   const solid = [];
   const box = (w, hh, d, x, y, z, key) => {
-    const g = new THREE.BoxGeometry(w, hh, d);
+    const g = detail ? new RoundedBoxGeometry(w, hh, d, 2, Math.min(w, hh, d) * 0.16)
+      : new THREE.BoxGeometry(w, hh, d);
     g.translate(x, y + hh / 2, z);
     return paint(g, key, solid);
   };
   /** A tapered, six-sided solid: a limb, a trunk, a head. Cheaper than it looks and it
    *  is what stops every part of a man being a rectangle. */
   const taper = (rTop, rBot, hh, x, y, z, key, sides = 6) => {
-    const g = new THREE.CylinderGeometry(rTop, rBot, hh, sides, 1);
+    const g = new THREE.CylinderGeometry(rTop, rBot, hh, detail ? Math.max(12, sides) : sides, 1);
     g.translate(x, y + hh / 2, z);
     return paint(g, key, solid);
   };
@@ -132,7 +134,7 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
   const knee = deg(S('crew_knee_deg'));
   for (const sx of [-1, 1]) {
     const hipX = sx * stance / 2;
-    const t = new THREE.CylinderGeometry(legT * 0.42, legT * 0.5, thigh, 5, 1);
+    const t = new THREE.CylinderGeometry(legT * 0.42, legT * 0.5, thigh, detail ? 12 : 5, 1);
     t.translate(0, -thigh / 2, 0);
     t.rotateX(-knee);
     t.translate(hipX, legH, 0);
@@ -140,7 +142,7 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
 
     const kneeY = legH - Math.cos(knee) * thigh;
     const kneeZ = Math.sin(knee) * thigh;
-    const sh = new THREE.CylinderGeometry(legT * 0.34, legT * 0.42, shin, 5, 1);
+    const sh = new THREE.CylinderGeometry(legT * 0.34, legT * 0.42, shin, detail ? 12 : 5, 1);
     sh.translate(0, -shin / 2, 0);
     sh.rotateX(knee * 0.85);
     sh.translate(hipX, kneeY, kneeZ);
@@ -177,7 +179,22 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
   const neckY = legH + torsoH;
   taper(headW * 0.22, headW * 0.26, neckH, 0, neckY, 0, 'crew_skin', 5);
   const headY = neckY + neckH;
-  taper(headW * 0.36, headW * 0.44, headH * 0.82, 0, headY, 0, 'crew_skin');
+  if (detail) {
+    const head = new THREE.SphereGeometry(1, 16, 12);
+    head.scale(headW * 0.44, headH * 0.5, headW * 0.43);
+    head.translate(0, headY + headH * 0.42, 0);
+    paint(head, 'crew_skin', solid);
+    const nose = new THREE.SphereGeometry(1, 8, 6);
+    nose.scale(headW * 0.085, headH * 0.115, headW * 0.14);
+    nose.translate(0, headY + headH * 0.40, headW * 0.40);
+    paint(nose, 'crew_skin', solid);
+    for (const side of [-1, 1]) {
+      const ear = new THREE.SphereGeometry(1, 8, 6);
+      ear.scale(headW * 0.08, headH * 0.13, headW * 0.12);
+      ear.translate(side * headW * 0.43, headY + headH * 0.40, 0);
+      paint(ear, 'crew_skin', solid);
+    }
+  } else taper(headW * 0.36, headW * 0.44, headH * 0.82, 0, headY, 0, 'crew_skin');
   // The queue: the tarred pigtail every seaman of this date wore. It is one of the few
   // silhouette details that is unmistakably of this period and not of any other.
   {
@@ -229,7 +246,7 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
     pivot.position.set(sx * (shoulder / 2 - armT * 0.35), shoulderY, 0);
 
     const limb = [];
-    const sleeve = new THREE.CylinderGeometry(armT * 0.4, armT * 0.48, upper, 5, 1);
+    const sleeve = new THREE.CylinderGeometry(armT * 0.4, armT * 0.48, upper, detail ? 12 : 5, 1);
     sleeve.translate(0, -upper / 2, 0);
     paint(sleeve, dress.coat, limb);
     const upperMesh = new THREE.Mesh(mergeGeometries(limb), mats.crew);
@@ -240,12 +257,12 @@ function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0 } = {}) {
     elbow.name = 'elbow';
     elbow.position.set(0, -upper, 0);
     const lower = [];
-    const cuff = new THREE.CylinderGeometry(armT * 0.34, armT * 0.4, fore - hand, 5, 1);
+    const cuff = new THREE.CylinderGeometry(armT * 0.34, armT * 0.4, fore - hand, detail ? 12 : 5, 1);
     cuff.translate(0, -(fore - hand) / 2, 0);
     paint(cuff, dress.coat, lower);
     // The hand: bare skin at the end of a dark sleeve, which is what says the arm is an
     // arm and not a stick.
-    const fist = new THREE.CylinderGeometry(armT * 0.36, armT * 0.3, hand, 5, 1);
+    const fist = new THREE.CylinderGeometry(armT * 0.36, armT * 0.3, hand, detail ? 12 : 5, 1);
     fist.translate(0, -(fore - hand) - hand / 2, 0);
     paint(fist, 'crew_skin', lower);
     const foreMesh = new THREE.Mesh(mergeGeometries(lower), mats.crew);
@@ -340,7 +357,7 @@ export function buildCrew(cfg, mats, model, ctx) {
   // Every man gets a seed of his own, so that no two are the same height or build.
   let seed = 0;
   const place = (name, at, opts) => {
-    const f = figure(mats, { seed: seed++, ...opts });
+    const f = figure(mats, { seed: seed++, detail: cfg.surfaceDetail, ...opts });
     f.position.copy(at.position);
     // Heading first, then the lean of the pose about his own athwartships axis. YXZ
     // order is what makes that read the way it is written: turn him, then tip him.
@@ -364,7 +381,7 @@ export function buildCrew(cfg, mats, model, ctx) {
     const y = model.standingDeckAt(zWheel);
     const spread = S('crew_helm_spread') / 2;
     for (const sx of [-1, 1]) {
-      const f = figure(mats, { pose: 'helm', rank: heavy ? 'oilskin' : 'seaman', seed: seed++ });
+      const f = figure(mats, { pose: 'helm', rank: heavy ? 'oilskin' : 'seaman', seed: seed++, detail: cfg.surfaceDetail });
       f.position.set(sx * spread, y, zWheel + S('crew_helm_abaft_wheel'));
       f.rotation.order = 'YXZ';
       f.rotation.y = Math.PI;                       // facing forward, at the wheel

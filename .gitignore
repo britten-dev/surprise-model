@@ -2,6 +2,8 @@ node_modules/
 .DS_Store
 *.log
 build/*.glb
+build/*.blend*
+build/*-reference.png
 renders/*.png
 !build/.gitkeep
 !renders/.gitkeep

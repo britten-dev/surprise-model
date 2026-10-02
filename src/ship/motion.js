@@ -183,7 +183,7 @@ const WET_PARS = `
   // How wet this fragment is: everything the sea reached, and the decks always, because
   // in this weather a deck is never dry.
   float wetAmount() {
-    return uWetness * max(uAlwaysWet, smoothstep(uWetY + 0.8, uWetY - 1.2, vShipYWet));
+    return uWetness * max(uAlwaysWet, 1.0 - smoothstep(uWetY - 1.2, uWetY + 0.8, vShipYWet));
   }
 `;
 
@@ -268,6 +268,18 @@ export function createMotion(ship, opts = {}) {
       }
       if (aloft) v = v.replace('#include <project_vertex>', `#include <project_vertex>\n${ALOFT_BODY}`);
       shader.vertexShader = v;
+
+      if (sail) {
+        // Thin flax scatters light from behind it. Use the actual directional
+        // light, in view space like the shading normal, instead of uniform glow.
+        shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+          #if NUM_DIR_LIGHTS > 0
+            float throughCloth = pow(max(0.0, dot(-normal, directionalLights[0].direction)), 1.5);
+            reflectedLight.indirectDiffuse += diffuseColor.rgb * directionalLights[0].color
+              * throughCloth * 0.16;
+          #endif`);
+      }
 
       if (wet) {
         shader.fragmentShader = shader.fragmentShader

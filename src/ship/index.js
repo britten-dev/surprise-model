@@ -4,6 +4,7 @@
 // Each module is handed the LOD configuration, the materials and the hull model, and
 // returns a Group. No module invents a dimension; all of them read the spec.
 import * as THREE from 'three';
+export { preloadSurfaceAssets } from './surface-assets.js';
 import { lodConfig, LODS } from './lod.js';
 import { makeMaterials } from './materials.js';
 import { buildHull, hullModel } from './hull.js';
