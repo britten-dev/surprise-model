@@ -378,17 +378,17 @@
     "key": "quarter_gallery_length",
     "metric": "extent_z",
     "expected": 2.1336,
-    "actual": 2.1335983276367188,
+    "actual": 2.1336002349853516,
     "tolerance": 0.08,
     "source": "RECONSTRUCTED §12.3 lower rim about 7 ft, Steel: \"the lower-rim should be as long as possible\""
   },
   {
     "key": "rudder_height",
     "metric": "extent_y",
-    "expected": 5.3340000000000005,
-    "actual": 5.261899948120117,
-    "tolerance": 0.06,
-    "source": "RECONSTRUCTED §6 heel at the underside of the keel, head 13 ft 6 in above the LWL"
+    "expected": 8.3947,
+    "actual": 8.394700050354004,
+    "tolerance": 0.02,
+    "source": "RECONSTRUCTED §6 heel at the 14 ft 0.5 in aft draught plus head 13 ft 6 in above the LWL; corrected former 17 ft 6 in total which stopped above the keel"
   },
   {
     "key": "skid_beam_count",

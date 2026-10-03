@@ -218,6 +218,7 @@ motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 | Cordage | Shrouds and stays swing a little at the middle of their span, running rigging three times as far. |
 | Colours | The ensign, pennant and jack are re-evaluated on the processor each frame — they are a hundred and fifty vertices between them and the exact surface is worth the microsecond. |
 | The wheel | Turns with the helm, and the two men on it follow it with their shoulders. |
+| The rudder | The full-depth blade, pintle straps and tiller turn ±30° about the raked post. The post and gudgeons stay fixed. |
 | The watch | Every man stands upright in the world rather than square to a heeled deck, and each has a period of his own so that thirteen of them do not sway as one. |
 | Wetness | A sea comes aboard and she goes dark and glossy below the line it reached, then dries over about nine seconds. |
 

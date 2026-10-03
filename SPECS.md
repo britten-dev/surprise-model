@@ -417,7 +417,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `rudder_breadth_at_head` | 0.4572 | — | RECONSTRUCTED | §6 the main piece at the head, sided a little more than the post |
 | `rudder_thickness` | 0.254 | 0 ft 10 in | RECONSTRUCTED | §6 the main piece moulded, from the measured sternpost siding of 1 ft 1 in |
 | `rudder_head_above_wl` | 4.1148 | 13 ft 6 in | RECONSTRUCTED | §2.2 the head carried up through the counter to the tiller under the quarterdeck |
-| `rudder_height` | 5.334 | 17 ft 6 in | RECONSTRUCTED | §6 heel at the underside of the keel, head 13 ft 6 in above the LWL |
+| `rudder_height` | 8.3947 | 27 ft 6.5 in | RECONSTRUCTED | §6 heel at the 14 ft 0.5 in aft draught plus head 13 ft 6 in above the LWL; corrected former 17 ft 6 in total which stopped above the keel |
 | `rudder_post_rake_deg` | 2.7 | — | MEASURED | §6 sternpost rake 0.67 ft over 14 ft of height, taken on the rudder's after edge |
 | `rudder_pintle_count` | 5 | — | RECONSTRUCTED | §6 five pairs of pintles and gudgeons on a rudder of this depth |
 | `rudder_iron_width` | 0.1016 | 0 ft 4 in | RECONSTRUCTED | §6 the straps of the pintles and gudgeons |

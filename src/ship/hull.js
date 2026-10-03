@@ -181,7 +181,8 @@ export function hullModel() {
 
   // The keel: a straight timber, dead level, running between the forefoot and the
   // sternpost. The rabbet — where the planking lands — rises above it toward both ends,
-  // and the wedge between the two is the deadwood.
+  // and the wedge between the two is the deadwood. Aft, that deadwood continues down
+  // to the keel underneath the near-vertical sternpost; it is not a second forefoot.
   //
   // Without this the hull's bottom followed the rabbet all the way up, so she had no
   // keel, no forefoot and no deadwood, her underwater body was a smooth canoe with both
@@ -190,16 +191,13 @@ export function hullModel() {
   const keelBottomY = -SPEC.hull_draught_aft.value;
   const keelHalf = SPEC.keel_straight_length.value / 2;
   const zKeelFwd = -keelHalf + (zFwd + zAft) / 2;
-  const zKeelAft = keelHalf + (zFwd + zAft) / 2;
 
   function keelBottomAt(z) {
     const rab = rabbetY(z);
-    if (z >= zKeelFwd && z <= zKeelAft) return keelBottomY;
-    // Beyond the ends of the keel the stem and the post carry the bottom up, meeting the
-    // rabbet at the extremities.
-    const t = z < zKeelFwd
-      ? clamp((zKeelFwd - z) / (zKeelFwd - zFwd), 0, 1)
-      : clamp((z - zKeelAft) / (zAft - zKeelAft), 0, 1);
+    if (z >= zKeelFwd) return keelBottomY;
+    // Only the forefoot rises to meet the stem. Mirroring that rise aft cut away
+    // the after deadwood and made the rudder hang three metres above the keel.
+    const t = clamp((zKeelFwd - z) / (zKeelFwd - zFwd), 0, 1);
     return lerp(keelBottomY, Math.max(keelBottomY, rab - SPEC.keel_moulding.value * 0.3), t * t);
   }
 

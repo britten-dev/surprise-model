@@ -702,7 +702,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
 function buildRudder(cfg, mats, model, sp, paintV, group) {
   const zAft = model.zAft;
   const rake = Math.tan(deg(SPEC.rudder_post_rake_deg.value));
-  const yHeel = sp.f.keel_bottom;
+  const yHeel = -SPEC.hull_draught_aft.value;
   const yHead = SPEC.rudder_head_above_wl.value;
   const t = SPEC.rudder_thickness.value / 2;
   const bHeel = SPEC.rudder_breadth_at_heel.value;
@@ -714,6 +714,29 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
     [bHeel, bHeel * 0.92, bHeel * 0.62, SPEC.rudder_breadth_at_head.value],
   );
   const zFwd = (y) => zAft + SPEC.keel_siding.value * 0.25 + rake * (y - yHeel);
+
+  // The fixed post carries the hinge down to the after deadwood. Its after face
+  // follows the same rake as the blade, with room for the leading corners to
+  // sweep past at full helm. The forward face is buried in the hull closure.
+  const gap = SPEC.keel_siding.value * 0.25;
+  const postShape = new THREE.Shape();
+  postShape.moveTo(-(zAft - gap), yHeel);
+  postShape.lineTo(-(zFwd(yHeel) - gap), yHeel);
+  postShape.lineTo(-(zFwd(yHead) - gap), yHead);
+  postShape.lineTo(-(zAft - gap), yHead);
+  postShape.closePath();
+  const postGeometry = new THREE.ExtrudeGeometry(postShape, {
+    depth: SPEC.keel_siding.value, bevelEnabled: false, steps: 1,
+  });
+  postGeometry.translate(0, 0, -SPEC.keel_siding.value / 2);
+  postGeometry.rotateY(Math.PI / 2);
+  const postPos = postGeometry.attributes.position, postUv = postGeometry.attributes.uv;
+  for (let i = 0; i < postPos.count; i++) {
+    postUv.setXY(i, postPos.getZ(i) / PAINT.hull_map_metres.value, paintV(postPos.getY(i)));
+  }
+  const post = new THREE.Mesh(postGeometry, mats.hull);
+  post.name = 'sternpost';
+  group.add(post);
   const hinge = new THREE.Group();
   hinge.name = 'rudder_hinge';
   hinge.position.set(0, yHeel, zFwd(yHeel));
@@ -736,13 +759,19 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
   const pos = [], uvs = [], idx = [];
   // The rudder is coppered below the waterline and blacked above it like the rest of the
   // ship, so its V comes from the hull's paint coordinate, not from its own length.
-  for (const L of levels) {
-    for (const [x, z] of ring(L)) { pos.push(x, L.y, z); uvs.push(z / PAINT.hull_map_metres.value, paintV(L.y)); }
-  }
-  for (let i = 0; i < levels.length - 1; i++) {
-    for (let k = 0; k < 4; k++) {
-      const kn = (k + 1) % 4;
-      const a = i * 4 + k, b = i * 4 + kn, c = a + 4, d = (i + 1) * 4 + kn;
+  // Separate vertices along the four edges keep the plank faces flat, instead
+  // of shading this narrow timber as a swollen, rounded paddle.
+  for (let k = 0; k < 4; k++) {
+    const start = pos.length / 3;
+    for (const L of levels) {
+      const corners = ring(L);
+      for (const corner of [k, (k + 1) % 4]) {
+        const [x, z] = corners[corner];
+        pos.push(x, L.y, z); uvs.push(z / PAINT.hull_map_metres.value, paintV(L.y));
+      }
+    }
+    for (let i = 0; i < levels.length - 1; i++) {
+      const a = start + i * 2, b = a + 1, c = a + 2, d = a + 3;
       idx.push(a, c, b, b, c, d);
     }
   }
@@ -773,9 +802,29 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
       // The gudgeon strap runs forward onto the post, the pintle strap aft onto the
       // blade, and the pin stands between them on the axis of the post.
       for (const [zc, len] of [[z0 - 0.30, 0.58], [z0 + 0.34, 0.66]]) {
-        const b = block(t * 2 + th * 2, w, len, 1);
+        const fixedStrap = zc < z0;
+        const b = block((fixedStrap ? SPEC.keel_siding.value : t * 2) + th * 2, w, len, 1);
+        if (!fixedStrap) {
+          const p = b.attributes.position;
+          for (let j = 0; j < p.count; j++) {
+            const half = lerp(t, t * .55, clamp((zc + p.getZ(j) - z0) / bl(y), 0, 1)) + th;
+            p.setX(j, Math.sign(p.getX(j)) * half);
+          }
+          b.computeVertexNormals();
+        }
         b.translate(0, y - w / 2, zc);
-        (zc < z0 ? fixed : moving).push(b);
+        (fixedStrap ? fixed : moving).push(b);
+      }
+      // Rivet heads on both faces of the moving straps. Their centres follow
+      // the blade's taper so they sit on the iron rather than floating beside it.
+      for (const fraction of [.18, .42, .66]) for (const side of [-1, 1]) {
+        const aft = Math.min(.60, bl(y) * fraction);
+        const half = lerp(t, t * .55, aft / bl(y)) + th * 1.1;
+        const bolt = new THREE.CylinderGeometry(th * .55, th * .65, th * .35,
+          Math.max(6, Math.round(cfg.latheSegments / 2)));
+        bolt.rotateZ(Math.PI / 2);
+        bolt.translate(side * half, y - w / 2, z0 + aft);
+        moving.push(bolt);
       }
       const pin = new THREE.CylinderGeometry(th * 1.7, th * 1.7, w * 1.9, Math.max(5, Math.round(cfg.latheSegments / 2)));
       pin.rotateX(Math.atan(rake));

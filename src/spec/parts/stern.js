@@ -170,7 +170,7 @@ export const STERN_SPEC = {
   rudder_breadth_at_head: m(ft(1, 6), 'RECONSTRUCTED §6 the main piece at the head, sided a little more than the post', { noAudit: true }),
   rudder_thickness: m(ft(0, 10), 'RECONSTRUCTED §6 the main piece moulded, from the measured sternpost siding of 1 ft 1 in', { noAudit: true }),
   rudder_head_above_wl: m(ft(13, 6), 'RECONSTRUCTED §2.2 the head carried up through the counter to the tiller under the quarterdeck', { noAudit: true }),
-  rudder_height: m(ft(17, 6), 'RECONSTRUCTED §6 heel at the underside of the keel, head 13 ft 6 in above the LWL', { tolerance: 0.06 }),
+  rudder_height: m(ft(27, 6.5), 'RECONSTRUCTED §6 heel at the 14 ft 0.5 in aft draught plus head 13 ft 6 in above the LWL; corrected former 17 ft 6 in total which stopped above the keel', { tolerance: 0.02 }),
   rudder_post_rake_deg: n(2.7, 'MEASURED §6 sternpost rake 0.67 ft over 14 ft of height, taken on the rudder\'s after edge', { noAudit: true }),
   rudder_pintle_count: n(5, 'RECONSTRUCTED §6 five pairs of pintles and gudgeons on a rudder of this depth', { noAudit: true }),
   rudder_iron_width: m(ft(0, 4), 'RECONSTRUCTED §6 the straps of the pintles and gudgeons', { noAudit: true }),
