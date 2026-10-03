@@ -3,48 +3,48 @@
     "name": "surprise-hero-full.glb",
     "lod": "hero",
     "sails": "full",
-    "tris": 838078,
-    "verts": 967759,
+    "tris": 867478,
+    "verts": 980884,
     "meshes": 459,
     "lines": 1734,
     "materials": 80,
-    "kb": 43035,
+    "kb": 43772,
     "inBudget": true
   },
   {
     "name": "surprise-hero-topsails.glb",
     "lod": "hero",
     "sails": "topsails",
-    "tris": 804318,
-    "verts": 948419,
+    "tris": 833718,
+    "verts": 961544,
     "meshes": 450,
     "lines": 1734,
     "materials": 80,
-    "kb": 42223,
+    "kb": 42960,
     "inBudget": true
   },
   {
     "name": "surprise-hero-storm.glb",
     "lod": "hero",
     "sails": "storm",
-    "tris": 799508,
-    "verts": 947334,
+    "tris": 828908,
+    "verts": 960459,
     "meshes": 452,
     "lines": 1734,
     "materials": 80,
-    "kb": 42841,
+    "kb": 43578,
     "inBudget": true
   },
   {
     "name": "surprise-hero-furled.glb",
     "lod": "hero",
     "sails": "furled",
-    "tris": 784342,
-    "verts": 936980,
+    "tris": 813742,
+    "verts": 950105,
     "meshes": 443,
     "lines": 1734,
     "materials": 79,
-    "kb": 41740,
+    "kb": 42477,
     "inBudget": true
   },
   {
@@ -56,7 +56,7 @@
     "meshes": 212,
     "lines": 782,
     "materials": 21,
-    "kb": 7110,
+    "kb": 7111,
     "inBudget": true
   },
   {
@@ -68,7 +68,7 @@
     "meshes": 208,
     "lines": 782,
     "materials": 21,
-    "kb": 7091,
+    "kb": 7092,
     "inBudget": true
   },
   {
@@ -80,7 +80,7 @@
     "meshes": 211,
     "lines": 782,
     "materials": 21,
-    "kb": 7182,
+    "kb": 7183,
     "inBudget": true
   },
   {
@@ -92,7 +92,7 @@
     "meshes": 204,
     "lines": 782,
     "materials": 21,
-    "kb": 7080,
+    "kb": 7081,
     "inBudget": true
   },
   {
@@ -116,7 +116,7 @@
     "meshes": 75,
     "lines": 272,
     "materials": 11,
-    "kb": 1021,
+    "kb": 1022,
     "inBudget": true
   }
 ]

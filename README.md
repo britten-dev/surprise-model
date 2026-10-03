@@ -144,6 +144,11 @@ ship takes a few hundred milliseconds, so it belongs at a loading screen and not
 frame — but once built, switching sail state is another build, not another download,
 which is what lets a ship shorten sail in front of you.
 
+For an exterior scene without people, use `buildShip({ crew: false, ...options })`
+and preload with `preloadSurfaceAssets({ crew: false })`. This skips figure
+construction and downloads only the detailed helm fittings. The default remains
+`crew: true` for existing hosts. See [rigging and cost notes](docs/research/11-rigging-bindings.md).
+
 Other entry points, for a host that wants more than the finished object:
 
 | import | gives |

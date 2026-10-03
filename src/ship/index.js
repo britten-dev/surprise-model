@@ -47,8 +47,9 @@ export { createMotion } from './motion.js';
  * @param {string} [opts.ports] 'open' | 'shut'. Follows the weather unless it is given.
  *   It is separable because the two are not quite the same claim: a ship can be under her
  *   topsails in a rising sea with her ports already in.
+ * @param {boolean} [opts.crew=true] Omit visible figures and their rendering cost when false.
  */
-export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState } = {}) {
+export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState, crew = true } = {}) {
   if (!SAIL_STATES.includes(sails)) {
     throw new Error(`unknown sail state "${sails}" — expected one of ${SAIL_STATES.join(', ')}`);
   }
@@ -60,7 +61,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   }
   const heavyWeather = weather === undefined ? sails === 'storm' : weather === 'heavy';
   const portsShut = portState === undefined ? heavyWeather : portState === 'shut';
-  const cfg = lodConfig(lod);
+  const cfg = { ...lodConfig(lod), ...(crew ? {} : { crew: false }) };
   const mats = makeMaterials(cfg);
   const model = hullModel();
 
@@ -70,6 +71,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   ship.userData.sails = sails;
   ship.userData.ports = portsShut ? 'shut' : 'open';
   ship.userData.weather = heavyWeather ? 'heavy' : 'fair';
+  ship.userData.visibleCrew = !!cfg.crew;
 
   // The hull first, with the gunports cut out of the loft grid as it is built.
   const ports = portLayout(model);

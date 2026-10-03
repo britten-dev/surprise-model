@@ -4,7 +4,7 @@ import { preloadAuthoredAssets } from './authored-assets.js';
 let deckImage = null;
 let pending;
 export function getDeckImage() { return deckImage; }
-export function preloadSurfaceAssets({ detail = true } = {}) {
+export function preloadSurfaceAssets({ detail = true, crew = true } = {}) {
   if (!pending) pending = new Promise((resolve) => {
     const image = new Image();
     const deadline = setTimeout(() => resolve(false), 8000);
@@ -12,5 +12,5 @@ export function preloadSurfaceAssets({ detail = true } = {}) {
     image.onerror = () => { clearTimeout(deadline); resolve(false); };
     image.src = new URL('../assets/holystoned-deck-v1.png', import.meta.url).href;
   });
-  return detail ? Promise.all([pending, preloadAuthoredAssets()]) : pending;
+  return detail ? Promise.all([pending, preloadAuthoredAssets({ crew })]) : pending;
 }

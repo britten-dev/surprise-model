@@ -1,14 +1,16 @@
 import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 
-let library = null;
-let pending;
-export async function preloadAuthoredAssets() {
-  if (!pending) pending = (async () => {
+const libraries = new Map(), pending = new Map();
+export async function preloadAuthoredAssets({ crew = true } = {}) {
+  const key = crew ? 'full' : 'fittings';
+  if (!pending.has(key)) pending.set(key, (async () => {
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), 25000);
     try {
-      const response = await fetch(new URL('../assets/quarterdeck-detail.glb', import.meta.url), { signal: abort.signal });
+      const url = crew ? new URL('../assets/quarterdeck-detail.glb', import.meta.url)
+        : new URL('../assets/quarterdeck-fittings.glb', import.meta.url);
+      const response = await fetch(url, { signal: abort.signal });
       if (!response.ok) throw new Error(`Detailed ship assets: HTTP ${response.status}`);
       const bytes = await response.arrayBuffer();
       const [{ GLTFLoader },{ MeshoptDecoder }] = await Promise.all([
@@ -16,7 +18,8 @@ export async function preloadAuthoredAssets() {
         import('three/addons/libs/meshopt_decoder.module.js'),
       ]);
       const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes, '');
-      library = gltf.scene;
+      const library = gltf.scene;
+      libraries.set(key, library);
       library.traverse(o => {
         if (!o.isMesh) return;
         o.castShadow = o.receiveShadow = true;
@@ -33,13 +36,13 @@ export async function preloadAuthoredAssets() {
       console.warn('Using the procedural ship detail.', error.message);
       return false;
     } finally { clearTimeout(timeout); }
-  })();
-  return pending;
+  })());
+  return pending.get(key);
 }
 
 export function authoredPart(name, cfg) {
   if (cfg.textureSize < 1024) return null;
-  const original = library?.getObjectByName(name);
+  const original = libraries.get('full')?.getObjectByName(name) ?? libraries.get('fittings')?.getObjectByName(name);
   if (!original) return null;
   const part = original.clone(true);
   part.userData.authored = true;

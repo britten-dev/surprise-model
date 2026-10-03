@@ -4,6 +4,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { compressAuthored } from './compress-authored.mjs';
+import { extractFittings } from './extract-fittings.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 await mkdir(new URL('../build/', import.meta.url), { recursive: true });
 await writeFile(new URL('../build/hero-dimensions.json', import.meta.url),
@@ -14,3 +15,4 @@ const result = spawnSync(blender, ['--background', '--python-exit-code', '1', '-
 });
 if (result.status !== 0) throw new Error(`Blender asset build failed: ${result.status ?? result.signal}`);
 await compressAuthored();
+await extractFittings();

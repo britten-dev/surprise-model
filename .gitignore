@@ -8,6 +8,7 @@ build/* colour.png
 build/* normal.png
 build/* roughness-metal.png
 build/hero-dimensions.json
+build/crew-prototype/
 __pycache__/
 renders/*.png
 !build/.gitkeep

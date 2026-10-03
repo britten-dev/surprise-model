@@ -18,6 +18,7 @@ import { deg, lerp, clamp } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 import { buildSails } from './sails.js';
 import { channelAnchors } from './channels.js';
+import { mastWooldings, yardBindings, woodenLeadBlock } from './rig-detail.js';
 
 const S = (k) => SPEC[k].value;
 
@@ -184,6 +185,7 @@ function buildMast(m, cfg, mats, group) {
   // Lower masts were left bright — varnished, not painted — with the mastheads black.
   const lower = stick(m.lowerLength, m.lowerDia, TAPER.mast, 0, mats.mast);
   lower.name = `${m.name}_lower_mast`;
+  lower.add(mastWooldings(m,cfg,mats,t=>(m.lowerDia/2)*taperAt(TAPER.mast,t)));
   audits(lower, [`${m.name}_mast_rake_deg`, 'rake_deg']);
   group.add(lower);
 
@@ -272,6 +274,7 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
   mesh.position.copy(p);
   mesh.rotation.y = deg(braceDeg);
   mesh.name = name;
+  mesh.add(yardBindings(length,maxDia,cfg,mats));
   // `self`, because this yard will have its sail bent to it: sails.js hangs each square
   // sail on its own yard so that bracing the yard brings its canvas round. Measured over
   // its descendants instead, a yard is as long as the sail hanging from it.
@@ -761,7 +764,25 @@ function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
     }
     // Halliards down to the deck at the mast.
     for (const m of geo.masts) {
-      add(m.along(m.topmastHoundsH), new THREE.Vector3(0.4, model.featureYAt(m.z0).deck + 0.4, m.z0 + 0.5), 0.02);
+      if(cfg.textureSize<2048) {
+        add(m.along(m.topmastHoundsH), new THREE.Vector3(.4,model.featureYAt(m.z0).deck+.4,m.z0+.5),.02);
+        continue;
+      }
+      const z=m.z0+S('fife_rail_radius')*.35;
+      const y=model.standingDeckAt(z)+S('deck_camber')+S('fife_rail_height')+.12;
+      const x=S('fife_rail_radius');
+      const guide=woodenLeadBlock(cfg,mats);guide.position.set(x,y,z);
+      group.add(guide);
+      // Lead through the sheave, then around the supporting rail/post. This is
+      // a visual deck lead; the purchase above remains simplified.
+      add(m.along(m.topmastHoundsH),new THREE.Vector3(x,y,z-.085),.012);
+      const turn=[];
+      for(let i=0;i<=12;i++) {
+        const a=Math.PI+i/12*Math.PI;
+        turn.push(new THREE.Vector3(x,y+Math.sin(a)*.087,z+Math.cos(a)*.087));
+      }
+      curves.push(new THREE.CatmullRomCurve3(turn));
+      add(new THREE.Vector3(x,y,z+.085),new THREE.Vector3(x-.15,y-.12,z+.025),.01);
     }
   }
 

@@ -25,6 +25,11 @@ The crew are fictional artistic reconstructions. No named person's likeness is
 represented. This GLB is rendered interactively in the browser; it is not an
 offline render used as a backdrop.
 
+`quarterdeck-fittings.glb` is a reproducible subset made by
+`node tools/extract-fittings.mjs`. It contains only the wheel, its stand and
+the binnacle, with the original vertices and materials. Hosts omitting visible
+crew can use it without loading facial, garment or hair assets.
+
 # Photographic facial projection
 
 `sailor-face-projection-v1.png` was made with the built-in image generation tool

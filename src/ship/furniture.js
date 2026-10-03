@@ -18,6 +18,7 @@
 // calls.
 import * as THREE from 'three';
 import { authoredPart } from './authored-assets.js';
+import { belayedHank } from './rig-detail.js';
 import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -209,6 +210,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
   // Canvas work: tarpaulins over the hatches, gripes over the boats. Tarred cloth, so it
   // takes the same near-black as the port lids rather than the timber's oak.
   const canvasWork = [];
+  const belayedRopes = [];
   const netting = [];
 
   const detailWheel = authoredPart('authored_wheel', cfg);
@@ -727,12 +729,22 @@ export function buildFurniture(cfg, mats, model, ctx) {
     const pl = SPEC.belaying_pin_length.value;
     const pr = SPEC.belaying_pin_diameter.value / 2;
     const spacing = SPEC.belaying_pin_spacing.value;
+    const pin=(x,y,z)=>new THREE.LatheGeometry([
+      [0,0],[pr*.64,pl*.015],[pr*.68,pl*.50],[pr*.78,pl*.56],
+      [pr*.75,pl*.59],[pr,pl*.65],[pr*1.05,pl*.84],[pr*.78,pl*.96],[0,pl]
+    ].map(([r,h])=>new THREE.Vector2(r,h)),cfg.latheSegments).translate(x,y,z);
     const n = Math.max(2, Math.round((zQdBreak - zFcBreak) / spacing));
     for (const side of [1, -1]) {
       for (let i = 1; i < n; i++) {
         const p = model.pointAt(lerp(zFcBreak, zQdBreak, i / n), 'rail', side);
-        timber.push(cyl(pr, pr * 0.7, pl, cfg.sparRadial,
-          { x: p.x - side * SPEC.side_thickness.value * 0.5, y: p.y - pl * 0.35, z: p.z }));
+        const x=p.x-side*SPEC.side_thickness.value*.5;
+        timber.push(pin(x,p.y-pl*.35,p.z));
+        if(cfg.textureSize>=2048 && i%3===1) {
+          // Hang inboard; mirror the entire hank rather than its vertex winding.
+          const hank=belayedHank(0,0,0,pr,i);
+          hank.rotateY(-side*Math.PI/2).translate(x,p.y+.035,p.z);
+          belayedRopes.push(hank);
+        }
       }
     }
 
@@ -755,8 +767,9 @@ export function buildFurniture(cfg, mats, model, ctx) {
       timber.push(bx(2 * half + rt, rt * 0.7, rt, { y: yRail - rt * 0.7, z }));
       const nPin = Math.max(4, Math.round(2 * half / spacing));
       for (let i = 0; i < nPin; i++) {
-        timber.push(cyl(pr, pr * 0.7, pl, cfg.sparRadial,
-          { x: lerp(-half, half, (i + 0.5) / nPin), y: yRail - pl * 0.5, z }));
+        const x=lerp(-half,half,(i+.5)/nPin);
+        timber.push(pin(x,yRail-pl*.5,z));
+        if(cfg.textureSize>=2048 && i%2===0) belayedRopes.push(belayedHank(x,yRail+.03,z,pr,i));
       }
     }
   }
@@ -808,6 +821,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
   bucket(copper, mats.copper, 'galley_funnel');
   bucket(black, mats.black, 'furniture_black');
   bucket(canvasWork, mats.black, 'battened_hatches');
+  bucket(belayedRopes, mats.runningRigging, 'belayed_rope_hanks');
   bucket(glass, mats.glass, 'skylight_glazing');
 
   if (netting.length) {
