@@ -72,6 +72,8 @@ check(crewMoved >= probe.crew.length - 1,
   `crew that moved: ${crewMoved} of ${probe.crew.length}`);
 check(probe.wheel !== null && probe.wheel > 1e-6, `wheel turned by ${probe.wheel?.toFixed(4)} rad`);
 
+check(probe.rudder > 0.1, `rudder turned by ${probe.rudder?.toFixed(4)} rad`);
+
 // The yards, and the canvas on them. A sail that is not parented to a yard cannot be
 // braced, and a rig that cannot be braced cannot answer a change of wind — which is the
 // failure this pair of checks exists to catch, because nothing else would notice it.

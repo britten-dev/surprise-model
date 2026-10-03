@@ -176,17 +176,16 @@ export const PAINT = {
   copper_line_above_wl_v: { value: 0.12, source: 'MEASURED §8 the main wale\'s lower edge is 15.2 ft above the moulded base line, 2.4 ft above the load waterline; the sheathing was carried to 2 ft 6 in - 3 ft, so the two coincide' },
 
   // The sheathing pattern. A sheet was 4 ft by 14 in, laid like slates with each course
-  // overlapping the one below and each sheet the one ahead. Over a hull 40 m long and
-  // a sheathed band about 3.5 m deep at the midship station, that is roughly these
-  // counts across the base map.
-  copper_sheets_along: { value: 22, source: 'SECONDARY §8 sheets 4 ft on the long edge, laid fore and aft over 121 ft of waterline; counted across the hull base map' },
+  // overlapping the one below and each sheet the one ahead. Horizontal counts refer
+  // to one 40 ft texture repeat; vertical counts cover the whole paint V coordinate.
+  copper_sheets_along: { value: 10, source: 'SECONDARY §8 ten sheets 4 ft long fit one 40 ft hull texture repeat; UV scale and sheet count must be changed together' },
   copper_sheets_up: { value: 26, source: 'SECONDARY §8 sheets 14 in on the short edge; the courses that fit between the keel and the sheathing line, counted over the whole V range of the base map' },
   // How far a lap and a nail head stand off the sheet, as a fraction of the base map's
   // luminance range. These drive the height map the hull's normal map is made from, so
   // they decide whether the sheathing has relief or is a printed pattern.
   copper_lap_relief: { value: 0.34, source: 'RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation' },
   copper_nail_relief: { value: 0.55, source: 'RECONSTRUCTED §8 a raised nail head; tuned so the nails catch the sun at beam distance' },
-  hull_map_metres: { value: 3.0, source: 'RECONSTRUCTED §8 how many metres of the ship\'s side one width of the hull map covers. It is what makes the planking read at the right size, and it is also the unit the weathering counts in: a streak drawn once in the map is drawn thirteen times along her' },
+  hull_map_metres: { value: 12.192, source: 'RECONSTRUCTED §8 one 40 ft repeat holds ten 4 ft copper sheets or two 20 ft planks; weathering density is counted per metre within this repeat' },
   hull_plank_relief: { value: 0.55, source: 'RECONSTRUCTED §8 how much of the planking\'s own light and shade is read as height for the normal map. At 1.0 every board stands a hand\'s breadth proud of the one beside it; this is the strength at which a seam catches the sun and a plank does not' },
   hull_normal_scale: { value: 1.15, source: 'RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance' },
   copper_pattern_depth: { value: 0.62, source: 'RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance' },

@@ -390,7 +390,7 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
   });
   // The wear that cannot live in the map.
   //
-  // The hull map repeats every three metres along her, which is what makes the planking
+  // The hull map repeats every 12.192 metres along her, which is what makes the planking
   // the right size and is also its limit: everything drawn in it is identical at the bow
   // and amidships. A real ship is not. Her bow is in the sea every time she pitches and
   // its paint never lasts a commission, while her middle comes off best of the three.

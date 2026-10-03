@@ -97,20 +97,25 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
       // it stands proud of the planking at one edge and sinks into it at the other.
       const lean = Math.atan2(Math.abs(sill.x) - Math.abs(head.x), head.y - sill.y) * side;
 
-      // The lining plugs the opening from inboard. It is deliberately a little smaller
-      // than the hole and set well inside it, so what shows through the port is red
-      // painted timber in shadow — which is what a gunport looks like from outboard.
-      const lining = new THREE.Mesh(
-        new THREE.BoxGeometry(depth * 1.6, h * 0.97, w * 0.97),
-        mats.red
+      // Four reveals leave the opening empty. A solid red plug here made every
+      // cannon appear to pass through a painted panel instead of an open gunport.
+      const trim = SPEC.gunport_lid_thickness.value;
+      const liningW = (p.cutZ1 ?? p.z + w / 2) - (p.cutZ0 ?? p.z - w / 2);
+      const centreZ = ((p.cutZ0 ?? p.z - w / 2) + (p.cutZ1 ?? p.z + w / 2)) / 2;
+      const frame = new THREE.Matrix4().compose(
+        new THREE.Vector3((Math.abs(sill.x) + Math.abs(head.x)) / 2 * side - depth / 2 * side,
+          (sill.y + head.y) / 2, centreZ),
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), lean),
+        new THREE.Vector3(1, 1, 1),
       );
-      lining.position.set(
-        (Math.abs(sill.x) + Math.abs(head.x)) / 2 * side - depth * 0.95 * side,
-        (sill.y + head.y) / 2,
-        p.z
-      );
-      lining.rotation.z = lean;
-      linings.push(lining);
+      for (const [height, width, dy, dz] of [
+        [trim, liningW, -h / 2, 0], [trim, liningW, h / 2, 0],
+        [h, trim, 0, -liningW / 2], [h, trim, 0, liningW / 2],
+      ]) {
+        const g = new THREE.BoxGeometry(depth, height, width);
+        g.translate(0, dy, dz); g.applyMatrix4(frame);
+        linings.push(new THREE.Mesh(g, mats.red));
+      }
 
       if (cfg.portLids) {
         const t = SPEC.gunport_lid_thickness.value;

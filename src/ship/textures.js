@@ -137,35 +137,50 @@ export function copperSheathing({
     g.fillRect(0, 0, size, size);
 
     const w = size / sheetsX, h = size / sheetsY;
-    // The lap is a real width, not a hairline: about a tenth of the short side of a
-    // sheet, which is what a 14 in sheet lapping an inch and a half comes to.
-    const lip = Math.max(1.5, h * 0.11);
-    // Big enough to survive a mipmap. Below about two pixels a nail averages away to
-    // nothing and the copper goes flat again, which is exactly what it used to do.
-    const dot = Math.max(2, size / 420);
+    const baseRGB = [1, 3, 5].map(i => parseInt(base.slice(i, i + 2), 16));
+    // Most of the overlap is hidden beneath its neighbour. Only the thin edge
+    // catches a shadow; a broad dark band makes sheet metal look like brickwork.
+    const lip = Math.max(1, h * 0.035);
+    // Roughly a centimetre across on a four-foot sheet. Nails should average away
+    // at a distance rather than becoming oversized points of reflected light.
+    const dot = Math.max(1.2, w * 0.009);
 
     for (let y = 0; y < sheetsY; y++) {
-      for (let x = 0; x < sheetsX; x++) {
+      for (let x = -1; x < sheetsX; x++) {
         // Every other course is offset half a sheet, as they were actually laid.
         const px = (x + (y % 2) * 0.5) * w;
         const py = y * h;
 
         // The face of the sheet, each with its own weathering.
         if (!height) {
-          g.save();
-          g.filter = `brightness(${(1 + (r() - 0.5) * 2 * variation).toFixed(3)})`;
-          g.fillStyle = base;
+          const shade = 1 + (r() - 0.5) * 2 * variation;
+          g.fillStyle = `rgb(${baseRGB.map(v => Math.min(255, Math.round(v * shade))).join(',')})`;
           g.fillRect(px, py, w, h);
-          g.restore();
-          g.filter = 'none';
         } else {
           r(); // keep the two passes in step so the height field matches the colour
         }
 
+        // Soft oxidation patches and shallow irregularities in beaten sheet.
+        // The seeded positions match in colour and relief; no baked sun direction.
+        g.save();
+        g.beginPath(); g.rect(px, py, w, h); g.clip();
+        for (let k = 0; k < 4; k++) {
+          const cx = px + r() * w, cy = py + r() * h;
+          const radius = h * (0.5 + r());
+          const light = r() > 0.5;
+          const patch = g.createRadialGradient(cx, cy, 0, cx, cy, radius);
+          patch.addColorStop(0, height
+            ? `rgba(${light ? '145,145,145' : '112,112,112'},0.35)`
+            : `rgba(${light ? '157,111,73' : '49,53,38'},0.18)`);
+          patch.addColorStop(1, 'rgba(128,128,128,0)');
+          g.fillStyle = patch; g.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+        }
+        g.restore();
+
         // The lap. A shadowed band along the top and the leading edge, where the sheet
         // above and ahead lies over this one, and a bright band along the bottom and the
         // trailing edge, where this sheet's own doubled edge stands proud.
-        g.globalAlpha = height ? 1 : 0.9;
+        g.globalAlpha = height ? 1 : 0.55;
         g.fillStyle = height ? grey(0.5 - lap * 0.5) : edge;
         g.fillRect(px, py, w, lip);
         g.fillRect(px, py, lip, h);

@@ -25,7 +25,7 @@
 // practice painted the whole stern black and kept the ochre for the carving; the gunport
 // strake therefore runs aft along the topside and stops at the quarter piece.
 import * as THREE from 'three';
-import { SPEC } from '../spec/spec.js';
+import { SPEC, PAINT } from '../spec/spec.js';
 import { monotoneCubic } from '../util/interp.js';
 import { mergeGeometries, weldByPosition } from '../util/loft.js';
 import { sweep, block, spar } from '../util/solids.js';
@@ -144,7 +144,7 @@ function gridGeometry(rows, { mirror = true, inward = false } = {}) {
         const p = rows[i][k].p;
         if (k > 0) run += p.distanceTo(rows[i][k - 1].p);
         pos.push(p.x * sign, p.y, p.z);
-        uvs.push(run / 2.4, rows[i][k].v ?? rows[i].v);
+        uvs.push(run / PAINT.hull_map_metres.value, rows[i][k].v ?? rows[i].v);
       }
     }
     const front = (sign > 0) !== inward;
@@ -714,6 +714,15 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
     [bHeel, bHeel * 0.92, bHeel * 0.62, SPEC.rudder_breadth_at_head.value],
   );
   const zFwd = (y) => zAft + SPEC.keel_siding.value * 0.25 + rake * (y - yHeel);
+  const hinge = new THREE.Group();
+  hinge.name = 'rudder_hinge';
+  hinge.position.set(0, yHeel, zFwd(yHeel));
+  hinge.userData.axis = new THREE.Vector3(0, 1, rake).normalize().toArray();
+  group.add(hinge);
+  const hang = (part) => {
+    part.position.sub(hinge.position);
+    hinge.add(part);
+  };
 
   const levels = [];
   const nY = Math.max(5, Math.round(cfg.sternStations * 0.8));
@@ -728,7 +737,7 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
   // The rudder is coppered below the waterline and blacked above it like the rest of the
   // ship, so its V comes from the hull's paint coordinate, not from its own length.
   for (const L of levels) {
-    for (const [x, z] of ring(L)) { pos.push(x, L.y, z); uvs.push(z / 2.4, paintV(L.y)); }
+    for (const [x, z] of ring(L)) { pos.push(x, L.y, z); uvs.push(z / PAINT.hull_map_metres.value, paintV(L.y)); }
   }
   for (let i = 0; i < levels.length - 1; i++) {
     for (let k = 0; k < 4; k++) {
@@ -752,12 +761,12 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
   const rudder = new THREE.Mesh(g, mats.hull);
   rudder.name = 'rudder';
   audit(rudder, 'rudder_height', 'extent_y');
-  group.add(rudder);
+  hang(rudder);
 
   if (cfg.rudderIrons) {
     const n = SPEC.rudder_pintle_count.value;
     const w = SPEC.rudder_iron_width.value, th = SPEC.rudder_iron_thickness.value;
-    const irons = [];
+    const fixed = [], moving = [];
     for (let i = 0; i < n; i++) {
       const y = lerp(yHeel + 0.30, sp.yTuck - 0.20, i / (n - 1));
       const z0 = zFwd(y);
@@ -766,16 +775,20 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
       for (const [zc, len] of [[z0 - 0.30, 0.58], [z0 + 0.34, 0.66]]) {
         const b = block(t * 2 + th * 2, w, len, 1);
         b.translate(0, y - w / 2, zc);
-        irons.push(b);
+        (zc < z0 ? fixed : moving).push(b);
       }
       const pin = new THREE.CylinderGeometry(th * 1.7, th * 1.7, w * 1.9, Math.max(5, Math.round(cfg.latheSegments / 2)));
+      pin.rotateX(Math.atan(rake));
       pin.translate(0, y - w / 2, z0);
-      irons.push(pin);
+      fixed.push(pin);
     }
-    const iron = new THREE.Mesh(mergeGeometries(irons), mats.iron);
+    const iron = new THREE.Mesh(mergeGeometries(fixed), mats.iron);
     iron.name = 'rudder_irons';
     iron.userData.count = n;
     group.add(iron);
+    const pintles = new THREE.Mesh(mergeGeometries(moving), mats.iron);
+    pintles.name = 'rudder_pintles';
+    hang(pintles);
   }
 
   // The head comes up through the counter, and the tiller runs forward from it under the
@@ -789,7 +802,7 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
   tiller.position.set(0, yHead - SPEC.tiller_diameter.value * 0.9, zFwd(yHead) + bl(yHead) / 2);
   // The tiller runs forward from the head, rising a little as it goes.
   tiller.rotation.x = deg(-86);
-  group.add(tiller);
+  hang(tiller);
 }
 
 // ---------------------------------------------------------------------------

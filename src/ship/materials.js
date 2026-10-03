@@ -102,6 +102,7 @@ function hullPaintStrip(size = 1024, cfg) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -233,6 +234,7 @@ function hullSurfaceMap(size, plankCanvas, copperCanvas) {
   const tex = new THREE.CanvasTexture(out);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -362,9 +364,9 @@ function capped(sourceCanvas, maxSize) {
  * ever generated, which both bounds the noise this bakes into the GLB and means the
  * detail pass itself runs over a quarter of the pixels or fewer at the hero level.
  */
-function withDetailNormal(macroNormalCanvas, cfg, seed) {
+function withDetailNormal(macroNormalCanvas, cfg, seed, maxSize = 512) {
   if (cfg.textureSize < 512) return macroNormalCanvas;
-  const base = capped(macroNormalCanvas, Math.min(512, cfg.textureSize));
+  const base = capped(macroNormalCanvas, Math.min(maxSize, cfg.textureSize));
   const size = base.width;
   const detail = normalFrom(
     fineGrainHeight(size, { seed, cell: PAINT.detail_normal_cell.value }),
@@ -386,7 +388,7 @@ function withDetailNormal(macroNormalCanvas, cfg, seed) {
 const materialCache = new Map();
 
 export function makeMaterials(cfg) {
-  const key = [cfg.textureSize, cfg.copperNails, cfg.hullRelief, cfg.surfaceDetail,
+  const key = [cfg.textureSize, cfg.hullTextureSize, cfg.copperNails, cfg.hullRelief, cfg.surfaceDetail,
     cfg.mouldingSweeps, !!getDeckImage()].join(':');
   if (!materialCache.has(key)) materialCache.set(key, buildMaterials(cfg));
   return materialCache.get(key);
@@ -396,6 +398,7 @@ makeMaterials.uncached = buildMaterials;
 
 function buildMaterials(cfg) {
   const N = cfg.textureSize;
+  const hullSize = cfg.hullTextureSize ?? N;
   // The cap every roughness and detail-normal map in this file is built down to — see
   // `capped` for why a finish map does not need its colour map's own resolution, and
   // hullSurfaceMap for the same cap chosen before any of the rest of this existed.
@@ -411,7 +414,7 @@ function buildMaterials(cfg) {
   const RN = Math.min(512, N);
 
   const hullPlank = asTexture(
-    planking({ base: '#8a7256', dark: '#5c4a34', light: '#9c8264', seam: '#241d16', planks: 26, size: N, seed: 3 }),
+    planking({ base: '#8a7256', dark: '#5c4a34', light: '#9c8264', seam: '#241d16', planks: 26, size: hullSize, seed: 3 }),
     { repeat: [1, 1] }
   );
   hullPlank.wrapT = THREE.ClampToEdgeWrapping;
@@ -425,7 +428,7 @@ function buildMaterials(cfg) {
     variation: PAINT.copper_sheet_variation.value,
     lap: PAINT.copper_lap_relief.value,
     nailRelief: PAINT.copper_nail_relief.value,
-    size: N,
+    size: hullSize,
   };
   const copperTex = asTexture(
     copperSheathing({
@@ -703,11 +706,11 @@ function buildMaterials(cfg) {
   mats.ratlineLine = new THREE.LineBasicMaterial({ color: col('rigging_tarred'), transparent: true, opacity: 0.7 });
 
   // The hull's paint. Built last because it needs the LOD's texture size.
-  mats.hullPaint = hullPaintStrip(cfg.textureSize, cfg);
-  mats.hullSurface = hullSurfaceMap(Math.min(512, cfg.textureSize), hullPlank.image, copperTex.image);
+  mats.hullPaint = hullPaintStrip(hullSize, cfg);
+  mats.hullSurface = hullSurfaceMap(Math.min(1024, cfg.textureSize), hullPlank.image, copperTex.image);
 
   mats.hull = std({
-    map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, cfg.textureSize),
+    map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, hullSize),
     // The lengthwise wear, which hull.js writes into the vertex colours because the map
     // repeats along her and cannot carry anything that varies from bow to stern.
     vertexColors: true,
@@ -726,22 +729,22 @@ function buildMaterials(cfg) {
       ? asTexture(
         withDetailNormal(
           normalFrom(
-            hullHeightField(
+            capped(hullHeightField(
               hullPlank.image,
               // The sheathing's own relief is the more expensive half — it is a second full
               // pass of the copper generator — and it is only ever read from alongside, so
               // below the game level the bottom keeps its colour and loses its laps.
               cfg.copperNails ? copperSheathing({ ...copperArgs, height: true }) : null,
-              cfg.textureSize
-            ),
+              hullSize
+            ), Math.min(2048, N)),
             1.1
           ),
-          cfg, 511
+          cfg, 511, 2048
         ),
         { srgb: false }
       )
       : null,
-    normalScale: new THREE.Vector2(0.3, 0.3),
+    normalScale: new THREE.Vector2(0.65, 0.65),
   });
 
   return mats;
@@ -806,12 +809,15 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
   // sea has been over her, weed in the wind-and-water band, and the black wash down from
   // every scupper. It is drawn on top rather than mixed in because the paint underneath
   // is evidence and this is not — see the head of src/ship/weathering.js.
-  g.drawImage(hullStains({ size }), 0, 0, size, size);
+  // Rust runs and wash are broad marks. Rasterising every blurred streak at 4K
+  // stalls the browser during launch; reserve 4K for the actual boards and plates.
+  g.drawImage(hullStains({ size: Math.min(1024, size) }), 0, 0, size, size);
 
   const tex = new THREE.CanvasTexture(out);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.anisotropy = 8;
   return tex;
 }
 

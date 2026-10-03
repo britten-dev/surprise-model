@@ -106,6 +106,8 @@ const CONFIG = {
     // one number here that materials.js's cache key already keys on, so this level gets
     // its own material set for free rather than colliding with hero's.
     textureSize: 2048,
+    // Spend texture memory on the hull without enlarging every rope and fitting.
+    hullTextureSize: 4096,
   },
 
   hero: {

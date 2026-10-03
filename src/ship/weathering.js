@@ -222,8 +222,8 @@ function grain(g, { size, colour, alpha, seed = 1, vFrom = 0, vTo = 1, scale = 1
  * and X repeats along her length.
  *
  * **Everything here is counted per metre of the ship's side, and that matters more than
- * any of the colours.** One width of this map covers `hull_map_metres` — three metres —
- * so it is laid along her thirteen times. Drawn without thinking about that, a modest
+ * any of the colours.** One width of this map covers `hull_map_metres` — 12.192 metres —
+ * so it is laid along her a little over three times. Drawn without thinking about that, a modest
  * two hundred streaks in the map becomes two and a half thousand on the ship, they
  * overlap into a solid wash, and the result is not a weathered hull but a repainted one.
  *
@@ -242,7 +242,10 @@ function grain(g, { size, colour, alpha, seed = 1, vFrom = 0, vTo = 1, scale = 1
 // the same computed shape rather than a second roll of the dice, is what keeps a streak
 // and its own finish sitting on the same pixels. `rg` is optional so a caller after the
 // colour alone — tools/dev/show-texture.js — need not build a canvas it will not use.
+const hullStainCache = new Map();
 export function hullStains({ size = 1024, seed = 61 } = {}) {
+  const cacheKey = `${size}:${seed}`;
+  if (hullStainCache.has(cacheKey)) return hullStainCache.get(cacheKey);
   const { c, g } = canvas(size, size);
   const { c: rc, g: rg } = canvas(size, size);
   const r = rng(seed);
@@ -398,6 +401,7 @@ export function hullStains({ size = 1024, seed = 61 } = {}) {
   // tools/dev/show-texture.js and any other caller after the colour alone can keep
   // treating this as a plain canvas.
   c.roughCanvas = rc;
+  hullStainCache.set(cacheKey, c);
   return c;
 }
 

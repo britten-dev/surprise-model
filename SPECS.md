@@ -1022,6 +1022,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `motion_haul_period` | 1.9 | — | RECONSTRUCTED | §10 seconds for one pull. Men hauling together work to a call and a rhythm, and the rhythm is slow — a heave, a pause to get a fresh hold, and another |
 | `motion_haul_swing_deg` | 22 | — | RECONSTRUCTED | §10 how far his shoulders travel through one pull. It is what turns a man posed as though he were hauling into a man who is hauling, and it is the only figure on deck that does anything but stand and sway |
 | `motion_helm_throw_deg` | 140 | — | RECONSTRUCTED | §10 how far the wheel turns from midships to hard over. A little under half a turn each way, which is the usual four spokes |
+| `motion_rudder_throw_deg` | 30 | — | RECONSTRUCTED | §10 visual hard-over blade angle about the raked sternpost; a reconstruction, not a measured Surprise steering stop |
 | `motion_helmsman_reach_deg` | 26 | — | RECONSTRUCTED | §10 how far a helmsman's shoulders follow the wheel. His hands go round with the spokes and his body does not |
 | `motion_wet_dry_seconds` | 9 | — | RECONSTRUCTED | §10 how long the topsides take to dry after a sea has been over them. It is slow, and it is what makes the wetness read as something that happened rather than as a setting |
 
@@ -1113,11 +1114,11 @@ and the ochre strake follow the sheer.
 | `copper_bright` | #F7BC9E | 0.35 | 0 | SECONDARY §8 new copper, used for the nail heads |
 | `copper_dark` | #3E2418 | 0.75 | 0 | SECONDARY §8 cupric oxide in the sheet laps |
 | `copper_line_above_wl_v` | 0.12 | — | — | MEASURED §8 the main wale's lower edge is 15.2 ft above the moulded base line, 2.4 ft above the load waterline; the sheathing was carried to 2 ft 6 in - 3 ft, so the two coincide |
-| `copper_sheets_along` | 22 | — | — | SECONDARY §8 sheets 4 ft on the long edge, laid fore and aft over 121 ft of waterline; counted across the hull base map |
+| `copper_sheets_along` | 10 | — | — | SECONDARY §8 ten sheets 4 ft long fit one 40 ft hull texture repeat; UV scale and sheet count must be changed together |
 | `copper_sheets_up` | 26 | — | — | SECONDARY §8 sheets 14 in on the short edge; the courses that fit between the keel and the sheathing line, counted over the whole V range of the base map |
 | `copper_lap_relief` | 0.34 | — | — | RECONSTRUCTED §8 the doubling at a sheet lap is one thickness of sheet copper; tuned so the laps are legible at beam distance and do not read as corrugation |
 | `copper_nail_relief` | 0.55 | — | — | RECONSTRUCTED §8 a raised nail head; tuned so the nails catch the sun at beam distance |
-| `hull_map_metres` | 3 | — | — | RECONSTRUCTED §8 how many metres of the ship's side one width of the hull map covers. It is what makes the planking read at the right size, and it is also the unit the weathering counts in: a streak drawn once in the map is drawn thirteen times along her |
+| `hull_map_metres` | 12.192 | — | — | RECONSTRUCTED §8 one 40 ft repeat holds ten 4 ft copper sheets or two 20 ft planks; weathering density is counted per metre within this repeat |
 | `hull_plank_relief` | 0.55 | — | — | RECONSTRUCTED §8 how much of the planking's own light and shade is read as height for the normal map. At 1.0 every board stands a hand's breadth proud of the one beside it; this is the strength at which a seam catches the sun and a plank does not |
 | `hull_normal_scale` | 1.15 | — | — | RECONSTRUCTED §8 the normal map is built from a height map whose relief is already scaled by the two rows above, so this stays near unity. At the old 0.4 the copper nails were invisible at every distance |
 | `copper_pattern_depth` | 0.62 | — | — | RECONSTRUCTED §8 how strongly the sheathing pattern modulates the base colour. Copper carries its own colour through the metalness map rather than through the base map, so its pattern is allowed to bite far harder than paint on planking does; at the old 0.42 the sheets were invisible at beam distance |

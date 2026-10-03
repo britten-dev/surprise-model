@@ -307,7 +307,9 @@ export function createMotion(ship, opts = {}) {
         shader.fragmentShader = shader.fragmentShader
           .replace('#include <common>', `#include <common>\n${WET_PARS}`)
           .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-            roughnessFactor = mix(roughnessFactor, uWetRough, wetAmount());
+            // Water smooths the finish but cannot erase plank grain and beaten
+            // copper. Preserve that variation instead of making every wet face a mirror.
+            roughnessFactor = mix(roughnessFactor, max(uWetRough, roughnessFactor * 0.62), wetAmount());
           `)
           .replace('#include <color_fragment>', `#include <color_fragment>
             diffuseColor.rgb *= 1.0 - uWetDarken * wetAmount();
@@ -408,6 +410,8 @@ export function createMotion(ship, opts = {}) {
     }
   }
   parts.wheel = named('ships_wheel');
+  parts.rudder = named('rudder_hinge');
+  const rudderAxis = new THREE.Vector3().fromArray(parts.rudder?.userData.axis ?? [0, 1, 0]);
 
   // ------------------------------------------------------------------- the yards
   //
@@ -513,6 +517,9 @@ export function createMotion(ship, opts = {}) {
 
     // ------------------------------------------------------------------- the wheel
     if (parts.wheel) parts.wheel.rotation[parts.wheel.userData.axis ?? 'x'] = -helm * deg(S('motion_helm_throw_deg'));
+    // The wheel, blade and steering physics share the same helm command. The blade
+    // turns about the raked sternpost; its gudgeons stay bolted to the hull.
+    if (parts.rudder) parts.rudder.quaternion.setFromAxisAngle(rudderAxis, clamp(helm, -1, 1) * deg(S('motion_rudder_throw_deg')));
 
     // -------------------------------------------------------------------- the watch
     const swayAmp = deg(S('motion_crew_sway_deg'));

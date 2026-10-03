@@ -55,6 +55,7 @@ export const MOTION_SPEC = {
   motion_haul_period: n(1.9, `${R} seconds for one pull. Men hauling together work to a call and a rhythm, and the rhythm is slow — a heave, a pause to get a fresh hold, and another`, { noAudit: true }),
   motion_haul_swing_deg: n(22, `${R} how far his shoulders travel through one pull. It is what turns a man posed as though he were hauling into a man who is hauling, and it is the only figure on deck that does anything but stand and sway`, { noAudit: true }),
   motion_helm_throw_deg: n(140, `${R} how far the wheel turns from midships to hard over. A little under half a turn each way, which is the usual four spokes`, { noAudit: true }),
+  motion_rudder_throw_deg: n(30, `${R} visual hard-over blade angle about the raked sternpost; a reconstruction, not a measured Surprise steering stop`, { noAudit: true }),
   motion_helmsman_reach_deg: n(26, `${R} how far a helmsman's shoulders follow the wheel. His hands go round with the spokes and his body does not`, { noAudit: true }),
 
   // ---------------------------------------------------------------------- wet

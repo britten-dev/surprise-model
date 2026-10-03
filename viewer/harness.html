@@ -147,6 +147,7 @@ window.motionProbe = ({ lod = 'game', sails = 'storm', t0 = 0, t1 = 1.7 } = {}) 
       .map(([k, v]) => [k, Math.abs(v - b.flags[k])])),
     crew: motion.parts.crew.map((c) => moved(c.node.name)).filter((v) => v !== null),
     wheel: motion.parts.wheel ? moved(motion.parts.wheel.name) : null,
+    rudder: motion.parts.rudder ? moved(motion.parts.rudder.name) : null,
     yards: {
       found: motion.parts.yards.length,
       // The yards are hauled round at a rate, so between two instants they should have
