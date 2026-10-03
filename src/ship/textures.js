@@ -221,6 +221,7 @@ export function sailCloth({
     // than returned alongside it, so a caller that only wants the colour — as
     // tools/dev/show-texture.js does — need not know it is there.
     const { c: rc, g: rg } = canvas(size);
+    const { c: hc, g: hg } = canvas(size);
     const n = Math.max(1, Math.round(variants));
     for (let vy = 0; vy < n; vy++) {
       for (let vx = 0; vx < n; vx++) {
@@ -230,9 +231,11 @@ export function sailCloth({
         });
         g.drawImage(tile.c, (vx * size) / n, (vy * size) / n);
         rg.drawImage(tile.rc, (vx * size) / n, (vy * size) / n);
+        hg.drawImage(tile.hc, (vx * size) / n, (vy * size) / n);
       }
     }
     c.roughCanvas = rc;
+    c.heightCanvas = hc;
     return c;
   });
 }
@@ -241,6 +244,9 @@ export function sailCloth({
 function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
   const { c, g } = canvas(size);
   const { c: rc, g: rg } = canvas(size);
+  const { c: hc, g: hg } = canvas(size);
+  hg.fillStyle = '#808080';
+  hg.fillRect(0, 0, size, size);
   {
     const r = rng(seed);
     g.fillStyle = base;
@@ -262,16 +268,44 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
     // Cloth seams, vertical, at the width of a bolt of canvas.
     g.globalAlpha = 1;
     const step = size / cloths;
+    // Each bolt carries load a little differently. Keep this separate from dirt:
+    // stains belong in colour/roughness, not in the surface's physical relief.
+    for (let i = 0; i < cloths; i++) {
+      const shade = r() * .035;
+      g.fillStyle = `rgba(56,43,24,${shade})`;
+      g.fillRect(i * step, 0, step, size);
+      const centre = (i + .5) * step;
+      const bulge = hg.createLinearGradient(i * step, 0, (i + 1) * step, 0);
+      bulge.addColorStop(0, '#7c7c7c');
+      bulge.addColorStop(.48, '#929292');
+      bulge.addColorStop(1, '#7c7c7c');
+      hg.fillStyle = bulge;
+      hg.fillRect(i * step, 0, step, size);
+      // Fine, interrupted tension wrinkles, broad enough to filter smoothly.
+      for (let fold = 0; fold < 2; fold++) {
+        const y = r() * size, length = size * (.1 + r() * .22);
+        hg.strokeStyle = fold ? '#969696' : '#777777';
+        hg.lineWidth = Math.max(1, size * .0018);
+        hg.beginPath(); hg.moveTo(centre + step * .2 * (r() - .5), y);
+        hg.bezierCurveTo(centre - step * .18, y + length * .3,
+          centre + step * .2, y + length * .7, centre, y + length);
+        hg.stroke();
+      }
+    }
     for (let i = 1; i < cloths; i++) {
       g.fillStyle = seam;
       g.globalAlpha = 0.55;
       g.fillRect(i * step - 1, 0, 2.5, size);
+      hg.fillStyle = '#a8a8a8';
+      hg.fillRect(i * step - size * .001, 0, size * .002, size);
     }
     // Reef bands across the head of the sail, doubled canvas.
     g.globalAlpha = 0.4;
     for (let i = 1; i <= reefs; i++) {
       g.fillStyle = seam;
       g.fillRect(0, (i / (reefs + 5)) * size, size, size * 0.016);
+      hg.fillStyle = '#989898';
+      hg.fillRect(0, (i / (reefs + 5)) * size, size, size * .016);
     }
     // The patches, over the seams, because a patch is a piece of cloth sewn on top of
     // them. The rest of the weathering has already gone on underneath — see `stain`
@@ -303,8 +337,10 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
     g.strokeStyle = seam;
     g.lineWidth = size * 0.018;
     g.strokeRect(0, 0, size, size);
+    hg.strokeStyle = '#a0a0a0'; hg.lineWidth = size * .018;
+    hg.strokeRect(0, 0, size, size);
     g.globalAlpha = 1;
-    return { c, rc };
+    return { c, rc, hc };
   }
 }
 

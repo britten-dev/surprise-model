@@ -88,7 +88,7 @@ const CONFIG = {
     // Sails: the belly and the ripple both live in these segment counts, and a coarse
     // grid is exactly where the canvas shader's shivering looks like a flag rather than
     // a sail. Half again more across and forty percent more up the leech.
-    sailSegments: [20, 14],
+    sailSegments: [32, 22],
     // Mouldings — the sheer strake, the wales, the headrails, the channel edges — are
     // swept along a curve in this many steps; hero's 96 already reads fair from a few
     // metres off, but the fiddle-head curls at the head and the scroll-work at the

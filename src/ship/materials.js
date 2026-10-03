@@ -516,6 +516,10 @@ function buildMaterials(cfg) {
   });
   const sailTex = asTexture(sailCanvas, { repeat: [1, 1] });
   const sailRoughTex = asTexture(capped(sailCanvas.roughCanvas, RN), { repeat: [1, 1], srgb: false });
+  const sailNormalTex = fine ? asTexture(
+    normalFrom(capped(sailCanvas.heightCanvas, Math.min(N, 1024)), 3),
+    { repeat: [1, 1], srgb: false }
+  ) : null;
 
   // One modulation map for every painted surface on the ship. It carries no colour of
   // its own — it is a light-and-shade map about white — so each material keeps the
@@ -635,6 +639,8 @@ function buildMaterials(cfg) {
       // map paired onto it, so a mildewed or salt-stiffened patch of canvas is a
       // different finish as well as a different shade of it.
       roughnessMap: fine ? sailRoughTex : null,
+      normalMap: sailNormalTex,
+      normalScale: new THREE.Vector2(.4, .4),
       metalness: 0,
       side: THREE.DoubleSide,
       // Emission through the weave, at the cloth's own pattern so the seams stay visible

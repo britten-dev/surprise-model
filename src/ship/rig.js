@@ -236,11 +236,20 @@ function buildMast(m, cfg, mats, group) {
     group.add(cap);
   }
 
-  // Topmast crosstrees, a bare frame, no platform.
-  const cross = new THREE.Mesh(
-    new THREE.BoxGeometry(m.topBreadth * 0.52 || 1.2, S('top_platform_thickness') * 1.4, m.topLength * 0.5 || 0.8),
-    mats.mastBlack
-  );
+  // Topmast crosstrees are an open timber frame. The old solid box filled the
+  // spaces between the beams, and its outer corners poked through braced canvas.
+  const crossWidth = m.topBreadth * .52 || 1.2;
+  const crossLength = m.topLength * .5 || .8;
+  const crossDepth = S('top_platform_thickness') * 1.4;
+  const beams = [];
+  for (const side of [-1, 1]) {
+    beams.push(new THREE.BoxGeometry(crossWidth, crossDepth, crossLength * .11)
+      .translate(0, 0, side * crossLength * .29));
+    beams.push(new THREE.BoxGeometry(crossWidth * .09, crossDepth, crossLength)
+      .translate(side * crossWidth * .15, 0, 0));
+  }
+  const cross = new THREE.Mesh(mergeGeometries(beams), mats.mastBlack);
+  cross.name = `${m.name}_topmast_crosstrees`;
   const cp = m.along(m.topmastHoundsH);
   cross.position.set(0, cp.y, cp.z);
   group.add(cross);

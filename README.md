@@ -18,6 +18,11 @@ an offline lighting reference PNG. The workshop preserves named parts, packs the
 textures, adds non-destructive furniture bevels, and saves helm/alongside cameras.
 The browser animation shaders are not baked into this static glTF/Blender export.
 
+The cinematic cloth uses a 32×22 grid with a separate seam/wrinkle normal map.
+Runtime billow has a phase and wavelength for each sail; its bolt ropes share
+those values. Animated rigging and canvas also supply matching shadow materials.
+Topmast crosstrees are open timber frames rather than solid placeholder slabs.
+
 She is built as a ship that has been at sea rather than one that has just left the
 dockyard, and that is a deliberate part of the brief: the sheathing is weathered, the
 topsides are salt-bleached and streaked with rust from every bolt in them, the canvas is

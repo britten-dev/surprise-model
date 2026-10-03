@@ -86,6 +86,18 @@ const ALOFT_GLSL = `
   float whipAt(float y) {
     return pow(clamp((y - uDeckY) / max(0.001, uTruckY - uDeckY), 0.0, 1.0), uWhipExp);
   }
+  vec3 rigDisplacement(vec4 wPos) {
+    float shipY = dot(uShipRowY, wPos);
+    vec3 disp = uWhipWorld * whipAt(shipY);
+    if (uSwayFactor > 0.0) {
+      float hf = clamp((shipY - uDeckY) / max(0.001, uTruckY - uDeckY), 0.0, 1.0);
+      float span = sin(3.14159 * hf);
+      float ph = uTime * 6.28318 / uSwayPeriod + wPos.z * 0.7 + wPos.x * 1.3;
+      disp += uWindWorld * (uSway * uSwayFactor * uWind * span * sin(ph));
+      disp.y += uSway * uSwayFactor * 0.25 * uWind * span * sin(ph * 1.7);
+    }
+    return disp;
+  }
 `;
 
 /**
@@ -96,21 +108,7 @@ const ALOFT_GLSL = `
  */
 const ALOFT_BODY = `
   {
-    vec4 wPos = modelMatrix * vec4(transformed, 1.0);
-    float shipY = dot(uShipRowY, wPos);
-    vec3 disp = uWhipWorld * whipAt(shipY);
-    // Cordage as well: a rope swings most at the middle of its span and not at all at
-    // its ends. There is no telling where a rope's ends are once fifty of them have been
-    // merged into one mesh — but a shroud's span is the height it covers, so height
-    // stands in for it, and the phase is varied along and across the ship so that no two
-    // ropes swing together.
-    if (uSwayFactor > 0.0) {
-      float hf = clamp((shipY - uDeckY) / max(0.001, uTruckY - uDeckY), 0.0, 1.0);
-      float span = sin(3.14159 * hf);
-      float ph = uTime * 6.28318 / uSwayPeriod + wPos.z * 0.7 + wPos.x * 1.3;
-      disp += uWindWorld * (uSway * uSwayFactor * uWind * span * sin(ph));
-      disp.y += uSway * uSwayFactor * 0.25 * uWind * span * sin(ph * 1.7);
-    }
+    vec3 disp = rigDisplacement(modelMatrix * vec4(transformed, 1.0));
     mvPosition.xyz += (viewMatrix * vec4(disp, 0.0)).xyz;
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -137,35 +135,41 @@ const SAIL_PARS = `
   uniform float uBreathe;
   uniform float uLuff;
   uniform float uSailTiles;
+  uniform float uSailPhase;
+  uniform vec2 uSailSpan;
+
+  float clothOffset(vec2 st) {
+    // UVs have an atlas gutter; remove it so every attachment is actually fixed.
+    vec2 q = clamp((st - 0.002) / 0.996, 0.0, 1.0);
+    float across = max(0.0, sin(3.14159265 * q.x));
+    float down = max(0.0, sin(3.14159265 * q.y));
+    float freedom = pow(across, 0.85) * pow(down, 0.8);
+    float k = 6.2831853 / max(0.5, uWaveLength);
+    float phase = k * q.x * uSailSpan.x - uTime * uWaveSpeed * 2.4 + uSailPhase;
+    float ripple = sin(phase + q.y * 1.4)
+      + 0.32 * sin(phase * 1.73 + q.y * 4.0 + uSailPhase);
+    float breath = uBreathe * 2.0 * sin(uTime * 0.48 + uSailPhase + q.y * 1.3);
+    float leech = mix(1.0, uLuff, pow(1.0 - across, 3.0));
+    return uFlutter * uWind * freedom * (ripple * 0.16 * leech + breath);
+  }
 `;
 
 const SAIL_BODY = `
   {
     vec2 suv = fract(uv * uSailTiles);
-    // Freedom to move: nil at every edge, most in the middle, and more toward the leech,
-    // which is the free edge and the one the eye watches.
-    float across = sin(3.14159 * suv.x);
-    float down = sin(3.14159 * suv.y);
-    float leech = mix(1.0, uLuff, pow(1.0 - across, 3.0));
-    float freedom = pow(across, 0.7) * pow(down, 0.55) * leech;
-
-    float k = 6.28318 / max(0.5, uWaveLength);
-    float phase = k * (suv.x * 8.0) - uTime * uWaveSpeed * 2.4;
-    float ripple = sin(phase) + 0.42 * sin(phase * 1.9 + suv.y * 4.0);
-    float breath = uBreathe * 2.0 * sin(uTime * 0.48 + suv.y * 1.3);
-
-    transformed += objectNormal * (uFlutter * uWind * freedom * (ripple * 0.22 + breath));
-
-    // The bent surface's normal. There is no tangent frame on this geometry, so one is
-    // built from the sail's own normal and the vertical — close enough on a sail, whose
-    // cloths hang and whose head and foot are level — and the normal is leaned toward
-    // the slope of the ripple. Without this the sail moves and its shading does not,
-    // and canvas that shivers under perfectly even light reads as moving plastic.
-    vec3 tU = normalize(cross(objectNormal, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
-    vec3 tV = cross(objectNormal, tU);
-    float dU = uFlutter * uWind * freedom * cos(phase) * k * 1.3;
-    float dV = uFlutter * uWind * freedom * 0.13 * cos(phase * 1.9 + suv.y * 4.0);
-    vNormal = normalize(normalMatrix * normalize(objectNormal - tU * dU - tV * dV));
+    transformed += objectNormal * clothOffset(suv);
+    #ifndef HW_SHADOW
+      // Shade the same displacement we render, including the edge constraints.
+      // Per-metre slopes prevent a small topsail looking as soft as a huge course.
+      float e = 0.002;
+      float dU = (clothOffset(suv + vec2(e, 0.0)) - clothOffset(suv - vec2(e, 0.0)))
+        / (2.0 * e * uSailSpan.x);
+      float dV = (clothOffset(suv + vec2(0.0, e)) - clothOffset(suv - vec2(0.0, e)))
+        / (2.0 * e * uSailSpan.y);
+      vec3 tU = normalize(cross(objectNormal, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
+      vec3 tV = cross(objectNormal, tU);
+      vNormal = normalize(normalMatrix * normalize(objectNormal - tU * dU - tV * dV));
+    #endif
   }
 `;
 
@@ -247,28 +251,45 @@ export function createMotion(ship, opts = {}) {
   function patch(mesh, { aloft = false, sail = false, wet = false, alwaysWet = 0, sway = 0 }) {
     const mat = mesh.material.clone();
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
+    if (sail) {
+      // Bolt ropes share the cloth's motion, including its phase and scale.
+      const clothName = mesh.name.replace('_cordage_sail', '_sail');
+      const geometry = mesh.parent?.getObjectByName(clothName)?.geometry ?? mesh.geometry;
+      geometry.computeBoundingBox();
+      const size = geometry.boundingBox.getSize(new THREE.Vector3());
+      let hash = 0;
+      for (const c of clothName) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+      own.uSailPhase = { value: (hash % 1000) / 1000 * Math.PI * 2 };
+      own.uSailSpan = { value: new THREE.Vector2(Math.max(2, size.x, size.z), Math.max(2, size.y)) };
+    }
+
+    function moveVertices(shader, shadow = false) {
+      Object.assign(shader.uniforms, own);
+      const declarations = [
+        shadow ? '#define HW_SHADOW' : '',
+        (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
+        aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '', wet ? WET_PARS : '',
+      ].filter(Boolean).join('\n');
+      let v = shader.vertexShader.replace('#include <common>', `#include <common>\n${declarations}`);
+      if (sail) {
+        const normal = shadow ? '#ifndef USE_DISPLACEMENTMAP\nvec3 objectNormal = vec3(normal);\n#endif\n' : '';
+        v = v.replace('#include <begin_vertex>', `${normal}#include <begin_vertex>\n${SAIL_BODY}`);
+      }
+      if (wet) v = v.replace('#include <project_vertex>',
+        'vShipYWet = dot(uShipRowY, modelMatrix * vec4(transformed, 1.0));\n#include <project_vertex>');
+      if (aloft) {
+        v = v.replace('#include <project_vertex>', `#include <project_vertex>\n${ALOFT_BODY}`);
+        // The world position used to sample a shadow must move with the vertex.
+        v = v.replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+          #if defined( USE_ENVMAP ) || defined( DISTANCE ) || defined( USE_SHADOWMAP ) || defined( USE_TRANSMISSION ) || NUM_SPOT_LIGHT_COORDS > 0
+            worldPosition.xyz += rigDisplacement(modelMatrix * vec4(transformed, 1.0));
+          #endif`);
+      }
+      shader.vertexShader = v;
+    }
 
     mat.onBeforeCompile = (shader) => {
-      Object.assign(shader.uniforms, own);
-
-      // The declarations every branch below needs, assembled once and inserted once, so
-      // that nothing here depends on a second search finding an include the first search
-      // has already rewritten.
-      const vertexPrelude = [
-        (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
-        aloft ? ALOFT_GLSL : '',
-        sail ? SAIL_PARS : '',
-        wet ? WET_PARS : '',
-      ].filter(Boolean).join('\n');
-
-      let v = shader.vertexShader.replace('#include <common>', `#include <common>\n${vertexPrelude}`);
-      if (sail) v = v.replace('#include <begin_vertex>', `#include <begin_vertex>\n${SAIL_BODY}`);
-      if (wet) {
-        v = v.replace('#include <project_vertex>',
-          '  vShipYWet = dot(uShipRowY, modelMatrix * vec4(transformed, 1.0));\n#include <project_vertex>');
-      }
-      if (aloft) v = v.replace('#include <project_vertex>', `#include <project_vertex>\n${ALOFT_BODY}`);
-      shader.vertexShader = v;
+      moveVertices(shader);
 
       if (sail) {
         // Thin flax scatters light from behind it. Use the actual directional
@@ -301,6 +322,13 @@ export function createMotion(ship, opts = {}) {
     mat.needsUpdate = true;
     mesh.material = mat;
     patched.push(mat);
+    if (aloft && mesh.isMesh) {
+      const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: mat.side });
+      depth.onBeforeCompile = shader => moveVertices(shader, true);
+      depth.customProgramCacheKey = () => `${key}:shadow`;
+      mesh.customDepthMaterial = depth;
+      patched.push(depth);
+    }
     return mat;
   }
 
