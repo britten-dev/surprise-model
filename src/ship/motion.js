@@ -381,6 +381,8 @@ export function createMotion(ship, opts = {}) {
         node: o,
         phase: o.geometry.userData.flag.phase,
         stream: o.geometry.userData.flag.dir.clone(),
+        wind: new THREE.Vector3(),
+        started: false,
         home: o.position.clone(),
         f: whipAt(new THREE.Box3().setFromObject(o).max.y, deckY, truckY, uniforms.uWhipExp.value),
       });
@@ -429,6 +431,10 @@ export function createMotion(ship, opts = {}) {
   const whip = new THREE.Vector3();
   const q = new THREE.Quaternion();
   const inv = new THREE.Matrix4();
+  const flagTurn = new THREE.Quaternion();
+  const flagStep = new THREE.Quaternion();
+  const flagTarget = new THREE.Vector3();
+  const flagGravity = new THREE.Vector3();
   let lastHeel = 0;
   let lastTime = 0;
   let wet = 0;
@@ -439,6 +445,7 @@ export function createMotion(ship, opts = {}) {
     const {
       windSpeed = 12,       // metres per second
       apparentWind = null, // optional air velocity in the ship's local frame
+      apparentWindAt = null, // optional (local hoist position, out) => local air velocity
       windDeg = 150,        // where the wind is going, from dead ahead, turning to starboard
       heel = 0,             // radians, positive to starboard
       pitch = 0,            // radians, positive bow up
@@ -482,17 +489,29 @@ export function createMotion(ship, opts = {}) {
     uniforms.uWetness.value = wet;
 
     // ------------------------------------------------------------------ the flags
+    flagGravity.set(0, -1, 0).applyQuaternion(q.clone().invert());
     for (const f of parts.flags) {
       f.node.position.set(f.home.x + whip.x * f.f, f.home.y, f.home.z + whip.z * f.f);
       // Cloth follows the air passing the ship. Integrate phase so changing weather
       // changes the flutter rate without jumping to a different pose.
-      const flagWind = apparentWind ? clamp(apparentWind.length() / 22, 0, 1.6) : w;
-      if (apparentWind && apparentWind.lengthSq() > 0.01) {
-        f.stream.lerp(apparentWind.clone().setY(0).normalize(), 1 - Math.exp(-dt / 0.65));
-        if (f.stream.lengthSq() > 0.001) f.stream.normalize();
+      if (apparentWindAt) apparentWindAt(f.node.position, f.wind);
+      else if (apparentWind) f.wind.copy(apparentWind);
+      else f.wind.set(Math.sin(wr), 0, -Math.cos(wr)).multiplyScalar(windSpeed);
+      const flagWind = clamp(f.wind.length() / 22, 0, 1.6);
+      if (f.wind.lengthSq() > 0.01) {
+        flagTarget.copy(f.wind).normalize();
+        if (!f.started) f.stream.copy(flagTarget);
+        else {
+          // Normalized linear interpolation gets stuck when the wind reverses
+          // exactly. Turn through an arc instead, retaining a short cloth lag.
+          flagTurn.setFromUnitVectors(f.stream, flagTarget);
+          flagStep.identity().slerp(flagTurn, 1 - Math.exp(-dt / 0.65));
+          f.stream.applyQuaternion(flagStep).normalize();
+        }
+        f.started = true;
       }
-      f.phase += dt * S('motion_flag_wave_speed') * (0.4 + flagWind);
-      poseFlag(f.node.geometry, f.phase, { direction: f.stream, wind: flagWind });
+      f.phase += dt * S('motion_flag_wave_speed') * 1.4 * Math.sqrt(flagWind);
+      poseFlag(f.node.geometry, f.phase, { direction: f.stream, wind: flagWind, gravity: flagGravity });
     }
 
     // ------------------------------------------------------------------- the yards

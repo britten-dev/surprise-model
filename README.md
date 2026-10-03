@@ -225,6 +225,13 @@ Three mechanisms, chosen per part by what that part is: a vertex shader for the 
 meshes aloft, node transforms for the rigid things that have nodes, and rewritten vertices
 for the flags. The head of `src/ship/motion.js` says why each.
 
+Flags accept `apparentWind` in ship-local metres per second, or an
+`apparentWindAt(localHoistPosition, out)` callback for air sampled at each flag.
+Otherwise they follow `windDeg` and `windSpeed`. Stronger air extends the cloth
+and speeds its flutter; still air leaves it hanging toward world-down with its
+hoist fixed. Direction changes have a short lag, including a complete reversal.
+`node tools/check-flags.js` measures these responses on the actual geometry.
+
 **What she still cannot do.** The belly of each sail is lofted to leeward for a wind
 forward of the beam, and that is baked into the geometry — so bracing the yards round
 swings the canvas correctly, but a wind from dead astern would want the bellies the other

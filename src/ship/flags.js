@@ -239,18 +239,23 @@ function flagGeometry(params) {
  * than the microsecond: a shader approximation of this would have to guess at the sag and
  * the shortening, and both of them are what make a flag read as cloth.
  */
-export function poseFlag(geometry, phase, { direction, wind = 1 } = {}) {
+export function poseFlag(geometry, phase, { direction, wind = 1, gravity } = {}) {
   const { dir, fly, hoist, tipHoist, segsU, segsV } = geometry.userData.flag;
-  const ef = (direction ?? dir).clone().setY(0).normalize();
+  const ef = (direction ?? dir).clone().normalize();
   const eh = new THREE.Vector3(0, -1, 0);
-  const en = new THREE.Vector3().crossVectors(ef, eh).normalize();
+  const down = (gravity ?? eh).clone().normalize();
+  const en = new THREE.Vector3().crossVectors(ef, down);
+  if (en.lengthSq() < 1e-6) en.crossVectors(ef, new THREE.Vector3(1, 0, 0));
+  en.normalize();
 
   const strength = Math.max(0, Math.min(1.6, wind));
+  const tension = strength * strength / (strength * strength + 0.16 * 0.16);
+  const reach = 0.03 + 0.97 * tension;
   const droop = S('flag_droop_frac') / (0.65 + strength * 0.65);
   // A long pennant bends along its length as well as rippling across its width.
   // Hoist-only amplitude made it look like a rigid strip from astern.
   const amp = S('flag_wave_amplitude_frac') * Math.max(hoist, fly * 0.16)
-    * (0.18 + 0.82 * Math.min(1.2, strength));
+    * (0.04 + 0.96 * Math.min(1.2, strength));
   const k = (Math.PI * 2) / (S('flag_wave_length_frac') * fly);
   const skew = S('flag_wave_skew');
   const slack = S('flag_stream_slack');
@@ -271,14 +276,17 @@ export function poseFlag(geometry, phase, { direction, wind = 1 } = {}) {
       const v = j / segsV;
       const lift = amp * swell * 0.72
         * Math.sin(k * along - phase * 0.87 + v * 0.6);
-      const across = inset + v * width + droop * fly * u * u + lift;
+      // The hoist stays attached to the ship. The free cloth hangs toward
+      // world-down in a lull and stretches along the apparent wind under load.
+      const fall = (1 - reach) * along + tension * droop * fly * u * u + lift;
       const wave = amp * swell * (
         Math.sin(k * along + skew * v * Math.PI * 2 - phase)
         + harm * Math.sin(2 * k * along - phase * 1.7)
       );
       p.set(0, 0, 0)
-        .addScaledVector(ef, along)
-        .addScaledVector(eh, across)
+        .addScaledVector(ef, along * reach)
+        .addScaledVector(eh, inset + v * width)
+        .addScaledVector(down, fall)
         .addScaledVector(en, wave);
       pos.setXYZ(i * w + j, p.x, p.y, p.z);
     }
