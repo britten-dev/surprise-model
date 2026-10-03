@@ -42,10 +42,28 @@ export function hullTimber(size,kind='colour'){
     const start=x+w*hash(seed+1)*.18,end=x+w*(.55+hash(seed+3)*.45),bend=(hash(seed+5)-.5)*h*.10;
     g.moveTo(start,yy);g.bezierCurveTo(start+w*.25,yy+bend,end-w*.2,yy-bend,end,yy);g.stroke();
    }
+   // Sparse end checks and flush fastening plugs beneath the painted finish.
+   // Dimensions/spacing are reconstructed; contrast stays low enough that the
+   // hull cannot acquire a spotted riveted-metal pattern at normal viewing range.
+   const framePitch=metre*.6096;
+   for (let frame=Math.floor(x/framePitch);frame<=Math.ceil((x+w)/framePitch);frame++) {
+    const xx=(frame+.28)*framePitch;
+    for (const fraction of [.24,.76]) {
+     const yy=y0+h*fraction, r=metre*.011;
+     g.fillStyle=grey(height?123:rough?143:126);
+     g.beginPath();g.ellipse(xx,yy,r,h*.011/breadth,0,0,Math.PI*2);g.fill();
+    }
+   }
+   if (height || !rough) for(let k=0;k<3;k++) {
+    const yy=y0+h*(.18+hash(row*17+k)*.64), len=metre*(.08+hash(row*23+k)*.15);
+    g.strokeStyle=height?'rgba(95,95,95,.20)':'rgba(80,75,68,.12)';
+    g.lineWidth=Math.max(.5,metre*.0015);g.beginPath();g.moveTo(x+metre*.013,yy);
+    g.quadraticCurveTo(x+len*.45,yy+metre*.005,x+len,yy-metre*.002);g.stroke();
+   }
    g.restore();
    // Caulking, rather than open black slots. Bevel slopes live in the height
    // field; the colour seam is thinner and remains subdued under paint.
-   g.fillStyle=grey(height?115:rough?185:85);
+   g.fillStyle=grey(height?66:rough?185:85);
    g.fillRect(x,y0,Math.max(.65,metre*.006),h);
    if(!height&&!rough){
     // Occasional paint abrasion beside a butt, never regularly spaced dots.
@@ -53,7 +71,7 @@ export function hullTimber(size,kind='colour'){
      g.fillStyle='rgba(177,164,136,.12)';g.fillRect(x+metre*.01,yy,metre*(.012+hash(k+row)*.055),Math.max(.5,metre*.002));}
    }
   }
-  g.fillStyle=grey(height?115:rough?185:80);
+  g.fillStyle=grey(height?66:rough?185:80);
   g.fillRect(0,y0,size,Math.max(.7,metre*.005));
   bottom=top;row++;
  }

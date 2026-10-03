@@ -12,6 +12,7 @@ const CONFIG = {
     // more girth points at each one, so the turn of the bilge and the tumblehome read
     // as a fair curve instead of a lofted polygon even with the camera sitting on the
     // planking.
+    hullSideJoinery: 'full',
     hullStations: 181,
     hullPoints: 96,
     // Round things: spars, ropes, deadeyes, gun barrels. Ten-sided is a decagon at
@@ -115,6 +116,7 @@ const CONFIG = {
 
   hero: {
     // Hull surface resolution.
+    hullSideJoinery: 'full',
     hullStations: 121,
     hullPoints: 72,
     // Round things: spars, ropes, deadeyes, gun barrels.
@@ -221,6 +223,7 @@ const CONFIG = {
   },
 
   game: {
+    hullSideJoinery: 'wale',
     hullStations: 61,
     hullPoints: 34,
     sparSegments: 5,
@@ -387,7 +390,7 @@ export const TRI_BUDGET = {
   // Includes the optional 299k authored watch. The crew-free browser host still
   // checks its 1.5m cinematic / 900k hero ship limits separately.
   cinematic: [380000, 1700000],
-  hero: [200000, 1100000],
+  hero: [200000, 1120000],
   game: [30000, 80000],
   distant: [1500, 5000],
 };

@@ -267,7 +267,7 @@ export function createMotion(ship, opts = {}) {
    */
   function patch(mesh, { aloft = false, sail = false, wet = false, alwaysWet = 0, sway = 0 }) {
     const mat = mesh.material.clone();
-    const hullProfile = mesh.name === 'hull_shell';
+    const hullProfile = mesh.name === 'hull_shell' || mesh.userData.hullWetProfile === true;
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
     if (sail) {
       // Bolt ropes share the cloth's motion, including its phase and scale.

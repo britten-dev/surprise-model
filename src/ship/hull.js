@@ -17,6 +17,7 @@ import { monotoneCubic, naturalCubic } from '../util/interp.js';
 import { loftSections, mergeGeometries } from '../util/loft.js';
 import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
+import { hullSideDetails } from './hull-side-details.js';
 
 // The feature stops, bottom to top. The V values are arbitrary but fixed: they are the
 // contract between the hull surface and the paint.
@@ -416,6 +417,16 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
     ['hull_beam_moulded', 'extent_x'],
   );
   group.add(hull);
+
+  const joinery = hullSideDetails(cfg, sections);
+  if (joinery) {
+    paintLengthwiseWear(joinery, model);
+    const sides = new THREE.Mesh(joinery, mats.hull);
+    sides.name = 'hull_side_joinery';
+    sides.userData.hullWetProfile = true;
+    sides.userData.bands = joinery.userData.bands;
+    group.add(sides);
+  }
 
   // A marker at the midship station on the centreline, so that the height of the gun
   // deck can be measured where it is specified — amidships — rather than averaged over

@@ -35,7 +35,7 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 | LOD | Triangles | Use |
 | --- | --- | --- |
 | `cinematic` | 380–1,700 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and optional crew. |
-| `hero` | 200–1,100 k | Close inspection with 1024 maps and authored detail. |
+| `hero` | 200–1,120 k | Close inspection with 1024 maps and authored detail. |
 | `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
 
@@ -59,6 +59,13 @@ solid bevelled joinery at cinematic/hero quality, following the curved surfaces.
 They add 5,790 triangles with no additional material batches or texture assets.
 Phone geometry stays unchanged. Profiles are reconstructed, with the existing
 window layout retained; see [window evidence and checks](docs/research/13-window-joinery.md).
+
+The main wale now stands proud of the hull with shaped upper and lower edges.
+Cinematic/hero also have a raised ochre moulding. Both sides share the existing
+hull material and water-contact history, while the paint carries shallow plank
+seams and subdued fastening marks. One mesh adds 8,672 cinematic / 5,792 hero
+triangles; the phone's simpler wale adds 1,456. Dimensions and their uncertainty
+are recorded in [the hull-side notes](docs/research/14-hull-side-joinery.md).
 
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and

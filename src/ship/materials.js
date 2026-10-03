@@ -792,7 +792,7 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
     const src = underwater ? copper : plank;
     // Copper is a metal and carries its own colour through the metalness map, so its
     // pattern is allowed to modulate more strongly than paint on planking does.
-    const depth = underwater ? PAINT.copper_pattern_depth.value : 0.26;
+    const depth = underwater ? PAINT.copper_pattern_depth.value : 0.40;
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
       const k = 1 + (lum(src, i) - 0.5) * 2 * depth;
