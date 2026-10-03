@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
 import { V } from './hull.js';
 import { mergeGeometries } from '../util/loft.js';
-import { block } from '../util/solids.js';
+import { portLid, batchPortLids } from './port-fittings.js';
 import { audit, audits } from '../audit/measure.js';
 
 /**
@@ -89,7 +89,6 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
 
   for (const p of ports) {
     for (const side of [1, -1]) {
-      const f = model.featureYAt(p.z);
       const sill = model.pointAt(p.z, 'port_sill', side);
       const head = model.pointAt(p.z, 'port_head', side);
 
@@ -117,44 +116,7 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
         linings.push(new THREE.Mesh(g, mats.red));
       }
 
-      if (cfg.portLids) {
-        const t = SPEC.gunport_lid_thickness.value;
-        // The lid overlaps its opening all round — see gunport_lid_overlap — so it is
-        // cut larger than the port and hung so that the overlap falls outside it.
-        const ov = SPEC.gunport_lid_overlap.value;
-        // Shut, the lid is cut to the hole the lofter actually made and given its overlap
-        // on top of that; open, it is the port's own size, because that is what is seen
-        // of it hanging above the opening.
-        const cutW = (p.cutZ1 ?? p.z + w / 2) - (p.cutZ0 ?? p.z - w / 2);
-        const lidW = ctx.portsShut ? Math.max(w, cutW) + ov * 2 : w;
-        const lidH = ctx.portsShut ? h + ov * 2 : h;
-        const lid = new THREE.Mesh(new THREE.BoxGeometry(t, lidH, lidW), mats.black);
-        const pivot = new THREE.Group();
-        pivot.position.set(Math.abs(head.x) * side, f.port_head, p.z);
-        pivot.rotation.z = lean;
-        const swing = new THREE.Group();
-
-        if (ctx.portsShut) {
-          // Shut: hinged along its top edge and hanging down over the opening, lying
-          // against the outside of the planking rather than sitting flush in the hole.
-          // Hung from the hinge at the port head so that its top edge stands `ov` above
-          // the opening and its foot the same below the sill.
-          const cutMid = ((p.cutZ0 ?? p.z - w / 2) + (p.cutZ1 ?? p.z + w / 2)) / 2;
-          lid.position.set(
-            side * (t / 2 + SPEC.gunport_lid_closed_proud.value),
-            -h / 2,
-            cutMid - p.z
-          );
-        } else {
-          // Open: swung up and outboard by seventy degrees on its hinges, which is how a
-          // ship with her guns run out actually looks.
-          lid.position.set(0, h / 2, 0);
-          swing.rotation.z = side * -(70 * Math.PI) / 180;
-        }
-        swing.add(lid);
-        pivot.add(swing);
-        lids.push(pivot);
-      }
+      if (cfg.portLids) lids.push(portLid(cfg, mats, model, p, side, !!ctx.portsShut));
     }
   }
 
@@ -193,6 +155,7 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
   audit(span, 'gunport_spacing', 'origin_z', { tolerance: 0.02 });
   group.add(span);
 
-  for (const l of lids) group.add(l);
+  group.userData.assemblies = lids.map(l => l.userData.portLid);
+  group.add(...batchPortLids(lids));
   return group;
 }

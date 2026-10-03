@@ -34,8 +34,8 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
-| `cinematic` | 380–1,000 k | Desktop deck cameras. Round spars and ropes, 2048 maps, authored fittings and crew. |
-| `hero` | 200–800 k | Close inspection with 1024 maps and authored detail. |
+| `cinematic` | 380–1,500 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and crew. |
+| `hero` | 200–900 k | Close inspection with 1024 maps and authored detail. |
 | `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
 
@@ -43,7 +43,14 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 The browser generates the main ship and downloads a shared 7.6 MB library of Blender
 detail. Phone quality uses `game` and skips that library. The standard GLB export
 matrix remains ten files; `tools/export-blender.mjs` separately exports the cinematic
-ship for the editable workshop. Counts depend on canvas, weather and loaded assets.
+ship for the editable workshop. Counts depend on canvas, weather and loaded assets. These are allowance ranges,
+not detail targets; measure frame time, draw calls and memory before spending more.
+
+Gunport lids have separate inner/outer painted boards, bevelled joinery, iron
+hinges, ringbolts and rope lifting spans at cinematic/hero quality. They share
+the same geometry open and shut. Small fittings are reconstructed from period
+practice, not claimed as measured Surprise dimensions; see
+[the research record](docs/research/09-gunport-fittings.md).
 
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and

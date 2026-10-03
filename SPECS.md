@@ -120,6 +120,25 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `gunport_first_from_stem` | 7.3152 | 24 ft 0 in | RECONSTRUCTED | §4 foremost port clear of the round of the bow on ZAZ3067 |
 | `qd_port_count_per_side` | 6 | — | PRIMARY | §2 threedecks, 8 x 4-pdr and 4 x 12-pdr carronades on the quarterdeck |
 | `fc_port_count_per_side` | 2 | — | PRIMARY | §2 threedecks, 2 x 4-pdr and 2 x 12-pdr carronades on the forecastle |
+| `gunport_lid_board_count` | 4 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lid_seam_width` | 0.0016 | 0 ft 0.1 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lid_edge_radius` | 0.0025 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lid_inner_fraction` | 0.35 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_strap_width` | 0.045 | 0 ft 1.8 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_strap_thickness` | 0.006 | 0 ft 0.2 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_strap_length` | 0.56 | 1 ft 10 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_fixed_height` | 0.12 | 0 ft 4.7 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_barrel_diameter` | 0.03 | 0 ft 1.2 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_barrel_length` | 0.075 | 0 ft 3 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_bolt_diameter` | 0.02 | 0 ft 0.8 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_bolt_height` | 0.006 | 0 ft 0.2 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_hinge_spacing_fraction` | 0.6 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lift_ring_diameter` | 0.066 | 0 ft 2.6 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lift_ring_iron` | 0.008 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lift_rope_diameter` | 0.014 | 0 ft 0.6 in | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lift_entry_above_head` | 0.34 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lift_ring_from_bottom` | 0.12 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
+| `gunport_lid_open_degrees` | 110 | — | RECONSTRUCTED | §09 docs/research/09-gunport-fittings.md; fitting size inferred for the existing 9-pounder opening |
 
 ### Wales
 

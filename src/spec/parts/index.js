@@ -5,6 +5,7 @@
 //   key: { value: <metres or degrees or a count>, source: '<GRADE> §n <where it came from>' }
 //
 // and every key must also appear as a row in SPECS.md, which `npm run trace` enforces.
+import { PORT_SPEC } from './ports.js';
 import { STERN_SPEC } from './stern.js';
 import { HEAD_SPEC } from './head.js';
 import { CHANNELS_SPEC } from './channels.js';
@@ -18,6 +19,7 @@ import { CREW_SPEC } from './crew.js';
 import { MOTION_SPEC } from './motion.js';
 
 const FRAGMENTS = {
+  ports: PORT_SPEC,
   stern: STERN_SPEC,
   head: HEAD_SPEC,
   channels: CHANNELS_SPEC,

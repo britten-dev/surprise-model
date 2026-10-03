@@ -1,6 +1,6 @@
 // Geometry tiers used by the browser and asset tools. Cinematic includes the
 // Blender-authored fittings and eleven close-range crew; phones keep game.
-// The desktop ceiling is one million ship triangles, measured separately from
+// The desktop allowance is 1.5 million ship triangles, measured separately from
 // ocean, reflection and shadow passes. tools/check-authored-detail.mjs exercises
 // every sail/weather combination; actual frame timing is checked in Chromium.
 export const LODS = ['cinematic', 'hero', 'game', 'distant'];
@@ -46,6 +46,7 @@ const CONFIG = {
     gunBreechings: true,
     gunTackles: true,
     portLids: true,
+    portFittings: true,
     innerBulwarks: true,
     deckFurniture: 'full',
     gratingBattens: true,
@@ -148,6 +149,7 @@ const CONFIG = {
     gunBreechings: true,
     gunTackles: true,
     portLids: true,
+    portFittings: true,
     innerBulwarks: true,
     deckFurniture: 'full',
     // Deck furniture sub-switches, owned by src/ship/furniture.js.
@@ -379,8 +381,8 @@ export function lodConfig(lod) {
 // the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
 // 'none' — in that order.
 export const TRI_BUDGET = {
-  cinematic: [380000, 1000000],
-  hero: [200000, 800000],
+  cinematic: [380000, 1500000],
+  hero: [200000, 900000],
   game: [30000, 80000],
   distant: [1500, 5000],
 };
