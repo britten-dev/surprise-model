@@ -16,6 +16,7 @@ import {
 } from './textures.js';
 import { hullStains, deckStains, sailStains } from './weathering.js';
 import { getDeckImage } from './surface-assets.js';
+import { hullTimber } from './hull-timber.js';
 
 const col = (key) => new THREE.Color(PAINT[key].hex);
 
@@ -119,23 +120,17 @@ function hullPaintStrip(size = 1024, cfg) {
  * coordinate the colour bands use so that everything still lines up with the sheer
  * rather than the horizon:
  *
- *  * the same plank and sheathing pattern that gives the colour map its board-by-board
- *    unevenness, read again as a roughness delta instead of a lightness one, because a
- *    seam that catches a shadow is a real crack and holds less of a sheen than the
- *    smooth face beside it;
+ *  * a dedicated plank-finish map and the sheathing pattern, so rough caulking
+ *    and smoother painted faces are independent of stains in the colour map;
  *  * the weathering roughness `hullStains` paints at the same streaks and bands it
  *    paints its colour at, so the wind-and-water band is smoother where it is darker
  *    with weed and a rust run is rougher where it is darker with iron oxide, rather than
  *    the finish staying uniform under a hull whose colour is doing all the work.
  *
- * Metalness is never touched by either layer. `hullStains`'s roughness overlay in
- * particular has effects — the verdigris mottle above all — that sit entirely inside the
- * copper band, and blending it in the way the colour map blends its own weathering, with
- * `drawImage`, would carry the overlay's alpha into every channel including the blue one
- * metalness lives in: an innocent-looking rougher patch would quietly turn part of the
- * sheathing non-metal, which is exactly the regression the metal/paint distinction
- * exists to prevent. So this is built as a manual per-pixel blend that always takes
- * metalness from the band map alone and only ever reads roughness out of the overlay.
+ * Channels are composed independently. Painted timber stays non-metallic;
+ * dense weathering within the copper band reduces its metallic response to
+ * approximate an oxide film. This is a single-layer material approximation,
+ * not a measured multilayer copper/oxide BRDF.
  */
 function hullSurfaceMap(size, plankCanvas, copperCanvas) {
   const bands = document.createElement('canvas');
@@ -211,21 +206,22 @@ function hullSurfaceMap(size, plankCanvas, copperCanvas) {
       let rough = base[i + 1] / 255;
       // The plank seams and the sheathing laps, darker being rougher — a crack, not a
       // burnish.
-      rough += (0.5 - lum(src, i)) * patternVar;
+      rough += (underwater ? 0.5 - lum(src, i) : lum(src, i) - .5) * patternVar;
       // The fine, all-over grain every big surface on the ship shares, standing in for
       // the thousand small differences a real finish has that no drawn feature accounts
       // for.
       if (grain) rough += (grain[i] / 255 - 0.5) * grainVar;
       rough = Math.max(0, Math.min(1, rough));
-      // The weathering last, blended by its own alpha exactly as the colour map blends
-      // its stains over the paint — but metalness is not part of this blend at all; it
-      // comes from the band map alone, untouched, which is what keeps a verdigris patch
-      // inside the copper band from being read as anything but metal.
+      // Blend weathering into roughness without leaking it into the paint's
+      // metallic channel. Copper's oxide approximation is handled below.
       const wa = weatherRough[i + 3] / 255;
       if (wa > 0) rough = rough * (1 - wa) + (weatherRough[i + 1] / 255) * wa;
       d[i] = 0;
       d[i + 1] = Math.round(Math.max(0, Math.min(1, rough)) * 255);
-      d[i + 2] = base[i + 2];
+      // An oxide film is a dielectric over metal. Retain copper underneath,
+      // but reduce the metallic response where the painted patina is dense.
+      const patina = underwater ? wa * .55 : 0;
+      d[i + 2] = Math.round(base[i + 2] * (1 - patina));
       d[i + 3] = 255;
     }
   }
@@ -364,7 +360,7 @@ function capped(sourceCanvas, maxSize) {
  * ever generated, which both bounds the noise this bakes into the GLB and means the
  * detail pass itself runs over a quarter of the pixels or fewer at the hero level.
  */
-function withDetailNormal(macroNormalCanvas, cfg, seed, maxSize = 512) {
+function withDetailNormal(macroNormalCanvas, cfg, seed, maxSize = 512, detailScale = 1) {
   if (cfg.textureSize < 512) return macroNormalCanvas;
   const base = capped(macroNormalCanvas, Math.min(maxSize, cfg.textureSize));
   const size = base.width;
@@ -372,7 +368,7 @@ function withDetailNormal(macroNormalCanvas, cfg, seed, maxSize = 512) {
     fineGrainHeight(size, { seed, cell: PAINT.detail_normal_cell.value }),
     PAINT.detail_normal_strength.value
   );
-  return blendNormalsWhiteout(base, detail, PAINT.detail_normal_blend.value);
+  return blendNormalsWhiteout(base, detail, PAINT.detail_normal_blend.value * detailScale);
 }
 
 // Materials are immutable and depend only on the level of detail, but building them
@@ -414,7 +410,7 @@ function buildMaterials(cfg) {
   const RN = Math.min(512, N);
 
   const hullPlank = asTexture(
-    planking({ base: '#8a7256', dark: '#5c4a34', light: '#9c8264', seam: '#241d16', planks: 26, size: hullSize, seed: 3 }),
+    hullTimber(hullSize),
     { repeat: [1, 1] }
   );
   hullPlank.wrapT = THREE.ClampToEdgeWrapping;
@@ -425,9 +421,9 @@ function buildMaterials(cfg) {
   const copperArgs = {
     sheetsX: PAINT.copper_sheets_along.value,
     sheetsY: PAINT.copper_sheets_up.value,
-    variation: PAINT.copper_sheet_variation.value,
-    lap: PAINT.copper_lap_relief.value,
-    nailRelief: PAINT.copper_nail_relief.value,
+    variation: PAINT.copper_sheet_variation.value * 0.4,
+    lap: PAINT.copper_lap_relief.value * 0.5,
+    nailRelief: PAINT.copper_nail_relief.value * 0.5,
     size: hullSize,
   };
   const copperTex = asTexture(
@@ -707,7 +703,7 @@ function buildMaterials(cfg) {
 
   // The hull's paint. Built last because it needs the LOD's texture size.
   mats.hullPaint = hullPaintStrip(hullSize, cfg);
-  mats.hullSurface = hullSurfaceMap(Math.min(1024, cfg.textureSize), hullPlank.image, copperTex.image);
+  mats.hullSurface = hullSurfaceMap(Math.min(1024, cfg.textureSize), hullTimber(Math.min(1024, cfg.textureSize),'roughness'), copperTex.image);
 
   mats.hull = std({
     map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, hullSize),
@@ -730,22 +726,25 @@ function buildMaterials(cfg) {
         withDetailNormal(
           normalFrom(
             capped(hullHeightField(
-              hullPlank.image,
+              hullTimber(hullSize,'height'),
               // The sheathing's own relief is the more expensive half — it is a second full
               // pass of the copper generator — and it is only ever read from alongside, so
               // below the game level the bottom keeps its colour and loses its laps.
               cfg.copperNails ? copperSheathing({ ...copperArgs, height: true }) : null,
               hullSize
             ), Math.min(2048, N)),
-            1.1
+            1.8
           ),
-          cfg, 511, 2048
+          // Painted timber has directional grain; the shared isotropic detail
+          // must not turn the broad hull into hammered stone.
+          cfg, 511, 2048, 0.18
         ),
         { srgb: false }
       )
       : null,
     normalScale: new THREE.Vector2(0.65, 0.65),
   });
+  mats.hull.userData.hullFinish='caulked-timber-v2';
 
   return mats;
 }
@@ -797,9 +796,8 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
       const k = 1 + (lum(src, i) - 0.5) * 2 * depth;
-      d[i] = Math.min(255, d[i] * k);
-      d[i + 1] = Math.min(255, d[i + 1] * k);
-      d[i + 2] = Math.min(255, d[i + 2] * k);
+      for (let c=0;c<3;c++) d[i+c] = Math.min(255, underwater
+        ? copper[i+c] * (0.9 + 0.1*k) : d[i+c] * k);
       d[i + 3] = 255;
     }
   }

@@ -112,6 +112,17 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
         [h, trim, 0, -liningW / 2], [h, trim, 0, liningW / 2],
       ]) {
         const g = new THREE.BoxGeometry(depth, height, width);
+        // The narrow reveal sees progressively less sky toward the gundeck.
+        // Bake that local cavity shade before the coarser whole-ship AO pass;
+        // no opaque backing plate or extra draw call is needed.
+        const pos = g.attributes.position;
+        const colours = new Float32Array(pos.count * 3);
+        for (let i = 0; i < pos.count; i++) {
+          const exposed = THREE.MathUtils.clamp(0.5 + side * pos.getX(i) / depth, 0, 1);
+          const shade = 0.48 + exposed * 0.52;
+          colours.fill(shade, i * 3, i * 3 + 3);
+        }
+        g.setAttribute('color', new THREE.BufferAttribute(colours, 3));
         g.translate(0, dy, dz); g.applyMatrix4(frame);
         linings.push(new THREE.Mesh(g, mats.red));
       }

@@ -184,16 +184,33 @@ const WET_PARS = `
   uniform float uWetRough;
   uniform float uAlwaysWet;
   varying float vShipYWet;
+  #ifdef HULL_WET_PROFILE
+    uniform sampler2D uHullWetProfile;
+    uniform vec4 uHullWetExtent;
+    varying vec3 vHullWetPoint;
+  #endif
 
   // How wet this fragment is: everything the sea reached, and the decks always, because
   // in this weather a deck is never dry.
   float wetAmount() {
+    #ifdef HULL_WET_PROFILE
+      if (uHullWetExtent.w > 0.5) {
+        float column = clamp((vHullWetPoint.z-uHullWetExtent.x)/(uHullWetExtent.y-uHullWetExtent.x),0.0,1.0)*(uHullWetExtent.z-1.0);
+        float row = vHullWetPoint.x < 0.0 ? 0.25 : 0.75;
+        float a = texture2D(uHullWetProfile,vec2((floor(column)+.5)/uHullWetExtent.z,row)).r;
+        float b = texture2D(uHullWetProfile,vec2((min(floor(column)+1.0,uHullWetExtent.z-1.0)+.5)/uHullWetExtent.z,row)).r;
+        float reached = mix(a,b,fract(column));
+        return max(uWetness*.25,1.0-smoothstep(reached-.14,reached+.24,vHullWetPoint.y));
+      }
+    #endif
     return uWetness * max(uAlwaysWet, 1.0 - smoothstep(uWetY - 1.2, uWetY + 0.8, vShipYWet));
   }
 `;
 
 export function createMotion(ship, opts = {}) {
   const uniforms = {
+    uHullWetProfile: { value: null },
+    uHullWetExtent: { value: new THREE.Vector4(0,1,1,0) },
     uTime: { value: 0 },
     uWhipWorld: { value: new THREE.Vector3() },
     uWhipExp: { value: S('motion_whip_exponent') },
@@ -250,6 +267,7 @@ export function createMotion(ship, opts = {}) {
    */
   function patch(mesh, { aloft = false, sail = false, wet = false, alwaysWet = 0, sway = 0 }) {
     const mat = mesh.material.clone();
+    const hullProfile = mesh.name === 'hull_shell';
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
     if (sail) {
       // Bolt ropes share the cloth's motion, including its phase and scale.
@@ -266,6 +284,7 @@ export function createMotion(ship, opts = {}) {
     function moveVertices(shader, shadow = false) {
       Object.assign(shader.uniforms, own);
       const declarations = [
+        hullProfile ? '#define HULL_WET_PROFILE' : '',
         shadow ? '#define HW_SHADOW' : '',
         (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
         aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '', wet ? WET_PARS : '',
@@ -277,6 +296,7 @@ export function createMotion(ship, opts = {}) {
       }
       if (wet) v = v.replace('#include <project_vertex>',
         'vShipYWet = dot(uShipRowY, modelMatrix * vec4(transformed, 1.0));\n#include <project_vertex>');
+      if (hullProfile) v = v.replace('#include <project_vertex>', 'vHullWetPoint = transformed;\n#include <project_vertex>');
       if (aloft) {
         v = v.replace('#include <project_vertex>', `#include <project_vertex>\n${ALOFT_BODY}`);
         // The world position used to sample a shadow must move with the vertex.
@@ -305,7 +325,7 @@ export function createMotion(ship, opts = {}) {
 
       if (wet) {
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', `#include <common>\n${WET_PARS}`)
+          .replace('#include <common>', `#include <common>\n${hullProfile?'#define HULL_WET_PROFILE':''}\n${WET_PARS}`)
           .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
             // Water smooths the finish but cannot erase plank grain and beaten
             // copper. Preserve that variation instead of making every wet face a mirror.
@@ -319,7 +339,7 @@ export function createMotion(ship, opts = {}) {
 
     // Each shape of patch needs its own compiled program. Without a key that says which,
     // three hands the sails the rigging's shader and nothing moves but the rigging.
-    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${wet ? 'w' : ''}${alwaysWet}:${sway}`;
+    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}`;
     mat.customProgramCacheKey = () => key;
     mat.needsUpdate = true;
     mesh.material = mat;
