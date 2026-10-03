@@ -31,6 +31,7 @@ import { mergeGeometries, weldByPosition } from '../util/loft.js';
 import { sweep, block, spar } from '../util/solids.js';
 import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit } from '../audit/measure.js';
+import { windowStrip } from './window-joinery.js';
 
 // ---------------------------------------------------------------------------
 // The stern profile: everything the closure and the ornament need to know about
@@ -417,6 +418,9 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
 
   const at = (out) => (x, y) => sp.surfaceAtX(y, x, out);
   const frames = [], glass = [], bars = [];
+  const joinery = (u0, u1, v0, v1, top, base, nu, nv) => cfg.windowJoinery
+    ? windowStrip((u, v, d) => sp.surfaceAtX(v, u, d), u0, u1, v0, v1, { base, top, nu, nv })
+    : patch(at(top), u0, u1, v0, v1, nu, nv);
 
   for (let i = 0; i < count; i++) {
     const cx = (i - (count - 1) / 2) * pitch;
@@ -426,27 +430,33 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
     // ochre instead of as a window with the dark cabin behind it.
     const fx0 = x0 - bar * 2, fx1 = x1 + bar * 2;
     const fy0 = ySill - bar * 2, fy1 = yHead + bar * 2;
-    frames.push(patch(at(depth), fx0, x0, fy0, fy1, 1, 3));
-    frames.push(patch(at(depth), x1, fx1, fy0, fy1, 1, 3));
-    frames.push(patch(at(depth), x0, x1, fy0, ySill, 3, 1));
-    frames.push(patch(at(depth), x0, x1, yHead, fy1, 3, 1));
+    frames.push(joinery(fx0, x0, fy0, fy1, depth, .008, 1, 3));
+    frames.push(joinery(x1, fx1, fy0, fy1, depth, .008, 1, 3));
+    frames.push(joinery(x0, x1, fy0, ySill, depth, .008, 3, 1));
+    frames.push(joinery(x0, x1, yHead, fy1, depth, .008, 3, 1));
     glass.push(patch(at(glassDepth), x0, x1, ySill, yHead, 3, 3));
     if (!cfg.galleryGlazing) continue;
     // Glazing bars: small rectangular panes in a grid, as contemporary sash windows were
     // glazed. Leaded diamond quarries were a century out of date by 1798.
     for (let k = 1; k < SPEC.stern_panes_wide.value; k++) {
       const bx = lerp(x0, x1, k / SPEC.stern_panes_wide.value);
-      bars.push(patch(at(glassDepth + bar), bx - bar / 2, bx + bar / 2, ySill, yHead, 1, 3));
+      bars.push(joinery(bx - bar / 2, bx + bar / 2, ySill, yHead, glassDepth + bar, glassDepth + .001, 1, 3));
     }
     for (let k = 1; k < SPEC.stern_panes_high.value; k++) {
       const by = lerp(ySill, yHead, k / SPEC.stern_panes_high.value);
-      bars.push(patch(at(glassDepth + bar), x0, x1, by - bar / 2, by + bar / 2, 3, 1));
+      const panes = cfg.windowJoinery ? SPEC.stern_panes_wide.value : 1;
+      for (let j = 0; j < panes; j++) {
+        const a = lerp(x0, x1, j / panes) + (j ? bar / 2 : 0);
+        const b = lerp(x0, x1, (j + 1) / panes) - (j < panes - 1 ? bar / 2 : 0);
+        bars.push(joinery(a, b, by - bar / 2, by + bar / 2, glassDepth + bar, glassDepth + .001, 3, 1));
+      }
     }
   }
 
   const frame = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
   frame.name = 'stern_light_frames';
   frame.userData.count = count;
+  frame.userData.solidJoinery = !!cfg.windowJoinery;
   audit(frame, 'stern_light_count', 'count');
   group.add(frame);
 
@@ -487,7 +497,8 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
     const half = (edge ? SPEC.stern_quarter_piece_width.value : SPEC.stern_light_munion.value) / 2;
     const px = (i - count / 2) * pitch;
     const c = i === 0 ? px - half : i === count ? px + half : px;
-    piers.push(patch(at(depth), c - half * 1.15, c + half * 1.15, ySill - bar * 2, yHead + bar * 2, 1, 3));
+    piers.push(joinery(c - half * 1.15, c + half * 1.15, ySill - bar * 2, yHead + bar * 2,
+      depth + (cfg.windowJoinery ? .006 : 0), .008, 1, 3));
   }
   const pier = new THREE.Mesh(mergeGeometries(piers), mats.ochre);
   pier.name = 'stern_munions';
@@ -616,25 +627,33 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   // Coarse flat triangles cut through the badge and produced black reflected bands.
   const badgePatch = (surface, u0, u1, v0, v1, nu = 8, nv = 12) =>
     patch(surface, u0, u1, v0, v1, nu, nv, side > 0);
+  const joinery = (u0, u1, v0, v1, nu, nv, thin = false) => cfg.windowJoinery
+    ? windowStrip(onBadge, u0, u1, v0, v1, { base: thin ? proud * .3 : .004, top: proud,
+      scaleU: len, scaleV: span, nu, nv, flip: side > 0 })
+    : badgePatch(inFrame, u0, u1, v0, v1, nu, nv);
   for (let i = 0; i < n; i++) {
     const c = margin + slot * (i + 0.5);
     const half = slot * 0.34;
     const f0 = c - half - bar * 2, f1 = c + half + bar * 2;
     const q0 = p0 - 0.04, q1 = p1 + 0.04;
-    frames.push(badgePatch(inFrame, f0, c - half, q0, q1, 1, 12));
-    frames.push(badgePatch(inFrame, c + half, f1, q0, q1, 1, 12));
-    frames.push(badgePatch(inFrame, c - half, c + half, q0, p0, 8, 1));
-    frames.push(badgePatch(inFrame, c - half, c + half, p1, q1, 8, 1));
+    frames.push(joinery(f0, c - half, q0, q1, 1, 12));
+    frames.push(joinery(c + half, f1, q0, q1, 1, 12));
+    frames.push(joinery(c - half, c + half, q0, p0, 8, 1));
+    frames.push(joinery(c - half, c + half, p1, q1, 8, 1));
     glass.push(badgePatch(inGlass, c - half, c + half, p0, p1));
-    glazingBars.push(badgePatch(inFrame, c-bar/2, c+bar/2, p0, p1, 1, 12));
+    glazingBars.push(joinery(c-bar/2, c+bar/2, p0, p1, 1, 12, true));
     const vb = SPEC.stern_glazing_bar.value / span;
     for (let j = 1; j < 3; j++) {
       const v = lerp(p0, p1, j / 3);
-      glazingBars.push(badgePatch(inFrame, c-half, c+half, v-vb/2, v+vb/2, 8, 1));
+      if (cfg.windowJoinery) {
+        glazingBars.push(joinery(c-half, c-bar/2, v-vb/2, v+vb/2, 4, 1, true));
+        glazingBars.push(joinery(c+bar/2, c+half, v-vb/2, v+vb/2, 4, 1, true));
+      } else glazingBars.push(joinery(c-half, c+half, v-vb/2, v+vb/2, 8, 1, true));
     }
   }
   const gf = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
   gf.name = 'quarter_gallery_frames';
+  gf.userData.solidJoinery = !!cfg.windowJoinery;
   group.add(gf);
   const gb = new THREE.Mesh(mergeGeometries(glazingBars), mats.ochre);
   gb.name = 'quarter_gallery_glazing_bars';

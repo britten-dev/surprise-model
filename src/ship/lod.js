@@ -54,6 +54,7 @@ const CONFIG = {
     hammockCranes: 'full',
     belayingPins: true,
     galleryGlazing: true,
+    windowJoinery: true,
     // The stern: half again more stations through the counter and the transom, so the
     // carved quarter-pieces and the transom's curvature stand comparison with the
     // reference photograph at the range a still is actually cropped to.
@@ -158,6 +159,7 @@ const CONFIG = {
     hammockCranes: 'full',
     belayingPins: true,
     galleryGlazing: true,
+    windowJoinery: true,
     // The stern, owned by src/ship/stern.js: how many stations the counter and the
     // transom are lofted through, whether the carved and gilded work exists, and
     // whether the rudder gets its pintles and gudgeons.

@@ -54,6 +54,12 @@ the same geometry open and shut. Small fittings are reconstructed from period
 practice, not claimed as measured Surprise dimensions; see
 [the research record](docs/research/09-gunport-fittings.md).
 
+Stern and quarter-gallery window frames, glazing bars and stern piers are
+solid bevelled joinery at cinematic/hero quality, following the curved surfaces.
+They add 5,790 triangles with no additional material batches or texture assets.
+Phone geometry stays unchanged. Profiles are reconstructed, with the existing
+window layout retained; see [window evidence and checks](docs/research/13-window-joinery.md).
+
 Four sail states: `full` (courses, topsails, topgallants, staysails and three
 headsails, as in the reference photograph), `topsails`, `storm` (reefed foresail and
 close-reefed main topsail) and `furled`.
