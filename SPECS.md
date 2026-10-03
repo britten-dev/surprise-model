@@ -302,7 +302,7 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `bobstay_pairs` | 2 | — | SECONDARY | §11 Steel 1794 v2, rigging warrant for a 28-gun ship of 594 tons; cabled, set up with hearts |
 | `ratline_spacing` | 0.3302 | 1 ft 1 in | SECONDARY | §11.4 Steel 1794 v1 pp.198-199, Progressive Method of Rigging Ships |
 | `ratline_stiffener_spacing` | 1.524 | 5 ft 0 in | SECONDARY | §11.4 boat oars seized to the shrouds about five feet asunder for the men to stand on |
-| `shroud_diameter` | 0.1143 | 0 ft 4.5 in | RECONSTRUCTED | §11 lower shroud circumference for this class, expressed as a diameter |
+| `shroud_diameter` | 0.0364 | 0 ft 1.4 in | RECONSTRUCTED | §11 4.5-inch lower shroud circumference, converted to diameter; Steel describes rope sizes by circumference, not a recovered Surprise rope schedule |
 | `stay_diameter` | 0.1524 | 0 ft 6 in | RECONSTRUCTED | §11 lower stay heavier than the shrouds |
 | `running_rigging_diameter` | 0.0508 | 0 ft 2 in | RECONSTRUCTED | §12 braces, lifts and sheets at model-visible size |
 

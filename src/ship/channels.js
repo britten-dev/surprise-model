@@ -16,6 +16,8 @@
 // inboard edge sits on the real planking at whatever half-breadth the station has — so
 // the whole region moves with the hull rather than standing off it.
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { deadeyePair, pairAttachment } from './deadeyes.js';
 import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { block } from '../util/solids.js';
@@ -292,7 +294,10 @@ export function channelAnchors(model, cfg) {
   for (const c of channelPlan(model)) {
     const e = channelEdges(model, c, cfg);
     const eyes = deadeyeRow(c, e);
-    const at = (eye) => new THREE.Vector3(eye.centre.x, eye.centre.y + eye.r, eye.centre.z);
+    const aim = new THREE.Vector3(0, c.aimY, c.zMast);
+    const at = (eye) => cfg.deadeyes === true
+      ? eye.centre.clone().addScaledVector(aim.clone().sub(eye.centre).normalize(), pairAttachment(eye.r))
+      : new THREE.Vector3(eye.centre.x, eye.centre.y + eye.r, eye.centre.z);
     out[c.name] = {
       shrouds: eyes.filter((x) => x.kind === 'shroud').map(at),
       topmastBackstays: eyes.filter((x) => x.kind === 'topmast_backstay').map(at),
@@ -382,7 +387,8 @@ export function buildChannels(cfg, mats, model, ctx) {
   for (const c of channelPlan(model)) {
     const e = channelEdges(model, c, cfg);
     const timber = [channelSlab(e)];
-    const iron = [];
+    const iron = [], faces = [], hemp = [], strops = [], pairRecords = [];
+    let eyeMaterial = mats.timber;
 
     const eyes = deadeyeRow(c, e);
 
@@ -421,10 +427,21 @@ export function buildChannels(cfg, mats, model, ctx) {
         0
       ).normalize();
 
-      if (cfg.deadeyes) {
+      if (cfg.deadeyes === true) {
+        const thickness = S(c.thickKey) * eye.r / (S(c.shroudDia) / 2);
+        const ropeScale = eye.kind === 'topmast_backstay' ? .8 : eye.kind === 'topgallant_backstay' ? .6 : 1;
+        const shroudRadius = S('shroud_diameter') * .5 * ropeScale;
+        const pair = deadeyePair(eye.r, thickness, cfg, mats, shroudRadius);
+        const frame = frameAt(eye.centre, up, out);
+        faces.push(pair.timber.applyMatrix4(frame));
+        hemp.push(pair.hemp.applyMatrix4(frame)); strops.push(pair.strop.applyMatrix4(frame));
+        eyeMaterial = pair.material;
+        pairRecords.push({ radius: eye.r, thickness, shroudRadius, authored: pair.authored,
+          lower: eye.centre.toArray(), upper: eye.centre.clone().addScaledVector(up, pair.separation).toArray(),
+          anchor: eye.centre.clone().addScaledVector(up, pair.attachment).toArray(), frame: frame.toArray() });
+      } else if (cfg.deadeyes) {
         const g = deadeyeGeometry(eye.r, S(c.thickKey), cfg);
-        g.applyMatrix4(frameAt(eye.centre, up, out));
-        timber.push(g);
+        g.applyMatrix4(frameAt(eye.centre, up, out)); timber.push(g);
       }
 
       if (cfg.deadeyes === true) {
@@ -433,7 +450,7 @@ export function buildChannels(cfg, mats, model, ctx) {
         // Both counts scale with the level. The tube's own cross-section was fixed at
         // three, so the strop stayed a triangular hoop at every level however round its
         // ring became — and it is iron, seen from a few feet away in the channels view.
-        const g = new THREE.TorusGeometry(eye.r + ir, ir,
+        const g = new THREE.TorusGeometry(eye.r * .91 + ir * .5, ir,
           Math.max(3, Math.round(cfg.latheSegments * 0.35)),
           Math.max(8, Math.round(cfg.latheSegments * 0.6)));
         g.applyMatrix4(frameAt(eye.centre, up, out));
@@ -448,9 +465,14 @@ export function buildChannels(cfg, mats, model, ctx) {
       const zBolt = eye.centre.z + (yBolt - eye.centre.y) * (dir.z / dir.y);
       const xBolt = model.halfBreadthAt(zBolt, yBolt) + S('chainplate_standoff');
       const bolt = new THREE.Vector3(xBolt, yBolt, zBolt);
-      const foot = new THREE.Vector3(eye.centre.x, eye.centre.y - eye.r, eye.centre.z);
+      const foot = cfg.deadeyes === true
+        ? eye.centre.clone().addScaledVector(up, -eye.r)
+        : new THREE.Vector3(eye.centre.x, eye.centre.y - eye.r, eye.centre.z);
 
-      const plate = block(S('chainplate_width'), bolt.distanceTo(foot), S(c.plateKey));
+      const length = bolt.distanceTo(foot);
+      const plate = cfg.deadeyes === true
+        ? new RoundedBoxGeometry(S('chainplate_width'), length, S(c.plateKey), 1, S(c.plateKey) * .3).translate(0, length / 2, 0)
+        : block(S('chainplate_width'), length, S(c.plateKey));
       plate.applyMatrix4(frameAt(bolt, new THREE.Vector3().subVectors(foot, bolt), out));
       iron.push(plate);
 
@@ -458,9 +480,12 @@ export function buildChannels(cfg, mats, model, ctx) {
         // The head of the bolt through the ship's side.
         const br = S('chain_bolt_diameter') / 2;
         const head = new THREE.CylinderGeometry(br, br, br, Math.max(6, Math.round(cfg.latheSegments / 2)));
-        head.rotateZ(Math.PI / 2);
-        head.translate(xBolt, yBolt, zBolt);
+        head.rotateX(Math.PI / 2);
+        head.translate(0, 0, br * .7);
+        head.applyMatrix4(frameAt(bolt, up, out));
         iron.push(head);
+        const washer = new THREE.TorusGeometry(br * 1.2, br * .25, 5, 12);
+        washer.applyMatrix4(frameAt(bolt, up, out)); iron.push(washer);
       }
     }
 
@@ -483,6 +508,15 @@ export function buildChannels(cfg, mats, model, ctx) {
       audit(platform, c.totalKey, 'count', { tolerance: 0.001 });
     }
     group.add(platform);
+
+    if (faces.length) {
+      for (const [geometries, material, suffix] of [[faces, eyeMaterial, 'deadeyes'], [hemp, mats.runningRigging, 'lanyards'], [strops, mats.standingRigging, 'shroud_seizings']]) {
+        const mesh = new THREE.Mesh(mergeGeometries([...geometries, ...geometries.map(mirrored)]), material);
+        mesh.name = `${c.name}_${suffix}`; mesh.castShadow = mesh.receiveShadow = true;
+        if (suffix === 'deadeyes') mesh.userData.deadeyePairs = pairRecords;
+        group.add(mesh);
+      }
+    }
 
     if (iron.length) {
       const chains = new THREE.Mesh(mergeGeometries([...iron, ...iron.map(mirrored)]), mats.iron);

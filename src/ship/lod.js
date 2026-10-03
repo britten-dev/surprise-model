@@ -1,6 +1,7 @@
 // Geometry tiers used by the browser and asset tools. Cinematic includes the
 // Blender-authored fittings and eleven close-range crew; phones keep game.
-// The desktop allowance is 1.5 million ship triangles, measured separately from
+// The library allowance is 1.7 million including the optional watch (the host
+// allows 1.5 million without people), measured separately from
 // ocean, reflection and shadow passes. tools/check-authored-detail.mjs exercises
 // every sail/weather combination; actual frame timing is checked in Chromium.
 export const LODS = ['cinematic', 'hero', 'game', 'distant'];
@@ -381,8 +382,10 @@ export function lodConfig(lod) {
 // the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
 // 'none' — in that order.
 export const TRI_BUDGET = {
-  cinematic: [380000, 1500000],
-  hero: [200000, 900000],
+  // Includes the optional 299k authored watch. The crew-free browser host still
+  // checks its 1.5m cinematic / 900k hero ship limits separately.
+  cinematic: [380000, 1700000],
+  hero: [200000, 1100000],
   game: [30000, 80000],
   distant: [1500, 5000],
 };

@@ -34,14 +34,16 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
-| `cinematic` | 380–1,500 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and crew. |
-| `hero` | 200–900 k | Close inspection with 1024 maps and authored detail. |
+| `cinematic` | 380–1,700 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and optional crew. |
+| `hero` | 200–1,100 k | Close inspection with 1024 maps and authored detail. |
 | `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
 | `distant` | under 5 k | A silhouette on the horizon. |
 
 `cinematic` gives the desktop experience smoother geometry and larger surface maps.
-The browser generates the main ship and downloads a shared 7.6 MB library of Blender
-detail. Phone quality uses `game` and skips that library. The standard GLB export
+The browser generates the main ship and downloads a 7.6 MB library of Blender
+detail (3.24 MB with `crew: false`), plus a 260 kB deadeye asset. Phone quality
+uses `game` and skips these assets. Without people, the host retains 1.5 million
+cinematic / 900k hero limits. The standard GLB export
 matrix remains ten files; `tools/export-blender.mjs` separately exports the cinematic
 ship for the editable workshop. Counts depend on canvas, weather and loaded assets. These are allowance ranges,
 not detail targets; measure frame time, draw calls and memory before spending more.
@@ -345,6 +347,14 @@ redistributed here — `docs/PHOTO-ANALYSIS.md` records what it shows, with the 
 sampled from it, so the reading survives without the image. See `reference/README.md`.
 
 ## Authored quarterdeck detail
+
+Channel deadeyes also use Blender: `tools/author-deadeyes.py` builds a grooved
+elm solid with rounded shoulders, eased open bores and baked cavity shading.
+Run Blender with `--background --python-exit-code 1 --python tools/author-deadeyes.py`.
+It writes `src/assets/rigging-deadeye.glb` and the editable
+`build/HMS Surprise - Rigging Workshop.blend`. The browser assembles 58 pairs
+with continuous lanyards, seized shrouds and rounded iron straps; all copies
+share one small texture. See [evidence and checks](docs/research/12-deadeyes-and-lanyards.md).
 
 The `cinematic` and `hero` tiers can load `src/assets/quarterdeck-detail.glb`
 through `await preloadSurfaceAssets()`. It contains Blender-built helm fittings

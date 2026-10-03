@@ -163,7 +163,7 @@ export const RIG_SPEC = {
   // "Each ratling is placed thirteen inches asunder." Not fourteen, not fifteen.
   ratline_spacing: m(inch(13), 'SECONDARY §11.4 Steel 1794 v1 pp.198-199, Progressive Method of Rigging Ships', { noAudit: true }),
   ratline_stiffener_spacing: m(ft(5, 0), 'SECONDARY §11.4 boat oars seized to the shrouds about five feet asunder for the men to stand on', { noAudit: true }),
-  shroud_diameter: m(inch(4.5), 'RECONSTRUCTED §11 lower shroud circumference for this class, expressed as a diameter', { noAudit: true }),
+  shroud_diameter: m(inch(4.5) / Math.PI, 'RECONSTRUCTED §11 4.5-inch lower shroud circumference, converted to diameter; Steel describes rope sizes by circumference, not a recovered Surprise rope schedule', { noAudit: true }),
   stay_diameter: m(inch(6), 'RECONSTRUCTED §11 lower stay heavier than the shrouds', { noAudit: true }),
   running_rigging_diameter: m(inch(2), 'RECONSTRUCTED §12 braces, lifts and sheets at model-visible size', { noAudit: true }),
 
