@@ -12,6 +12,7 @@ import { loftSections, mergeGeometries, weldByPosition } from '../util/loft.js';
 import { sweep } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
 import { audit } from '../audit/measure.js';
+import {sternDeckBoundary} from './stern.js';
 
 /**
  * One deck surface, cambered. A deck is not flat: it is rounded up toward the
@@ -19,15 +20,26 @@ import { audit } from '../audit/measure.js';
  *
  * @param {'gundeck'|'forecastle'|'quarterdeck'} which
  */
-function deckSurface(model, cfg, which, zFrom, zTo) {
+function deckSurface(model, cfg, which, zFrom, zTo, closeStern=false) {
   const camber = SPEC.deck_camber.value;
-  const nz = Math.max(6, Math.round(cfg.hullStations * (zTo - zFrom) / model.lengthOnDeck));
+  const heightAt=(x,z)=>{
+    const station=Math.min(z,model.zAft);
+    const edge=which==='gundeck'?model.featureYAt(station).deck:model.standingDeckAt(station);
+    const width=Math.max(.001,model.halfBreadthAt(station,edge));
+    return edge+camber*(1-(x/width)**2);
+  };
+  const stern=closeStern?sternDeckBoundary(cfg,model,heightAt):null;
+  const baseRows=Math.max(6,Math.round(cfg.hullStations*(zTo-zFrom)/model.lengthOnDeck));
+  const stations=Array.from({length:baseRows},(_,i)=>lerp(zFrom,zTo,i/(baseRows-1)));
+  if(stern)stations.push(...stern.stations.filter(z=>z>zTo+1e-5),stern.aft);
+  stations.sort((a,b)=>a-b);
+  const zs=stations.filter((z,i)=>!i||z-stations[i-1]>1e-5),nz=zs.length;
   const nx = Math.max(5, Math.round(cfg.hullPoints / 5));
 
   const pos = [], uvs = [], idx = [];
   for (let i = 0; i < nz; i++) {
-    const z = lerp(zFrom, zTo, i / (nz - 1));
-    const f = model.featureYAt(z);
+    const z = zs[i];
+    const f = model.featureYAt(Math.min(z,model.zAft));
     // The deck at side, then the camber added toward the centreline. Above the gundeck
     // the deck sits at the side where the hull has narrowed, which is why the
     // quarterdeck and forecastle are narrower than the waist.
@@ -37,11 +49,11 @@ function deckSurface(model, cfg, which, zFrom, zTo) {
     // put both of them above the rail, and left the sixteen guns on them standing in the
     // open air with nothing round them.
     const yEdge = which === 'gundeck' ? f.deck : model.standingDeckAt(z);
-    const xEdge = model.halfBreadthAt(z, yEdge);
+    const xEdge = stern&&z>=model.zAft?stern.halfBreadthAt(z):model.halfBreadthAt(z, yEdge);
     for (let j = 0; j < nx; j++) {
       const t = (j / (nx - 1)) * 2 - 1;           // -1 port, +1 starboard
       const x = t * xEdge;
-      const y = yEdge + camber * (1 - t * t);
+      const y = heightAt(x,z);
       pos.push(x, y, z);
       uvs.push(z / 2.4, x / 2.4);                 // planks run fore and aft
     }
@@ -56,6 +68,16 @@ function deckSurface(model, cfg, which, zFrom, zTo) {
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   g.setIndex(idx);
+  // Collapse the final point at the centre of the rounded transom. Welding
+  // keeps its normals continuous and the deck a single connected surface.
+  if(stern){
+    weldByPosition(g,1e-6);
+    const clean=[];for(let i=0;i<g.index.count;i+=3){
+      const a=g.index.getX(i),b=g.index.getX(i+1),c=g.index.getX(i+2);
+      if(a!==b&&b!==c&&c!==a)clean.push(a,b,c);
+    }
+    g.setIndex(clean);g.userData.sternClosure={sternpost:model.zAft,aft:stern.aft};
+  }
   g.computeVertexNormals();
   return g;
 }
@@ -117,7 +139,7 @@ export function buildDecks(cfg, mats, model) {
   // The gundeck runs the whole length of the ship. Forward of the forecastle break and
   // abaft the quarterdeck break it is covered over, but it is still there, and in the
   // waist it is the deck you stand on.
-  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern - 0.4), mats.deck);
+  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern, true), mats.deck);
   gundeck.name = 'gundeck';
   // The height of this deck is audited from a marker at the midship station in hull.js,
   // not from the mesh: the deck sweeps up at both ends with the sheer, so its average
@@ -133,7 +155,7 @@ export function buildDecks(cfg, mats, model) {
   group.add(fc);
 
   const qd = new THREE.Mesh(
-    deckSurface(model, cfg, 'quarterdeck', zQdBreak, zStern - 0.4),
+    deckSurface(model, cfg, 'quarterdeck', zQdBreak, zStern, true),
     mats.deck
   );
   qd.name = 'quarterdeck';
@@ -174,7 +196,7 @@ export function buildDecks(cfg, mats, model) {
   }
 
   if (cfg.innerBulwarks) {
-    const inner = new THREE.Mesh(innerBulwark(model, cfg, zStem + 0.5, zStern - 0.3), mats.red);
+    const inner = new THREE.Mesh(innerBulwark(model, cfg, zStem + 0.5, zStern), mats.red);
     inner.name = 'inner_bulwark';
     group.add(inner);
   }

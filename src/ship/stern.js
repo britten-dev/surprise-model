@@ -72,7 +72,13 @@ function sternProfile(model) {
   // and a half into a swollen blister. Where the two disagree the hull wins, which is the
   // whole point of siting off the model. Above the rail there is no hull left to compare
   // with, so the elevation stands on its own.
-  const yLights = f.deck + SPEC.stern_light_sill_above_deck.value + SPEC.stern_light_height.value / 2;
+  // The window band and cabin lining must fit below the quarterdeck. Their
+  // old independent heights put the upper panes and ceiling through its floor.
+  const cabinCeiling=model.standingDeckAt(zTuck)-.06;
+  const lightHead=Math.min(f.deck+SPEC.stern_light_sill_above_deck.value+SPEC.stern_light_height.value,
+    cabinCeiling-SPEC.stern_glazing_bar.value*2-.05);
+  const lightSill=lightHead-SPEC.stern_light_height.value;
+  const yLights=(lightSill+lightHead)/2;
   const drawn = monotoneCubic(
     [yTuck, yWing, yLights, yTaff],
     [SPEC.stern_half_breadth_at_tuck.value,
@@ -122,7 +128,7 @@ function sternProfile(model) {
   }
 
   return {
-    zTuck, f, yTuck, yWing, yUpper, yLights, yTaff,
+    zTuck, f, yTuck, yWing, yUpper, yLights, yTaff, lightSill,lightHead,cabinCeiling,
     zAbaft, halfBreadth, roundAft, roundUp, surface, surfaceNormal, surfaceAtX,
   };
 }
@@ -360,6 +366,46 @@ function closureRows(cfg, model, sp) {
   return rows;
 }
 
+/** The deck's after edge, cut from the same triangles as the curved stern. */
+export function sternDeckBoundary(cfg,model,heightAt) {
+  const rows=closureRows(cfg,model,sternProfile(model)),segments=[];
+  const signed=p=>p.y-heightAt(p.x,p.z);
+  const cut=(a,b)=>{
+    let lo=0,hi=1,fa=signed(a);const p=new THREE.Vector3();
+    for(let n=0;n<32;n++){
+      const t=(lo+hi)/2;p.lerpVectors(a,b,t);
+      if((signed(p)>=0)===(fa>=0))lo=t;else hi=t;
+    }
+    return p.lerpVectors(a,b,(lo+hi)/2).clone();
+  };
+  const triangle=(a,b,c)=>{
+    const v=[a,b,c],hits=[];
+    for(let j=0;j<3;j++){
+      const p=v[j],q=v[(j+1)%3],fp=signed(p),fq=signed(q);
+      if(Math.abs(fp)<1e-8)hits.push(p.clone());
+      if((fp<0&&fq>0)||(fp>0&&fq<0))hits.push(cut(p,q));
+    }
+    const unique=hits.filter((p,i)=>hits.findIndex(q=>p.distanceToSquared(q)<1e-14)===i);
+    if(unique.length===2&&unique[0].distanceToSquared(unique[1])>1e-14)segments.push(unique);
+  };
+  for(let i=0;i<rows.length-1;i++)for(let k=0;k<rows[0].length-1;k++){
+    const a=rows[i][k].p,b=rows[i][k+1].p,c=rows[i+1][k].p,d=rows[i+1][k+1].p;
+    triangle(a,b,c);triangle(b,d,c);
+  }
+  if(!segments.length)throw Error('The stern does not meet the deck');
+  const aft=Math.max(...segments.flat().map(p=>p.z));
+  return {aft,stations:segments.flat().map(p=>p.z),segments,
+    halfBreadthAt(z){
+      let width=0;
+      for(const [a,b]of segments){
+        if(z<Math.min(a.z,b.z)-1e-6||z>Math.max(a.z,b.z)+1e-6)continue;
+        const dz=b.z-a.z;
+        width=Math.max(width,Math.abs(dz)<1e-8?Math.max(a.x,b.x):lerp(a.x,b.x,clamp((z-a.z)/dz,0,1)));
+      }
+      return width;
+    }};
+}
+
 /**
  * The inboard face of the stern above the deck, inset by the thickness of the side.
  * Without it you look straight through the taffrail into the counter from overhead.
@@ -397,8 +443,7 @@ function innerRows(rows, fromY) {
  */
 function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const count = SPEC.stern_light_count.value;
-  const ySill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
-  const yHead = ySill + SPEC.stern_light_height.value;
+  const ySill=sp.lightSill,yHead=sp.lightHead;
   // The row of lights fills the transom between the two quarter pieces. It is worked out
   // before the early return, because the taffrail's carving is spaced off it and the two
   // LOD switches — whether the lights are glazed and whether anything is carved — have to
@@ -468,7 +513,7 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const reveal=new THREE.Mesh(mergeGeometries(reveals),mats.ochre);
   reveal.name='stern_window_reveals';group.add(reveal);
   const rear=sp.surfaceAtX(mid,0).z-SPEC.side_thickness.value-.12;
-  group.userData.cabin={floor:sp.f.deck,width:halfSpan*2,height:yHead-sp.f.deck+.42,
+  group.userData.cabin={floor:sp.f.deck,width:halfSpan*2,height:sp.cabinCeiling-sp.f.deck,ceiling:sp.cabinCeiling,
     rear,front:rear-3.3,sill:ySill,head:yHead,openings};
   const cabin=new THREE.Group();cabin.name='great_cabin';
   const c=group.userData.cabin;
@@ -476,11 +521,11 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const lining=mats.timber.clone();lining.color.set(0x3e3527);lining.side=THREE.DoubleSide;
   const add=(w,h,x,y,z,ry=0,rx=0)=>{
     const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),lining);o.position.set(x,y,z);
-    o.rotation.set(rx,ry,0);cabin.add(o);
+    o.rotation.set(rx,ry,0);cabin.add(o);return o;
   };
   add(c.width,c.height,0,c.floor+c.height/2,c.front);
   for(const side of [-1,1])add(rear-c.front,c.height,side*c.width/2,c.floor+c.height/2,(rear+c.front)/2,Math.PI/2);
-  for(const y of [c.floor,c.floor+c.height])add(c.width,rear-c.front,0,y,(rear+c.front)/2,0,Math.PI/2);
+  for(const y of [c.floor,c.ceiling])add(c.width,rear-c.front,0,y,(rear+c.front)/2,0,Math.PI/2).name=y===c.floor?'cabin_floor':'cabin_ceiling';
   group.add(cabin);
 
   const frame = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
@@ -548,7 +593,7 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   // Follow the cabin lights and the raked transom, not the tuck at the waterline.
   // Anchoring to the tuck put the gallery over the last gun; spanning wale-to-rail
   // stretched its windows across two decks.
-  const sill = sp.f.deck + SPEC.stern_light_sill_above_deck.value;
+  const sill=sp.lightSill;
   const yBot = sill - SPEC.quarter_gallery_rim_depth.value;
   const yTop = sill + SPEC.stern_light_height.value + SPEC.quarter_gallery_hood_depth.value;
   const z1 = Math.min(sp.surface(yBot, 1).z, sp.surface(yTop, 1).z)

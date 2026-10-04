@@ -270,6 +270,11 @@ This is a visual attachment constraint, not a rope-tension or collision solver.
 `node tools/check-rigging-anchors.mjs` verifies attachments while bracing both
 ways, handling/reversing sail orders and moving the whole ship.
 
+The quarterdeck and gundeck continue through the stern overhang to the actual
+curved transom, retaining their camber and continuous plank UVs. Cabin lining
+and window heads fit beneath the quarterdeck. The four-tier closure probe is
+`node tools/check-afterdeck.mjs`; see [geometry notes](docs/research/17-stern-deck-closure.md).
+
 Hosts can select `buildShip({ensign:'white',flagYear:1805})` for a white naval
 ensign with the post-1801 Union. The library default remains blue/1798. Flags
 have sewn breadths, hems, a reinforced heading and wool colour/bump/roughness

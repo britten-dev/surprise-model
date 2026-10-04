@@ -1,0 +1,90 @@
+[
+  {
+    "lod": "distant",
+    "checks": [
+      {
+        "name": "gundeck",
+        "probes": 95,
+        "missing": 0,
+        "maxError": 0.0067493884520781755,
+        "aft": 20.044984817504883,
+        "sternpost": 18.4404
+      },
+      {
+        "name": "quarterdeck",
+        "probes": 100,
+        "missing": 0,
+        "maxError": 0.009078155101204466,
+        "aft": 20.48453712463379,
+        "sternpost": 18.4404
+      }
+    ],
+    "cabinIntrusion": 0
+  },
+  {
+    "lod": "game",
+    "checks": [
+      {
+        "name": "gundeck",
+        "probes": 95,
+        "missing": 0,
+        "maxError": 0.006892255871572939,
+        "aft": 20.055713653564453,
+        "sternpost": 18.4404
+      },
+      {
+        "name": "quarterdeck",
+        "probes": 100,
+        "missing": 0,
+        "maxError": 0.005714774100139319,
+        "aft": 20.48453712463379,
+        "sternpost": 18.4404
+      }
+    ],
+    "cabinIntrusion": 0
+  },
+  {
+    "lod": "hero",
+    "checks": [
+      {
+        "name": "gundeck",
+        "probes": 95,
+        "missing": 0,
+        "maxError": 0.001166300676127996,
+        "aft": 20.059856414794922,
+        "sternpost": 18.4404
+      },
+      {
+        "name": "quarterdeck",
+        "probes": 100,
+        "missing": 0,
+        "maxError": 0.0007532822401667971,
+        "aft": 20.48687744140625,
+        "sternpost": 18.4404
+      }
+    ],
+    "cabinIntrusion": 0
+  },
+  {
+    "lod": "cinematic",
+    "checks": [
+      {
+        "name": "gundeck",
+        "probes": 95,
+        "missing": 0,
+        "maxError": 0.00037922514346533376,
+        "aft": 20.06068992614746,
+        "sternpost": 18.4404
+      },
+      {
+        "name": "quarterdeck",
+        "probes": 100,
+        "missing": 0,
+        "maxError": 0.00037855124829722087,
+        "aft": 20.490482330322266,
+        "sternpost": 18.4404
+      }
+    ],
+    "cabinIntrusion": 0
+  }
+]
