@@ -130,6 +130,7 @@ const ALOFT_BODY = `
  */
 const SAIL_PARS = `
   uniform float uFlutter;
+  uniform float uSailSpread;
   uniform float uWaveLength;
   uniform float uWaveSpeed;
   uniform float uBreathe;
@@ -150,7 +151,7 @@ const SAIL_PARS = `
       + 0.32 * sin(phase * 1.73 + q.y * 4.0 + uSailPhase);
     float breath = uBreathe * 2.0 * sin(uTime * 0.48 + uSailPhase + q.y * 1.3);
     float leech = mix(1.0, uLuff, pow(1.0 - across, 3.0));
-    return uFlutter * uWind * freedom * (ripple * 0.16 * leech + breath);
+    return uSailSpread * uFlutter * uWind * freedom * (ripple * 0.16 * leech + breath);
   }
 `;
 
@@ -270,6 +271,7 @@ export function createMotion(ship, opts = {}) {
     const hullProfile = mesh.name === 'hull_shell' || mesh.userData.hullWetProfile === true;
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
     if (sail) {
+      own.uSailSpread = mesh.userData.sailSpread ?? { value: 1 };
       // Bolt ropes share the cloth's motion, including its phase and scale.
       const clothName = mesh.name.replace('_cordage_sail', '_sail');
       const geometry = mesh.parent?.getObjectByName(clothName)?.geometry ?? mesh.geometry;

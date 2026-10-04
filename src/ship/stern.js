@@ -32,6 +32,7 @@ import { sweep, block, spar } from '../util/solids.js';
 import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit } from '../audit/measure.js';
 import { windowStrip } from './window-joinery.js';
+import { cutWindowApertures } from './window-apertures.js';
 
 // ---------------------------------------------------------------------------
 // The stern profile: everything the closure and the ornament need to know about
@@ -417,7 +418,7 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const pitch = w + SPEC.stern_light_munion.value;
 
   const at = (out) => (x, y) => sp.surfaceAtX(y, x, out);
-  const frames = [], glass = [], bars = [];
+  const frames = [], glass = [], bars = [], openings = [], reveals = [];
   const joinery = (u0, u1, v0, v1, top, base, nu, nv) => cfg.windowJoinery
     ? windowStrip((u, v, d) => sp.surfaceAtX(v, u, d), u0, u1, v0, v1, { base, top, nu, nv })
     : patch(at(top), u0, u1, v0, v1, nu, nv);
@@ -425,6 +426,12 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   for (let i = 0; i < count; i++) {
     const cx = (i - (count - 1) / 2) * pitch;
     const x0 = cx - w / 2, x1 = cx + w / 2;
+    openings.push({ x0, x1, y0:ySill, y1:yHead });
+    for (const [u0,u1,v0,v1] of [[x0-bar,x0,ySill,yHead],[x1,x1+bar,ySill,yHead],
+      [x0,x1,ySill-bar,ySill],[x0,x1,yHead,yHead+bar]]) {
+      reveals.push(windowStrip((u,v,d)=>sp.surfaceAtX(v,u,d),u0,u1,v0,v1,
+        {base:-SPEC.side_thickness.value-.05,top:glassDepth,nu:3,nv:3}));
+    }
     // The frame is a ring, not a panel behind the glass. Crown glass is transmissive, so
     // a solid frame behind it shows straight through and every light reads as a slab of
     // ochre instead of as a window with the dark cabin behind it.
@@ -453,6 +460,29 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
     }
   }
 
+  const mid=(ySill+yHead)/2, half=sp.halfBreadth(mid), round=sp.roundUp(mid);
+  for(const name of ['stern_shell','stern_inner']) {
+    const shell=group.getObjectByName(name);
+    if(shell)shell.geometry=cutWindowApertures(shell.geometry,openings,p=>p[1]+round*(p[0]/half)**2);
+  }
+  const reveal=new THREE.Mesh(mergeGeometries(reveals),mats.ochre);
+  reveal.name='stern_window_reveals';group.add(reveal);
+  const rear=sp.surfaceAtX(mid,0).z-SPEC.side_thickness.value-.12;
+  group.userData.cabin={floor:sp.f.deck,width:halfSpan*2,height:yHead-sp.f.deck+.42,
+    rear,front:rear-3.3,sill:ySill,head:yHead,openings};
+  const cabin=new THREE.Group();cabin.name='great_cabin';
+  const c=group.userData.cabin;
+  // An enclosed recess prevents sky/sea leaking through the opened transom.
+  const lining=mats.timber.clone();lining.color.set(0x3e3527);lining.side=THREE.DoubleSide;
+  const add=(w,h,x,y,z,ry=0,rx=0)=>{
+    const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),lining);o.position.set(x,y,z);
+    o.rotation.set(rx,ry,0);cabin.add(o);
+  };
+  add(c.width,c.height,0,c.floor+c.height/2,c.front);
+  for(const side of [-1,1])add(rear-c.front,c.height,side*c.width/2,c.floor+c.height/2,(rear+c.front)/2,Math.PI/2);
+  for(const y of [c.floor,c.floor+c.height])add(c.width,rear-c.front,0,y,(rear+c.front)/2,0,Math.PI/2);
+  group.add(cabin);
+
   const frame = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
   frame.name = 'stern_light_frames';
   frame.userData.count = count;
@@ -480,7 +510,10 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
     group.add(dead);
   }
 
-  const pane = new THREE.Mesh(mergeGeometries(glass), mats.glass);
+  const glazing=mats.glass.clone();
+  glazing.transmission=0;glazing.transparent=true;glazing.opacity=.16;glazing.depthWrite=false;
+  glazing.color.set(0xbcc9c6);glazing.roughness=.23;glazing.envMapIntensity=.45;
+  const pane = new THREE.Mesh(mergeGeometries(glass), glazing);
   pane.name = 'stern_light_glazing';
   group.add(pane);
 

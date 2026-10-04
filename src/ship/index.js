@@ -31,6 +31,7 @@ export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
 // It is re-exported here rather than only from its own module so that a host has one
 // import for the whole package.
 export { createMotion } from './motion.js';
+export { createSailHandling } from './sail-handling.js';
 
 /**
  * @param {object} [opts]
@@ -47,9 +48,10 @@ export { createMotion } from './motion.js';
  * @param {string} [opts.ports] 'open' | 'shut'. Follows the weather unless it is given.
  *   It is separable because the two are not quite the same claim: a ship can be under her
  *   topsails in a rising sea with her ports already in.
+ * @param {boolean} [opts.animatedSails=false] Keep separate fore-and-aft cloth for createSailHandling. Use full sails.
  * @param {boolean} [opts.crew=true] Omit visible figures and their rendering cost when false.
  */
-export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState, crew = true } = {}) {
+export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState, crew = true, animatedSails = false } = {}) {
   if (!SAIL_STATES.includes(sails)) {
     throw new Error(`unknown sail state "${sails}" — expected one of ${SAIL_STATES.join(', ')}`);
   }
@@ -82,7 +84,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   ship.add(decks.group);
 
   const ctx = {
-    cfg, mats, model, sails, lod, ports, portsShut, heavyWeather,
+    cfg, mats, model, sails, lod, ports, portsShut, heavyWeather, animatedSails,
     zFcBreak: decks.zFcBreak,
     zQdBreak: decks.zQdBreak,
   };

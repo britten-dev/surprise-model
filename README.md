@@ -23,6 +23,14 @@ Runtime billow has a phase and wavelength for each sail; its bolt ropes share
 those values. Animated rigging and canvas also supply matching shadow materials.
 Topmast crosstrees are open timber frames rather than solid placeholder slabs.
 
+For gradual sail changes, build with `sails: 'full', animatedSails: true`, then
+create `createSailHandling(ship, 'topsails')` before `createMotion(ship)`.
+Call `handling.setState('storm')` and advance `handling.update(dt)` each frame.
+The same cloth gathers and fills without replacing the rig. Stern windows now
+have real openings and recessed surrounds, with an enclosed cabin behind them;
+heavy-weather deadlights retain their protection. See the
+[animation and cabin research notes](docs/research/15-sail-handling-and-cabin.md).
+
 She is built as a ship that has been at sea rather than one that has just left the
 dockyard, and that is a deliberate part of the brief: the sheathing is weathered, the
 topsides are salt-bleached and streaked with rust from every bolt in them, the canvas is

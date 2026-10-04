@@ -23,7 +23,7 @@ const S = (k) => SPEC[k].value;
 
 // Which sails are set in each state. A sail named here is drawn; anything not named is
 // either furled on its yard or not there at all.
-const SUIT = {
+export const SUIT = {
   full: {
     set: ['fore_course', 'main_course',
       'fore_topsail', 'main_topsail', 'mizzen_topsail',
@@ -80,7 +80,7 @@ function squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef = 
       const s = (u - 0.5) * width;
       // The belly: fullest in the middle of the sail and dying away at head, foot and
       // both leeches, where the sail is held to a spar or a rope.
-      const b = Math.sin(Math.PI * u) * Math.sin(Math.PI * clamp(vv * 0.86 + 0.07, 0, 1)) * belly * width;
+      const b = Math.sin(Math.PI * u) * Math.sin(Math.PI * vv) * belly * width;
       const p = centre.clone().addScaledVector(across, s).addScaledVector(lee, b);
       // Small strain folds radiate from the sheeted clews. The head and clews
       // remain fixed, and the broad belly still carries almost all the shape.
@@ -267,6 +267,7 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     // onto the spar that carries it.
     head.node.updateMatrix();
     geometry.applyMatrix4(new THREE.Matrix4().copy(head.node.matrix).invert());
+    geometry.userData.handling = { name: sailName, kind: 'square', headWidth, tiles: Math.round(PAINT.weather_sail_variants.value), reef: sailName === 'fore_course' ? .62 : .45 };
     squares.push({ geometry, yard: head, name: `${sailName}_sail` });
   }
 
@@ -281,8 +282,11 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // headsails and small staysails, with the square pyramid dominating.
   const fa = [];
   const lee = -1;                                  // the sails belly to leeward
-  const addTriangle = (head, tack, clew) =>
-    fa.push(retileUV(foreAndAftSail([head, tack, clew], cfg, { side: lee }), cloth++));
+  const addTriangle = (name, head, tack, clew) => {
+    const g = retileUV(foreAndAftSail([head, tack, clew], cfg, { side: lee }), cloth++);
+    g.userData.handling = { name, kind: 'stay', tack: tack.toArray(), tiles: Math.round(PAINT.weather_sail_variants.value) };
+    fa.push(g);
+  };
 
   // A sheeting point at the rail, so many metres abaft a mast and to leeward.
   const sheetAt = (mast, abaft, above = 0.9) => {
@@ -293,21 +297,21 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
 
   const bs = geo.bowsprit;
   if (setNames.has('fore_topmast_staysail')) {
-    addTriangle(
+    addTriangle('fore_topmast_staysail',
       geo.fore.along(geo.fore.topmastHeel + (geo.fore.topmastHoundsH - geo.fore.topmastHeel) * 0.72),
       bs.at(bs.length * 0.58),
       sheetAt(geo.fore, -1.4, 1.1)
     );
   }
   if (setNames.has('jib')) {
-    addTriangle(
+    addTriangle('jib',
       geo.fore.along(geo.fore.topmastHoundsH),
       bs.cap.clone().lerp(bs.end, 0.42),
       sheetAt(geo.fore, -4.2, 1.4)
     );
   }
   if (setNames.has('flying_jib')) {
-    addTriangle(
+    addTriangle('flying_jib',
       geo.fore.along(geo.fore.tgHeel + geo.fore.tgStop * 0.55),
       bs.end,
       sheetAt(geo.fore, -7.4, 1.7)
@@ -318,21 +322,21 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // each masthead, and are sheeted to the deck abaft the mast in front. They are modest
   // sails, filling the lower half of the gap and no more.
   if (setNames.has('main_staysail')) {
-    addTriangle(
+    addTriangle('main_staysail',
       geo.main.along(geo.main.above(0.86)),
       new THREE.Vector3(0, model.featureYAt(geo.fore.z0 + 2.4).deck + 0.5, geo.fore.z0 + 2.4),
       sheetAt(geo.main, -1.6, 0.7)
     );
   }
   if (setNames.has('main_topmast_staysail')) {
-    addTriangle(
+    addTriangle('main_topmast_staysail',
       geo.main.along(geo.main.topmastHeel + (geo.main.topmastHoundsH - geo.main.topmastHeel) * 0.78),
       geo.fore.along(geo.fore.houndsH + 0.4),
       geo.main.along(geo.main.above(0.42))
     );
   }
   if (setNames.has('mizzen_staysail')) {
-    addTriangle(
+    addTriangle('mizzen_staysail',
       geo.mizzen.along(geo.mizzen.above(0.88)),
       geo.main.along(geo.main.above(0.16)),
       sheetAt(geo.mizzen, -1.2, 0.6)
@@ -342,10 +346,9 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // The spanker: a four-cornered sail on the gaff and boom abaft the mizzen.
   if (setNames.has('spanker') && ctx.spanker) {
     const sp = ctx.spanker;
-    fa.push(retileUV(
-      foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: lee }),
-      cloth++
-    ));
+    const g = retileUV(foreAndAftSail([sp.gaffRoot, sp.boomRoot, sp.boomEnd, sp.gaffEnd], cfg, { side: lee }), cloth++);
+    g.userData.handling = { name: 'spanker', kind: 'spanker', root: sp.boomRoot.toArray(), end: sp.boomEnd.toArray(), tiles: Math.round(PAINT.weather_sail_variants.value) };
+    fa.push(g);
   }
 
   // The square sails are hung on their own yards rather than merged into one mesh.
@@ -371,6 +374,7 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
       if (cordage) {
         const cord = new THREE.Mesh(cordage, mats.sailCord);
         cord.name = name.replace(/_sail$/, '_cordage_sail');
+        cord.geometry.userData.handling = geometry.userData.handling;
         yard.node.add(cord);
       }
       first ??= mesh;
@@ -384,7 +388,14 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     audit(tally, 'square_sails_set', 'count', { tolerance: 0.001 });
     group.add(tally);
   }
-  if (fa.length) {
+  if (fa.length && ctx.animatedSails) {
+    const pieces = new THREE.Group(); pieces.name = 'fore_and_aft_sails';
+    for (const g of fa) {
+      const mesh = new THREE.Mesh(g, mats.sail);
+      mesh.name = `${g.userData.handling.name}_sail`; pieces.add(mesh);
+    }
+    group.add(pieces);
+  } else if (fa.length) {
     const mesh = new THREE.Mesh(mergeGeometries(fa), mats.sail);
     mesh.name = 'fore_and_aft_sails';
     group.add(mesh);
