@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { ropeLines, ropeTube } from '../util/solids.js';
 import { mergeGeometries } from '../util/loft.js';
+import {laidRopeUV} from './rope-finish.js';
 
 // Keep one render batch, with the provenance of each span. Node names and local
 // points/cloth vertex indices keep build metadata free of scene references.
@@ -17,6 +18,8 @@ export function runningRopeGeometry(spans,radius,cfg) {
     }
     g.setAttribute('aRopeT',new T.BufferAttribute(t,1));
     g.setAttribute('aRopeFreedom',new T.BufferAttribute(freedom,1));
+    // Preserve the normalized attachment coordinate above before scaling texture U.
+    if(cfg.ropesAsTubes)laidRopeUV(g,span.curve,radius);
     if(span.from||span.to)bindings.push({start,count,from:span.from,to:span.to,
       a:span.curve.getPoint(0).toArray(),b:span.curve.getPoint(1).toArray(),label:span.label});
     start+=count;pieces.push(g);

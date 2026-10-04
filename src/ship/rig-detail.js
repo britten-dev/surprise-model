@@ -3,11 +3,14 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from '../util/loft.js';
 import { detailChoice } from './detail-lod.js';
 import { ropeTube } from '../util/solids.js';
+import {laidRopeUV} from './rope-finish.js';
 
 // Steel, 1794: served slings, 13–15 turns per mast woolding and wooden
 // rope-strapped blocks. Placement and small dimensions are reconstruction.
-function strand(points, radius, steps=64, radial=6) {
-  return ropeTube(new THREE.CatmullRomCurve3(points),radius,{tubular:steps,radial});
+function strand(points, radius, steps=64, radial=6, physical=true) {
+  const c=new THREE.CatmullRomCurve3(points);
+  const g=ropeTube(c,radius,{tubular:steps,radial});
+  return physical?laidRopeUV(g,c,radius):g;
 }
 function batch(parent,geometries,material,name) {
   if(!geometries.length) return;
@@ -25,11 +28,11 @@ export function mastWooldings(m,cfg,mats,radiusAt) {
     const h=count===1?m.houndsH-.65:3+(m.houndsH-4)*k/(count-1);
     const r=radiusAt(h/m.lowerLength), cord=.012;
     const points=[];
-    for(let j=0;j<=13*32;j++) {
-      const a=j/32*Math.PI*2;
-      points.push(new THREE.Vector3((r+cord)*Math.cos(a),h+(j/(13*32)-.5)*13*cord*2.05,(r+cord)*Math.sin(a)));
+    for(let j=0;j<=13*24;j++) {
+      const a=j/24*Math.PI*2;
+      points.push(new THREE.Vector3((r+cord)*Math.cos(a),h+(j/(13*24)-.5)*13*cord*2.05,(r+cord)*Math.sin(a)));
     }
-    ropes.push(strand(points,cord,13*32));
+    ropes.push(strand(points,cord,13*24));
     if(cfg.adaptiveDetail) {
       // The served band stays on the mast; individual turns resolve only near it.
       coarse.push(new THREE.CylinderGeometry(r+cord*1.6,r+cord*1.6,13*cord*2.05,16,1,true).translate(0,h,0));
@@ -54,11 +57,11 @@ export function yardBindings(length,diameter,cfg,mats) {
     const x=side*diameter*1.1;
     for(let turn=0;turn<6;turn++) {
       const points=[];
-      for(let j=0;j<=40;j++) {
-        const a=j/40*Math.PI*2;
+      for(let j=0;j<=24;j++) {
+        const a=j/24*Math.PI*2;
         points.push(new THREE.Vector3(x+(turn-2.5)*.024,(diameter*.5+.017)*Math.sin(a),(diameter*.5+.017)*Math.cos(a)));
       }
-      rope.push(strand(points,.0115,40));
+      rope.push(strand(points,.0115,24,5));
     }
     if(cfg.adaptiveDetail) {
       const band=new THREE.CylinderGeometry(diameter*.5+.025,diameter*.5+.025,.144,12,1,true);
@@ -105,7 +108,7 @@ export function belayedHank(x,y,z,radius,seed=0,coarse=false) {
       const a=i/32*Math.PI*2;
       points.push(new THREE.Vector3(x+Math.sin(a)*(radius+.013),y+.083*Math.cos(a),z+Math.sin(a*2)*.028+(turn-1)*.013));
     }
-    rope.push(strand(points,coarse?.015:.009,coarse?12:32,coarse?3:6));
+    rope.push(strand(points,coarse?.015:.009,coarse?12:32,coarse?3:6,false));
   }
   for(let turn=0;turn<(coarse?2:4);turn++) {
     const points=[];
@@ -114,8 +117,8 @@ export function belayedHank(x,y,z,radius,seed=0,coarse=false) {
       points.push(new THREE.Vector3(x+(.088+turn*.009)*Math.sin(a)+.014*Math.sin(a*2+seed),
         y-.27+(.24+turn*.009)*Math.cos(a),z+.09+turn*.017+.018*Math.sin(a*3+seed)));
     }
-    rope.push(strand(points,coarse?.015:.009,coarse?12:32,coarse?3:6));
+    rope.push(strand(points,coarse?.015:.009,coarse?12:32,coarse?3:6,false));
   }
-  if(!coarse)rope.push(strand([new THREE.Vector3(x,y+.03,z+.026),new THREE.Vector3(x+.035,y-.02,z+.07),new THREE.Vector3(x,y-.035,z+.12)],.009,12));
+  if(!coarse)rope.push(strand([new THREE.Vector3(x,y+.03,z+.026),new THREE.Vector3(x+.035,y-.02,z+.07),new THREE.Vector3(x,y-.035,z+.12)],.009,12,6,false));
   return mergeGeometries(rope);
 }

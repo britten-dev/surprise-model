@@ -16,13 +16,13 @@ const CONFIG = {
     hullStations: 181,
     hullPoints: 96,
     // Round things: spars, ropes, deadeyes, gun barrels. Ten-sided is a decagon at
-    // arm's length; sixteen reads as round. Five-sided rope is the one hero fault every
+    // arm's length; twenty-four keeps a close spar silhouette round. Five-sided rope is the one hero fault every
     // enthusiast's eye catches first — a flat running down a stay — so it goes to eight,
     // which is the point a tube stops looking like a prism. The lathe count follows the
     // same reasoning for a truck, a cap, a deadeye or a gun's reinforce rings: hero's 20
     // is coarse enough to see the facets on a bright highlight, 32 is not.
     sparSegments: 20,
-    sparRadial: 16,
+    sparRadial: 24,
     ropeRadial: 8,
     ropeSegments: 16,
     latheSegments: 32,

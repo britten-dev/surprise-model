@@ -19,7 +19,9 @@ export function headRobands(yard, cfg) {
         Math.sin(a) * radius, Math.cos(a) * radius));
     }
     points.push(new THREE.Vector3(x + .017, -.12, 0));
-    pieces.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 20, .007, 5, false));
+    // Intermediate devices retain every tie, with fewer circular subdivisions.
+    const cinematic=cfg.textureSize>=2048;
+    pieces.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), cinematic?20:14, .007, cinematic?5:4, false));
   }
   const geometry = mergeGeometries(pieces);
   for (const piece of pieces) piece.dispose();

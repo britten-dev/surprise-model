@@ -20,6 +20,9 @@ import { buildSails } from './sails.js';
 import { runningRopeGeometry } from './rigging-bindings.js';
 import { channelAnchors } from './channels.js';
 import { mastWooldings, yardBindings, woodenLeadBlock } from './rig-detail.js';
+import { sparMaterials, sparUV } from './spar-finish.js';
+import { mastConstruction, yardFurniture, mastTop } from './spar-details.js';
+import {ropeMaterials, laidRopeUV} from './rope-finish.js';
 
 const S = (k) => SPEC[k].value;
 
@@ -170,6 +173,7 @@ export function mastGeometry(model) {
 function buildMast(m, cfg, mats, group) {
   const seg = cfg.sparSegments;
   const radial = cfg.sparRadial;
+  const finish=sparMaterials(cfg);
 
   const stick = (length, maxDia, table, heelH, material) => {
     const g = spar({
@@ -177,6 +181,7 @@ function buildMast(m, cfg, mats, group) {
       radiusAt: (t) => (maxDia / 2) * taperAt(table, t),
       segments: seg, radial,
     });
+    sparUV(g,length,maxDia);
     const mesh = new THREE.Mesh(g, material);
     mesh.position.copy(m.along(heelH));
     mesh.rotation.x = m.rake;
@@ -184,9 +189,10 @@ function buildMast(m, cfg, mats, group) {
   };
 
   // Lower masts were left bright — varnished, not painted — with the mastheads black.
-  const lower = stick(m.lowerLength, m.lowerDia, TAPER.mast, 0, mats.mast);
+  const lower = stick(m.lowerLength, m.lowerDia, TAPER.mast, 0, finish.bright);
   lower.name = `${m.name}_lower_mast`;
   lower.add(mastWooldings(m,cfg,mats,t=>(m.lowerDia/2)*taperAt(TAPER.mast,t)));
+  lower.add(mastConstruction(m,cfg,mats,t=>(m.lowerDia/2)*taperAt(TAPER.mast,t)));
   audits(lower, [`${m.name}_mast_rake_deg`, 'rake_deg']);
   group.add(lower);
 
@@ -199,11 +205,11 @@ function buildMast(m, cfg, mats, group) {
   headMesh.rotation.x = m.rake;
   group.add(headMesh);
 
-  const topmast = stick(m.topmastLength, m.topmastDia, TAPER.topmast, m.topmastHeel, mats.mast);
+  const topmast = stick(m.topmastLength, m.topmastDia, TAPER.topmast, m.topmastHeel, finish.bright);
   topmast.name = `${m.name}_topmast`;
   group.add(topmast);
 
-  const tg = stick(m.tgLength, m.tgDia, TAPER.topmast, m.tgHeel, mats.mast);
+  const tg = stick(m.tgLength, m.tgDia, TAPER.topmast, m.tgHeel, finish.bright);
   tg.name = `${m.name}_topgallant`;
   group.add(tg);
 
@@ -212,8 +218,8 @@ function buildMast(m, cfg, mats, group) {
   if (m.topBreadth) {
     const t = S('top_platform_thickness');
     const plat = new THREE.Mesh(
-      new THREE.BoxGeometry(m.topBreadth, t, m.topLength),
-      mats.mastBlack
+      cfg.textureSize<512?new THREE.BoxGeometry(m.topBreadth,t,m.topLength):mastTop(m,t,cfg),
+      finish.top
     );
     const p = m.along(m.houndsH);
     plat.position.set(0, p.y, p.z + m.topLength * 0.18);
@@ -259,7 +265,7 @@ function buildMast(m, cfg, mats, group) {
 }
 
 /** One yard, hung across a mast at a given height, braced round by `braceDeg`. */
-function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name, auditKey) {
+function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name, auditKey, tier) {
   const g = spar({
     length,
     radiusAt: yardRadius(maxDia),
@@ -268,14 +274,16 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
   });
   // The spar helper builds along +Y from the origin; a yard lies athwartships, so it is
   // laid down onto the X axis and then swung to the brace angle.
+  sparUV(g,length,maxDia);
   g.translate(0, -length / 2, 0);
   g.rotateZ(Math.PI / 2);
-  const mesh = new THREE.Mesh(g, mats.mastBlack);
+  const mesh = new THREE.Mesh(g, sparMaterials(cfg).black);
   const p = m.along(heightH);
   mesh.position.copy(p);
   mesh.rotation.y = deg(braceDeg);
   mesh.name = name;
   mesh.add(yardBindings(length,maxDia,cfg,mats));
+  mesh.add(yardFurniture(length,maxDia,tier,cfg,mats,yardRadius(maxDia)));
   // `self`, because this yard will have its sail bent to it: sails.js hangs each square
   // sail on its own yard so that bracing the yard brings its canvas round. Measured over
   // its descendants instead, a yard is as long as the sail hanging from it.
@@ -297,6 +305,7 @@ function yardArms(m, heightH, length, braceDeg) {
 }
 
 export function buildRig(cfg, mats, model, ctx) {
+  mats={...mats,...ropeMaterials(cfg)};
   const group = new THREE.Group();
   group.name = 'rig';
   const geo = mastGeometry(model);
@@ -315,7 +324,8 @@ export function buildRig(cfg, mats, model, ctx) {
     radiusAt: (t) => (S('bowsprit_diameter') / 2) * taperAt(TAPER.bowsprit, t),
     segments: cfg.sparSegments, radial: cfg.sparRadial,
   });
-  const bsMesh = new THREE.Mesh(bsG, mats.mast);
+  sparUV(bsG,bs.length,S('bowsprit_diameter'));
+  const bsMesh = new THREE.Mesh(bsG, sparMaterials(cfg).bright);
   bsMesh.position.copy(bs.heel);
   bsMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bs.dir);
   bsMesh.name = 'bowsprit';
@@ -331,6 +341,7 @@ export function buildRig(cfg, mats, model, ctx) {
     }),
     mats.mast
   );
+  sparUV(jb.geometry,jbLen,S('jibboom_diameter'));jb.material=sparMaterials(cfg).bright;
   jb.position.copy(bs.cap);
   jb.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bs.dir);
   jb.name = 'jibboom';
@@ -346,12 +357,15 @@ export function buildRig(cfg, mats, model, ctx) {
         // five, this one spritsail yard stayed coarse while the rest of the rig refined.
         segments: Math.max(4, cfg.sparSegments), radial: cfg.sparRadial,
       });
+      sparUV(g,S('spritsail_yard_length'),S('spritsail_yard_diameter'));
       g.translate(0, -S('spritsail_yard_length') / 2, 0);
       g.rotateZ(Math.PI / 2);
       return g;
     })(),
     mats.mastBlack
   );
+  sy.material=sparMaterials(cfg).black;
+  sy.add(yardFurniture(S('spritsail_yard_length'),S('spritsail_yard_diameter'),'lower',cfg,mats,yardRadius(S('spritsail_yard_diameter'))));
   sy.position.copy(bs.at(bs.length * 0.62));
   sy.name = 'spritsail_yard';
   group.add(sy);
@@ -377,7 +391,7 @@ export function buildRig(cfg, mats, model, ctx) {
     const m = geo[mastName];
     const h = m.yardH[tier];
     const mesh = buildYard(m, h, S(lenKey), S(diaKey), BRACE, cfg, mats, group, name,
-      AUDITED.has(name) ? `${name}_length` : null);
+      AUDITED.has(name) ? `${name}_length` : null,tier);
     yards[name] = {
       mast: m, tier, h,
       length: S(lenKey), diameter: S(diaKey),
@@ -405,6 +419,7 @@ export function buildRig(cfg, mats, model, ctx) {
     }),
     mats.mastBlack
   );
+  sparUV(boom.geometry,S('spanker_boom_length'),S('spanker_boom_diameter'));boom.material=sparMaterials(cfg).black;
   boom.position.copy(boomRoot);
   boom.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0.09, 1).normalize());
   boom.name = 'spanker_boom';
@@ -421,6 +436,7 @@ export function buildRig(cfg, mats, model, ctx) {
     }),
     mats.mastBlack
   );
+  sparUV(gaff.geometry,S('spanker_gaff_length'),S('spanker_gaff_diameter'));gaff.material=sparMaterials(cfg).black;
   gaff.position.copy(gaffRoot);
   gaff.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), gaffDir);
   gaff.name = 'spanker_gaff';
@@ -458,7 +474,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
 
   const addRope = (a, b, sag, radius = r) => {
     const c = ropeCurve(a, b, sag, cfg.ropeSegments);
-    if (cfg.ropesAsTubes) tubes.push(ropeTube(c, radius, { tubular: cfg.ropeSegments, radial: cfg.ropeRadial }));
+    if (cfg.ropesAsTubes) tubes.push(laidRopeUV(ropeTube(c, radius, { tubular: cfg.ropeSegments, radial: cfg.ropeRadial }),c,radius));
     else lines.push(c);
     return c;
   };
@@ -629,6 +645,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
     }),
     mats.mastBlack
   );
+  sparUV(strikerSpar.geometry,strikerLen,S('dolphin_striker_diameter'));strikerSpar.material=sparMaterials(cfg).black;
   strikerSpar.position.copy(strikerHeel);
   strikerSpar.quaternion.setFromUnitVectors(
     new THREE.Vector3(0, 1, 0),
