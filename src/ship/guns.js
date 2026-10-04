@@ -25,6 +25,8 @@ import { SPEC } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { ropeTube } from '../util/solids.js';
 import { clamp, deg } from '../util/math.js';
+import { gunMaterials, metreGrain } from './gun-finish.js';
+import { upperGunLinings } from './gun-openings.js';
 import { audit } from '../audit/measure.js';
 
 const HALF = 0.5;
@@ -33,6 +35,23 @@ const HALF = 0.5;
 // exist so the lathe profile has somewhere to turn the corner.
 const FILLET = 0.05;
 const RING_HALF = 0.025;
+
+function mergeColoured(parts){
+  for(const g of parts)if(!g.attributes.color)g.setAttribute('color',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*3).fill(1),3));
+  return mergeGeometries(parts);
+}
+
+// A bent cap-square hugs the upper trunnion and lands on the cheek at both ends.
+function capSquare(r,t,width){
+  const shape=new THREE.Shape(),n=10;
+  shape.moveTo(-r-t,-r*.6);shape.lineTo(-r-t,0);
+  for(let i=0;i<=n;i++){const a=Math.PI-i/n*Math.PI;shape.lineTo(Math.cos(a)*(r+t),Math.sin(a)*(r+t));}
+  shape.lineTo(r+t,-r*.6);shape.lineTo(r,-r*.6);shape.lineTo(r,0);
+  for(let i=0;i<=n;i++){const a=i/n*Math.PI;shape.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+  shape.lineTo(-r,-r*.6);shape.closePath();
+  const g=new THREE.ExtrudeGeometry(shape,{depth:width,bevelEnabled:false,curveSegments:1});
+  g.translate(0,0,-width/2);return g;
+}
 
 // ---------------------------------------------------------------------------- barrels
 
@@ -89,8 +108,8 @@ function longGunProfile(L, d, coarse) {
     [rm, L - f * 2],                                 // the swell of the muzzle
     [rm * 0.96, L],
     [bore, L],
-    [bore, L - d],
-    [0, L - d],                                      // the bottom of the bore, so that
+    [bore, L * 0.22],
+    [0, L * 0.22],                                      // the bottom of the bore, so that
   ];                                                 // the muzzle reads as a hole
 }
 
@@ -129,7 +148,9 @@ function carronadeProfile(L, d, coarse) {
     [rmz, L],
     [rmz * 0.80, L - cup * 0.35],                    // the cup at the muzzle
     [bore * 1.35, L - cup],
-    [0, L - cup],
+    [bore, L - cup - d * .25],
+    [bore, L * .23],
+    [0, L * .23],
   ];
 }
 
@@ -137,6 +158,14 @@ function carronadeProfile(L, d, coarse) {
 function lathed(profile, radial) {
   const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), radial);
   g.rotateZ(-Math.PI * HALF);
+  const colors=new Float32Array(g.attributes.position.count*3);
+  // The muzzle has a lit rim, with a deep, dark bore instead of a grey stopper.
+  for(let i=0;i<g.attributes.position.count;i++){
+    const ring=i%profile.length;
+    const shade=ring>=profile.length-2?.11:ring===profile.length-3?.62:1;
+    colors.fill(shade,i*3,i*3+3);
+  }
+  g.setAttribute('color',new THREE.BufferAttribute(colors,3));
   return g;
 }
 
@@ -152,7 +181,7 @@ function roller(radius, length, radial) {
 
 /** A box centred on the origin, sized along the gun axis, up, and fore and aft. */
 function bar(lx, ly, lz, detailed = false) {
-  return detailed ? new RoundedBoxGeometry(lx, ly, lz, 2, Math.min(.006, lx*.12, ly*.12, lz*.12))
+  return detailed ? new RoundedBoxGeometry(lx, ly, lz, 1, Math.min(.006, lx*.12, ly*.12, lz*.12))
     : new THREE.BoxGeometry(lx, ly, lz);
 }
 
@@ -180,7 +209,7 @@ function longGunBarrel(cfg, L, d) {
     parts.push(rim);
   }
 
-  const g = mergeGeometries(parts);
+  const g = mergeColoured(parts);
   // Slide the whole piece so that the trunnion axis is the origin.
   g.translate(-tb, 0, 0);
   return g;
@@ -209,7 +238,7 @@ function carronadeBarrel(cfg, L, d, dropToBed) {
   screw.translate(-d * 0.1, -dropToBed * HALF, 0);
   parts.push(screw);
 
-  const g = mergeGeometries(parts);
+  const g = mergeColoured(parts);
   g.translate(-L, 0, 0);
   return g;
 }
@@ -303,6 +332,10 @@ function truckCarriage(cfg, { length, width, axisH, truckFore, truckRear, trunni
   const q = new THREE.ExtrudeGeometry(quoin, { depth: between * 0.8, bevelEnabled: false, curveSegments: 1 });
   q.translate(0, 0, -between * 0.4);
   parts.push(q);
+  if(cfg.textureSize>=1024){
+    const handle=new THREE.CylinderGeometry(.017,.020,.13,8);handle.rotateZ(Math.PI/2);
+    handle.translate(xR+s-.055,yAft+.015,0);parts.push(handle);
+  }
 
   const tr = SPEC.gun_transom_siding.value;
   const transom = bar(tr, tr, between);
@@ -429,14 +462,10 @@ function siteRunOut(model, z, rise, axisAbove, foreOffset) {
   let deckY = 0;
   for (let pass = 0; pass < 2; pass++) {
     deckY = deckYAt(model, z, x, rise);
-    const inner = rise === 0
-      // On the gun deck the bulwark is carried up round the ports, so the anchor is the
-      // ship's own side at the height of the bore.
-      ? model.halfBreadthAt(z, deckY + axisAbove)
-        - SPEC.side_thickness.value - SPEC.gun_run_out_side_clearance.value
-      // The quarterdeck and forecastle carry no bulwark in the hull as traced, so the
-      // piece is set in from the edge of the deck instead.
-      : deckEdgeX(model, z, rise) - SPEC.gun_deck_inset.value;
+    // Tumblehome narrows both batteries at bore height. Use the inboard face,
+    // not the deck edge, so the fore trucks clear the real side.
+    const inner = model.halfBreadthAt(z, deckY + axisAbove)
+      - SPEC.side_thickness.value - SPEC.gun_run_out_side_clearance.value;
     x = inner - foreOffset;
   }
   return { x, y: deckY, tilt: deckSlopeAt(model, z, x, rise) };
@@ -462,6 +491,8 @@ export function buildGuns(cfg, mats, model, ctx) {
   const group = new THREE.Group();
   group.name = 'guns';
   if (!cfg.gunBarrels) return group;
+  Object.assign(mats,gunMaterials(cfg));
+  group.add(upperGunLinings(model,mats.red));
 
   const L9 = SPEC.gun_9pdr_barrel_length.value, d9 = SPEC.gun_9pdr_bore.value;
   const L4 = SPEC.gun_4pdr_barrel_length.value, d4 = SPEC.gun_4pdr_bore.value;
@@ -545,8 +576,8 @@ export function buildGuns(cfg, mats, model, ctx) {
   // ---- The quarterdeck: six stations a side, the two foremost taken by carronades and
   // the four abaft them by long 4-pounders.
   //
-  // These are not housed when the gundeck battery is. There are no ports up here to shut
-  // — the quarterdeck and forecastle guns fire over an open rail — so in heavy weather
+  // These are not housed when the gundeck battery is. The upper battery's
+  // openings have no hinged lids in this reconstruction, so in heavy weather
   // they are secured where they stand, with their tackles bowsed and their muzzles
   // plugged, and they go on looking exactly like guns run out.
   const qdFirst = SPEC.gun_quarterdeck_first_from_stem.value;
@@ -601,9 +632,9 @@ export function buildGuns(cfg, mats, model, ctx) {
   // ---- Instance them all.
   const carriages = [];
   for (const [name, nat] of Object.entries(natures)) {
-    const barrels = new THREE.InstancedMesh(nat.barrel, mats.iron, nat.at.length);
+    const barrels = new THREE.InstancedMesh(nat.barrel, mats.gunIron, nat.at.length);
     barrels.name = `${name}_pounder_barrels`;
-    const carr = new THREE.InstancedMesh(nat.carriage, mats.red, nat.at.length);
+    const carr = new THREE.InstancedMesh(metreGrain(nat.carriage), mats.gunPaint, nat.at.length);
     carr.name = `${name}_pounder_carriages`;
     nat.at.forEach((g, i) => {
       const mtx = placement(g);
@@ -621,8 +652,8 @@ export function buildGuns(cfg, mats, model, ctx) {
       const cheek = width/2-tw-th/2;
       const tr = calR*nat.bore, capT = SPEC.gun_cap_square_thickness.value;
       for (const z of [-cheek, cheek]) {
-        const cap = bar(tr*2.6,capT,th*1.6,true);
-        cap.translate(0,nat.axis+tr+capT/2,z);hardware.push(cap);
+        const cap=capSquare(tr,capT,th*1.25);
+        cap.translate(0,nat.axis,z);hardware.push(cap);
         for (const x of [-length*.60,-length*.24,.12]) {
           const strap = bar(.029,.21,.008,true);
           strap.translate(x,nat.axis*.61,z+Math.sign(z)*(th/2+.005));hardware.push(strap);
@@ -631,10 +662,18 @@ export function buildGuns(cfg, mats, model, ctx) {
             bolt.translate(x,nat.axis*.61+dy,z+Math.sign(z)*(th/2+.013));hardware.push(bolt);
           }
         }
-        const eye=new THREE.TorusGeometry(.035,.008,8,20);
+        const eye=new THREE.TorusGeometry(.035,.008,6,12);
         eye.translate(-length*.46,nat.axis*.53,z+Math.sign(z)*(th/2+.025));hardware.push(eye);
       }
-      const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.iron,nat.at.length);
+      // Axle ends and retaining pins keep the trucks from reading as unconnected discs.
+      const axle=SPEC.gun_axletree_siding.value;
+      const truckR=[SPEC[`gun_${name==='nine'?'9pdr':'4pdr'}_truck_fore_diameter`].value/2,
+        SPEC[`gun_${name==='nine'?'9pdr':'4pdr'}_truck_rear_diameter`].value/2];
+      for(const [x,y]of [[trunnionFromFore-axle/2,truckR[0]],[trunnionFromFore-length+axle/2,truckR[1]]])for(const side of [-1,1]){
+        const hub=roller(.026,.028,8);hub.translate(x,y,side*(width/2+.01));hardware.push(hub);
+        const pin=bar(.010,.07,.008);pin.translate(x,y,side*(width/2+.026));hardware.push(pin);
+      }
+      const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.gunIron,nat.at.length);
       fittings.name=`${name}_pounder_ironwork`;
       nat.at.forEach((g,i)=>fittings.setMatrixAt(i,placement(g)));
       fittings.instanceMatrix.needsUpdate=true;
@@ -646,9 +685,9 @@ export function buildGuns(cfg, mats, model, ctx) {
   carriages[0].userData.count = natures.nine.at.length + natures.four.at.length;
   audit(carriages[0], 'gun_truck_carriage_count', 'count');
 
-  const carBarrels = new THREE.InstancedMesh(carronade.barrel, mats.iron, carronade.at.length);
+  const carBarrels = new THREE.InstancedMesh(carronade.barrel, mats.gunIron, carronade.at.length);
   carBarrels.name = 'carronade_barrels';
-  const carSlides = new THREE.InstancedMesh(carronade.slide, mats.red, carronade.at.length);
+  const carSlides = new THREE.InstancedMesh(metreGrain(carronade.slide), mats.gunPaint, carronade.at.length);
   carSlides.name = 'carronade_slides';
   carronade.at.forEach((g, i) => {
     const mtx = placement(g);
@@ -670,17 +709,21 @@ export function buildGuns(cfg, mats, model, ctx) {
   // ---- The breechings and the tackle. Every one of these is a different length and a
   // different shape, so they cannot be instanced; they are merged into one mesh apiece.
   if (cfg.gunBreechings) {
-    const ropes = [], tackles = [];
+    const ropes = [], tackles = [], blocks = [];
     for (const nat of [natures.nine, natures.four]) {
       for (const g of nat.at) {
         ropes.push(breeching(cfg, model, nat, g));
-        if (cfg.gunTackles) tackles.push(...gunTackle(cfg, model, nat, g));
+        if (cfg.gunTackles) tackles.push(...gunTackle(cfg, model, nat, g, blocks));
       }
     }
     if (ropes.length) {
       const mesh = new THREE.Mesh(mergeGeometries(ropes), mats.runningRigging);
       mesh.name = 'gun_breechings';
       group.add(mesh);
+    }
+    if(blocks.length){
+      const mesh=new THREE.Mesh(metreGrain(mergeGeometries(blocks)),mats.gunBlock);
+      mesh.name='gun_tackle_blocks';group.add(mesh);
     }
     if (tackles.length) {
       const mesh = new THREE.Mesh(mergeGeometries(tackles), mats.runningRigging);
@@ -700,18 +743,15 @@ function inGunFrame(g) {
 
 /**
  * A ring bolt in the ship's side beside a gun, `z` metres fore or aft of it. On the gun
- * deck the bulwark is carried up round the ports, so the bolt goes into the side a
- * little above the sill. On the quarterdeck and forecastle, which carry no bulwark in
- * the hull as traced, it goes into the waterway at the edge of the deck.
+ * deck the bolt goes a little above the sill; on the upper decks it is lower
+ * on the inboard planking. Both follow the side's actual tumblehome.
  */
 function sideBolt(model, g, z) {
   const zz = g.z + z;
   const f = model.featureYAt(zz);
   const above = SPEC.gun_breeching_bolt_above_sill.value;
   const y = g.rise === 0 ? f.port_sill + above : deckEdgeHeight(model, zz, true) + above;
-  const x = g.rise === 0
-    ? model.halfBreadthAt(zz, y) - SPEC.side_thickness.value
-    : deckEdgeX(model, zz, g.rise) - SPEC.gun_deck_inset.value;
+  const x = model.halfBreadthAt(zz,y)-SPEC.side_thickness.value;
   return new THREE.Vector3(x * g.side, y, zz);
 }
 
@@ -747,25 +787,43 @@ function breeching(cfg, model, nat, g) {
  * eye bolts in the ship's side beside the port; one runs from the rear of the carriage
  * to an eye bolt in the deck, to check the gun and to run it in again.
  */
-function gunTackle(cfg, model, nat, g) {
+function gunTackle(cfg, model, nat, g, blocks) {
   const xR = SPEC.gun_carriage_trunnion_from_fore.value - nat.carriageLength;
   const half = nat.carriageWidth * HALF;
   const r = SPEC.gun_tackle_diameter.value * HALF;
   const sag = SPEC.gun_tackle_sag.value;
-  const opts = { tubular: Math.max(3, cfg.ropeSegments), radial: cfg.ropeRadial };
+  const opts = { tubular: Math.max(4, Math.min(8,cfg.ropeSegments)), radial: Math.min(6,cfg.ropeRadial) };
   const local = inGunFrame(g);
   const fall = (a, b) => {
-    const mid = a.clone().add(b).multiplyScalar(HALF);
-    mid.y -= sag * a.distanceTo(b);
-    return ropeTube(new THREE.CatmullRomCurve3([a, mid, b]), r, opts);
+    const dir=b.clone().sub(a).normalize(),side=new THREE.Vector3().crossVectors(dir,UP).normalize();
+    const aa=a.clone().addScaledVector(dir,.09),bb=b.clone().addScaledVector(dir,-.09);
+    const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),dir);
+    for(const p of [aa,bb]){
+      const block=new THREE.SphereGeometry(1,10,6);block.scale(.084,.051,.039);
+      block.applyQuaternion(q);block.translate(p.x,p.y,p.z);blocks.push(block);
+    }
+    const ropes=[];
+    // Three separately reeved parts through the pair of wooden blocks.
+    for(const shift of [-.024,0,.024]){
+      const pa=aa.clone().addScaledVector(side,shift),pb=bb.clone().addScaledVector(side,shift);
+      const mid=pa.clone().add(pb).multiplyScalar(.5);mid.y-=sag*a.distanceTo(b)*.45;
+      ropes.push(ropeTube(new THREE.CatmullRomCurve3([pa,mid,pb]),r*.65,opts));
+    }
+    // Strops around the shell and short connections to the fixing bolts.
+    for(const [end,p]of [[a,aa],[b,bb]]){
+      const ring=new THREE.TorusGeometry(.044,r*.65,5,12);ring.rotateY(Math.PI/2);
+      ring.scale(1,1.18,.94);ring.applyQuaternion(q);ring.translate(p.x,p.y,p.z);ropes.push(ring);
+      ropes.push(ropeTube(new THREE.LineCurve3(end,p),r*.7,{tubular:1,radial:5}));
+    }
+    return ropes;
   };
   const out = [];
 
   for (const s of [1, -1]) {
     const a = local(xR + nat.carriageLength * 0.55, nat.axis * 0.60, s * half);
-    out.push(fall(a, sideBolt(model, g, s * SPEC.gun_breeching_bolt_from_port.value)));
+    out.push(...fall(a, sideBolt(model, g, s * SPEC.gun_breeching_bolt_from_port.value)));
   }
-  out.push(fall(
+  out.push(...fall(
     local(xR, nat.axis * 0.55, 0),
     local(xR - SPEC.gun_train_tackle_length.value, 0, 0)
   ));

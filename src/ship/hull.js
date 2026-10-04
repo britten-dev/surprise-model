@@ -18,6 +18,7 @@ import { loftSections, mergeGeometries } from '../util/loft.js';
 import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 import { hullSideDetails } from './hull-side-details.js';
+import {cutGunOpenings,upperGunOpenings} from './gun-openings.js';
 
 // The feature stops, bottom to top. The V values are arbitrary but fixed: they are the
 // contract between the hull surface and the paint.
@@ -382,11 +383,12 @@ export function buildHull(cfg, mats, model = hullModel(), { skipQuad = null } = 
 
   // U runs the length of the ship so the planking texture runs fore and aft as real
   // planking does; V is the paint coordinate.
-  const geom = loftSections(sections, {
+  const loft = loftSections(sections, {
     mirror: true,
     skipQuad,
     uv: (u, v) => [u * SPEC.hull_length_gundeck.value / PAINT.hull_map_metres.value, v],
   });
+  const geom=cutGunOpenings(loft,upperGunOpenings(model));loft.dispose();
   // The wear that cannot live in the map.
   //
   // The hull map repeats every 12.192 metres along her, which is what makes the planking

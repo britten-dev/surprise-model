@@ -88,6 +88,7 @@ const P = (key) => PAINT[key].value;
 // into it rather than replacing it, so the darkening sits under whatever was painted
 // there rather than over it.
 const AO_MATERIAL_KEYS = [
+  'gunIron', 'gunPaint', 'gunBlock',
   'hull', 'crew', 'deck', 'timber', 'mastBlack', 'black', 'ochre', 'red', 'white',
   'iron', 'brass', 'gilt', 'copper',
 ];

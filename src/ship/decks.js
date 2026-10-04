@@ -13,6 +13,7 @@ import { sweep } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
 import { audit } from '../audit/measure.js';
 import {sternDeckBoundary} from './stern.js';
+import {cutGunOpenings,upperGunOpenings} from './gun-openings.js';
 
 /**
  * One deck surface, cambered. A deck is not flat: it is rounded up toward the
@@ -110,7 +111,12 @@ function innerBulwark(model, cfg, zFrom, zTo) {
   const port = loftSections(sections.map((s) => ({ z: s.z, points: s.points.map(([x, y]) => [-x, y]) })), { mirror: false });
   const g = mergeGeometries([starboard, port]);
   g.computeVertexNormals();
-  return g;
+  const openings=upperGunOpenings(model);
+  for(let i=0;i<SPEC.gunport_count_per_side.value;i++){
+    const z=model.fromStem(SPEC.gunport_first_from_stem.value)+i*SPEC.gunport_spacing.value,f=model.featureYAt(z);
+    openings.push({z0:z-SPEC.gunport_width.value/2,z1:z+SPEC.gunport_width.value/2,y0:f.port_sill,y1:f.port_head});
+  }
+  const cut=cutGunOpenings(g,openings);g.dispose();return cut;
 }
 
 /** The cap rail: the timber that finishes the top of the bulwark all round. */

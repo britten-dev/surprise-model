@@ -124,7 +124,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
     // gun barrels, chainplates and every load-bearing rigging span stay present.
     if(!mesh.isMesh)return;
     if(/_pounder_ironwork$/.test(mesh.name))detailChoice(mesh,.025);
-    if(mesh.name==='gun_tackles'||mesh.name==='gun_breechings')detailChoice(mesh,.025);
+    if(mesh.name==='gun_tackles'||mesh.name==='gun_breechings'||mesh.name==='gun_tackle_blocks')detailChoice(mesh,.025);
     if(mesh.name.endsWith('_cordage_sail'))detailChoice(mesh,.024);
   });
 
