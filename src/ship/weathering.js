@@ -482,7 +482,7 @@ export function deckStains({ size = 1024, seed = 71 } = {}) {
 // caller that has never heard of it — the ground stage of `sailTile`'s first draft did
 // not carry one, and neither does tools/dev/show-texture.js today — passes nothing and
 // gets colour only, exactly as before.
-export function sailStains(g, { size, seed = 81, stage = 'ground', rg = null } = {}) {
+export function sailStains(g, { size, seed = 81, stage = 'ground', rg = null, lg = null } = {}) {
   const r = rng(seed);
   const a = num('weather_sail_stain_alpha');
 
@@ -498,6 +498,7 @@ export function sailStains(g, { size, seed = 81, stage = 'ground', rg = null } =
       g.fillStyle = rgba(hex('weather_sail_patch'), num('weather_sail_patch_alpha'));
       g.fillRect(x, y, w, h);
       g.restore();
+      if (lg) { lg.fillStyle = '#909090'; lg.fillRect(x, y, w, h); }
       // The stitching round it, which is what makes it read as sewn rather than as a
       // lighter square somebody drew.
       g.strokeStyle = rgba(hex('weather_sail_stain'), num('weather_sail_patch_alpha') * 1.8);

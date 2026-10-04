@@ -692,6 +692,10 @@ function buildMaterials(cfg) {
     }),
   };
 
+  // A runtime-only data map; keep Texture objects out of serialised userData.
+  // GLTF continues to use its ordinary roughness channel and opaque canvas.
+  mats.sail.sailLayerMap = sailRoughTex;
+
   // Spar UV.v follows the timber's length; the source grain is horizontal.
   for (const texture of [mats.mast.map, mats.mast.normalMap, mats.mast.roughnessMap]) {
     if (texture) { texture.center.set(0.5, 0.5); texture.rotation = Math.PI / 2; }

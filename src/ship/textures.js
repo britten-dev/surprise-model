@@ -260,6 +260,11 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
   const { c, g } = canvas(size);
   const { c: rc, g: rg } = canvas(size);
   const { c: hc, g: hg } = canvas(size);
+  // Optical thickness travels in the unused blue channel of the roughness
+  // atlas. Doubled cloth should show up against the light without painted-on
+  // shadows, extra texture fetches in the material, or transparent polygons.
+  const { c: lc, g: lg } = canvas(size);
+  lg.fillStyle = '#404040'; lg.fillRect(0, 0, size, size);
   hg.fillStyle = '#808080';
   hg.fillRect(0, 0, size, size);
   {
@@ -313,6 +318,8 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
       g.fillRect(i * step - 1, 0, 2.5, size);
       hg.fillStyle = '#a8a8a8';
       hg.fillRect(i * step - size * .001, 0, size * .002, size);
+      lg.fillStyle = '#909090';
+      lg.fillRect(i * step - size * .002, 0, size * .004, size);
     }
     // Reef bands across the head of the sail, doubled canvas.
     g.globalAlpha = 0.4;
@@ -321,13 +328,15 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
       g.fillRect(0, (i / (reefs + 5)) * size, size, size * 0.016);
       hg.fillStyle = '#989898';
       hg.fillRect(0, (i / (reefs + 5)) * size, size, size * .016);
+      lg.fillStyle = '#909090';
+      lg.fillRect(0, (i / (reefs + 5)) * size, size, size * .016);
     }
     // The patches, over the seams, because a patch is a piece of cloth sewn on top of
     // them. The rest of the weathering has already gone on underneath — see `stain`
     // above the seams — because the cloth is what is stained and the seams are sewn
     // through it.
     g.globalAlpha = 1;
-    if (stain) stain(g, { size, seed: seed + 3, stage: 'patches', rg });
+    if (stain) stain(g, { size, seed: seed + 3, stage: 'patches', rg, lg });
     // Tabling: the doubled hem all round.
     // Broad corner reinforcing cloths take the load from the clews. Their
     // stitched edges remain visible on a backlit sail without a dark outline.
@@ -337,6 +346,10 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
       g.beginPath(); g.moveTo(cx,cy);
       g.lineTo(cx+sx*size*.13,cy); g.lineTo(cx,cy+sy*size*.18);
       g.closePath(); g.fill();
+      lg.fillStyle = '#c4c4c4';
+      lg.beginPath(); lg.moveTo(cx,cy);
+      lg.lineTo(cx+sx*size*.13,cy); lg.lineTo(cx,cy+sy*size*.18);
+      lg.closePath(); lg.fill();
       g.strokeStyle = seam; g.lineWidth = .8; g.globalAlpha = .45;
       g.setLineDash([Math.max(1,size*.0025), Math.max(1,size*.003)]); g.stroke(); g.setLineDash([]);
     }
@@ -354,6 +367,12 @@ function sailTile({ base, seam, size, cloths, reefs, seed, stain, roughBase }) {
     g.strokeRect(0, 0, size, size);
     hg.strokeStyle = '#a0a0a0'; hg.lineWidth = size * .018;
     hg.strokeRect(0, 0, size, size);
+    lg.strokeStyle = '#a8a8a8'; lg.lineWidth = size * .018;
+    lg.strokeRect(0, 0, size, size);
+    const surface = rg.getImageData(0, 0, size, size);
+    const layers = lg.getImageData(0, 0, size, size).data;
+    for (let i = 0; i < layers.length; i += 4) surface.data[i + 2] = layers[i];
+    rg.putImageData(surface, 0, 0);
     g.globalAlpha = 1;
     return { c, rc, hc };
   }

@@ -272,9 +272,17 @@ export function createMotion(ship, opts = {}) {
    */
   function patch(mesh, { aloft = false, sail = false, wet = false, alwaysWet = 0, sway = 0 }) {
     const mat = mesh.material.clone();
+    const clothLight = sail && !!mesh.material.sailLayerMap;
     const pinnedRope=!!mesh.geometry.attributes.aRopeFreedom;
     const hullProfile = mesh.name === 'hull_shell' || mesh.userData.hullWetProfile === true;
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
+    if (clothLight) {
+      own.uClothLayers = { value: mesh.material.sailLayerMap };
+      // A night sail is lit by the moon and sky, not by an internal lamp.
+      mat.emissiveIntensity *= .12;
+      mat.sheen *= .65;
+      mat.sheenRoughness = .78;
+    }
     if (sail) {
       own.uSailSpread = mesh.userData.sailSpread ?? { value: 1 };
       // Bolt ropes share the cloth's motion, including its phase and scale.
@@ -319,15 +327,23 @@ export function createMotion(ship, opts = {}) {
     mat.onBeforeCompile = (shader) => {
       moveVertices(shader);
 
-      if (sail) {
+      if (clothLight) {
         // Thin flax scatters light from behind it. Use the actual directional
         // light, in view space like the shading normal, instead of uniform glow.
-        shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>',
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform sampler2D uClothLayers;')
+          .replace('#include <lights_fragment_end>',
           `#include <lights_fragment_end>
           #if NUM_DIR_LIGHTS > 0
-            float throughCloth = pow(max(0.0, dot(-normal, directionalLights[0].direction)), 1.5);
-            reflectedLight.indirectDiffuse += diffuseColor.rgb * directionalLights[0].color
-              * throughCloth * 0.16;
+            float clothLayers = texture2D(uClothLayers, vMapUv).b;
+            // Single canvas passes a warm diffuse glow; hems, seams, patches
+            // and reinforcing pieces attenuate it through additional layers.
+            float clothTransmission = 0.43 * exp(-3.1 * clothLayers);
+            for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
+              float throughCloth = pow(max(0.0, dot(-normal, directionalLights[i].direction)), 1.25);
+              reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(1.0, .93, .79)
+                * directionalLights[i].color * throughCloth * clothTransmission;
+            }
           #endif`);
       }
 
@@ -347,7 +363,7 @@ export function createMotion(ship, opts = {}) {
 
     // Each shape of patch needs its own compiled program. Without a key that says which,
     // three hands the sails the rigging's shader and nothing moves but the rigging.
-    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}:${pinnedRope?'pinned':''}`;
+    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${clothLight ? 'layers' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}:${pinnedRope?'pinned':''}`;
     mat.customProgramCacheKey = () => key;
     mat.needsUpdate = true;
     mesh.material = mat;
