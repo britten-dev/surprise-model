@@ -9,10 +9,12 @@ export function windowStrip(surface, u0, u1, v0, v1, {
   const bu = Math.min(bevel / scaleU, (u1 - u0) * .18);
   const bv = Math.min(bevel / scaleV, (v1 - v0) * .18);
   const bd = Math.min(bevel, (top - base) * .3);
-  const pos = [], uv = [], indices = [];
+  const pos = [], uv = [], physical = [], indices = [];
+  const horizontal=(u1-u0)*scaleU>(v1-v0)*scaleV;
   const vertex = (u, v, d) => {
     const p = surface(u, v, d), index = pos.length / 3;
     pos.push(p.x, p.y, p.z); uv.push((u - u0) / (u1 - u0), (v - v0) / (v1 - v0));
+    physical.push((horizontal?u*scaleU:v*scaleV)/1.25,(horizontal?v*scaleV:u*scaleU)/.22);
     return index;
   };
   const tri = (a, b, c, reverse = false) => {
@@ -48,6 +50,7 @@ export function windowStrip(surface, u0, u1, v0, v1, {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setAttribute('uv1',new THREE.Float32BufferAttribute(physical,2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
   return geometry;
 }

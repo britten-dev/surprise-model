@@ -31,6 +31,8 @@ import { mergeGeometries, weldByPosition } from '../util/loft.js';
 import { sweep, block, spar } from '../util/solids.js';
 import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit } from '../audit/measure.js';
+import {joineryFinish,crownGlassNormal} from './stern-finishes.js';
+import { furnishCabin } from './cabin-interior.js';
 import { windowStrip } from './window-joinery.js';
 import { cutWindowApertures } from './window-apertures.js';
 import { finishSternShell, addSternOrnament } from './stern-detail.js';
@@ -520,6 +522,7 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const c=group.userData.cabin;
   // An enclosed recess prevents sky/sea leaking through the opened transom.
   const lining=mats.timber.clone();lining.color.set(0x3e3527);lining.side=THREE.DoubleSide;
+  lining.userData.bakedOcclusion=true;
   const add=(w,h,x,y,z,ry=0,rx=0)=>{
     const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),lining);o.position.set(x,y,z);
     o.rotation.set(rx,ry,0);cabin.add(o);return o;
@@ -527,6 +530,7 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   add(c.width,c.height,0,c.floor+c.height/2,c.front);
   for(const side of [-1,1])add(rear-c.front,c.height,side*c.width/2,c.floor+c.height/2,(rear+c.front)/2,Math.PI/2);
   for(const y of [c.floor,c.ceiling])add(c.width,rear-c.front,0,y,(rear+c.front)/2,0,Math.PI/2).name=y===c.floor?'cabin_floor':'cabin_ceiling';
+  furnishCabin(cabin,c,cfg,mats);
   group.add(cabin);
 
   const frame = new THREE.Mesh(mergeGeometries(frames), mats.ochre);
@@ -558,7 +562,8 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
 
   const glazing=mats.glass.clone();
   glazing.transmission=0;glazing.transparent=true;glazing.opacity=.16;glazing.depthWrite=false;
-  glazing.color.set(0xbcc9c6);glazing.roughness=.23;glazing.envMapIntensity=.45;
+  glazing.color.set(0xd3dfdc);glazing.roughness=.12;glazing.envMapIntensity=.7;
+  glazing.normalMap=crownGlassNormal(cfg);glazing.normalScale.set(.55,.55);
   const pane = new THREE.Mesh(mergeGeometries(glass), glazing);
   pane.name = 'stern_light_glazing';
   group.add(pane);
@@ -1040,6 +1045,10 @@ export function buildStern(cfg, mats, model, ctx) {
   // Fit close-range timber finish and restrained carved work after the apertures.
   finishSternShell(shell,cfg,sp);
   addSternOrnament(cfg,mats,sp,lights,group);
+  if(cfg.windowJoinery)group.traverse(o=>{
+    if(o.isMesh && o.geometry.attributes.uv1 && /^(stern_light_frames|stern_window_reveals|stern_glazing_bars|stern_munions|quarter_gallery_frames|quarter_gallery_glazing_bars)$/.test(o.name))
+      o.material=joineryFinish(cfg);
+  });
 
   return group;
 }

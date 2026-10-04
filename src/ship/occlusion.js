@@ -99,6 +99,12 @@ export function applyAmbientOcclusion(ship, cfg, mats) {
   ship.updateMatrixWorld(true);
 
   const targets = new Set(AO_MATERIAL_KEYS.map((k) => mats[k]).filter(Boolean));
+  // Bespoke static finishes opt into the same contact shading as their source
+  // materials. They also need a white colour attribute when AO is disabled.
+  ship.traverse(obj => {
+    if (!obj.isMesh) return;
+    for (const mat of [obj.material].flat()) if (mat.userData.bakedOcclusion) targets.add(mat);
+  });
   const targetMeshes = [];
   ship.traverse((obj) => {
     if (!obj.isMesh) return;

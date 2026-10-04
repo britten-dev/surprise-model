@@ -742,9 +742,9 @@ function buildMaterials(cfg) {
         { srgb: false }
       )
       : null,
-    normalScale: new THREE.Vector2(0.65, 0.65),
+    normalScale: new THREE.Vector2(0.82, 0.82),
   });
-  mats.hull.userData.hullFinish='caulked-timber-v2';
+  mats.hull.userData.hullFinish='caulked-timber-v3';
 
   return mats;
 }

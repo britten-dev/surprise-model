@@ -42,6 +42,27 @@ export function hullTimber(size,kind='colour'){
     const start=x+w*hash(seed+1)*.18,end=x+w*(.55+hash(seed+3)*.45),bend=(hash(seed+5)-.5)*h*.10;
     g.moveTo(start,yy);g.bezierCurveTo(start+w*.25,yy+bend,end-w*.2,yy-bend,end,yy);g.stroke();
    }
+   // Subtle growth-ring deviations and old brush laps interrupt the uniform
+   // straight grain. Paint remains intact: these are low-relief fibres, not
+   // exposed rotten wood or colour stains converted to bumps.
+   for(let knot=0;knot<2;knot++) {
+    const cx=x+w*(.2+hash(row*61+knot*23)*.6),cy=y0+h*(.24+hash(row*83+knot)*.50);
+    const rx=metre*(.075+hash(row+knot*17)*.09),ry=h*.09;
+    for(let ring=1;ring<=5;ring++) {
+     g.strokeStyle=height?'rgba(108,108,108,.09)':rough?'rgba(165,165,165,.12)':'rgba(76,73,64,.065)';
+     g.lineWidth=Math.max(.45,metre*.001);g.beginPath();
+     g.ellipse(cx,cy,rx*(.4+ring*.21),ry*(.4+ring*.23),0,0,Math.PI*2);g.stroke();
+    }
+   }
+   // A restrained worn edge catches a raking light without a bright uniform
+   // outline round every plank. Short exposed flecks occur only at some butts.
+   if(!height&&!rough && hash(row*31+segment)>.62) {
+    g.fillStyle='rgba(179,166,134,.19)';
+    for(let nick=0;nick<7;nick++) {
+     const yy=y0+h*hash(row*19+nick*11);
+     g.fillRect(x+metre*.008,yy,metre*(.008+hash(nick+row)*.026),Math.max(.55,metre*.002));
+    }
+   }
    // Sparse end checks and flush fastening plugs beneath the painted finish.
    // Dimensions/spacing are reconstructed; contrast stays low enough that the
    // hull cannot acquire a spotted riveted-metal pattern at normal viewing range.
