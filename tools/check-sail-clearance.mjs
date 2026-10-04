@@ -56,7 +56,11 @@ try {
        const ripple=Math.sin(wave+qy*1.4)+.32*Math.sin(wave*1.73+qy*4+phase);
        const breath=SPEC.motion_sail_breathe.value*3.6*(.7*Math.sin(flutterTime*.43+phase-qy*1.1)+.3*Math.sin(flutterTime*.79+phase*1.7-qy*2));
        const leech=T.MathUtils.lerp(1,SPEC.motion_sail_luff_shiver.value,(1-across)**3);
-       const offset=c.userData.sailSpread.value*SPEC.motion_sail_flutter.value*1.6*across**.85*down**.8*(ripple*.16*leech+breath);
+       // Worst-case luffing edge motion, alongside gale-strength body flutter.
+       const edge=(1-across)**5*down**1.2,gust=.8+.2*Math.sin(flutterTime*.67+phase);
+       const shake=Math.sin(flutterTime*6.2-qy*9+phase)+.28*Math.sin(flutterTime*6.2*1.87-qy*15+phase*1.7);
+       const edgeMotion=edge*Math.sqrt(1.6)*gust*.48*shake;
+       const offset=c.userData.sailSpread.value*(SPEC.motion_sail_flutter.value*1.6*across**.85*down**.8*(ripple*.16*leech+breath)+edgeMotion);
        tmp.addScaledVector(n,offset);const u=entry.uniforms;sheetPosition(tmp,u.uSheetRestFoot.value,u.uSheetFoot.value,u.uSheetTurn.value);
       }
       tmp.applyMatrix4(c.matrixWorld);p.setXYZ(i,tmp.x,tmp.y,tmp.z);

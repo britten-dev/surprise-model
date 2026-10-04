@@ -127,9 +127,8 @@ const ALOFT_BODY = `
  * A sail.
  *
  * The ripple runs across the cloth from luff to leech and the whole belly breathes with
- * the gusts. Both die away to nothing at the head, the foot and the two leeches, because
- * those edges are bent to a spar or roped to a bolt rope and cannot move — a sail that
- * ripples at its head has come adrift from its yard.
+ * the gusts. The head and loaded corners stay fixed. The free leeches ripple
+ * more visibly, especially when apparent wind runs nearly along the canvas.
  *
  * The displacement is along the sail's own normal and so is done in the mesh's own
  * frame, where the normal is; the whip above is done in the world's. `uv` arrives tiled
@@ -147,6 +146,10 @@ const SAIL_PARS = `
   uniform float uSailTiles;
   uniform float uSailPhase;
   uniform vec2 uSailSpan;
+  uniform float uClothWind;
+  uniform float uClothLuff;
+  uniform float uFreeLeeches;
+  uniform float uClothPhase;
 
   float clothOffset(vec2 st) {
     // UVs have an atlas gutter; remove it so every attachment is actually fixed.
@@ -161,7 +164,14 @@ const SAIL_PARS = `
     float breath = uBreathe * 3.6 * (0.7 * sin(uTime * 0.43 + uSailPhase - q.y * 1.1)
       + 0.3 * sin(uTime * 0.79 + uSailPhase * 1.7 - q.y * 2.0));
     float leech = mix(1.0, uLuff, pow(1.0 - across, 3.0));
-    return uSailSpread * uFlutter * uWind * freedom * (ripple * 0.16 * leech + breath);
+    // Keep extra movement at the free sides, away from masthead/stay clearances.
+    // The head, foot and loaded corners remain fixed.
+    float edge = uFreeLeeches * pow(1.0 - across, 5.0) * pow(down, 1.2);
+    float gust = 0.8 + 0.2 * sin(uTime * 0.67 + uSailPhase);
+    float shake = sin(uClothPhase - q.y * 9.0 + uSailPhase)
+      + 0.28 * sin(uClothPhase * 1.87 - q.y * 15.0 + uSailPhase * 1.7);
+    float edgeMotion = edge * sqrt(uClothWind) * gust * (0.16 + 0.32 * uClothLuff) * shake;
+    return uSailSpread * (uFlutter * uClothWind * freedom * (ripple * 0.16 * leech + breath) + edgeMotion);
   }
 `;
 
@@ -289,6 +299,7 @@ export function createMotion(ship, opts = {}) {
   }
 
   const patched = [];
+  const clothDrivers = new Map();
 
   /**
    * Patch one mesh's material.
@@ -319,6 +330,15 @@ export function createMotion(ship, opts = {}) {
       // Bolt ropes share the cloth's motion, including its phase and scale.
       const clothName = mesh.name.replace('_cordage_sail', '_sail');
       const geometry = mesh.parent?.getObjectByName(clothName)?.geometry ?? mesh.geometry;
+      let driver = clothDrivers.get(clothName);
+      if (!driver) {
+        driver = {mesh,wind:new THREE.Vector3(),point:new THREE.Vector3(),
+          strength:{value:0},luff:{value:0},phase:{value:0},square:!!geometry.userData.sheetFrame};
+        clothDrivers.set(clothName,driver);
+      }
+      own.uClothWind=driver.strength;own.uClothLuff=driver.luff;
+      own.uClothPhase=driver.phase;
+      own.uFreeLeeches={value:driver.square?1:0};
       const size = new THREE.Box3().setFromBufferAttribute(geometry.attributes.position).getSize(new THREE.Vector3());
       let hash = 0;
       for (const c of clothName) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
@@ -628,6 +648,22 @@ export function createMotion(ship, opts = {}) {
     }
     parts.sheeting.update();
     parts.rigging.update();
+    // One response for cloth and bolt ropes. Apparent wind includes ship speed
+    // and gusts; ease pressure changes instead of snapping into a flap.
+    for(const d of clothDrivers.values()) {
+      if(d.square)d.point.copy(d.mesh.parent.position);
+      else d.point.set(0,deckY+8,0);
+      if(apparentWindAt)apparentWindAt(d.point,d.wind);
+      else if(apparentWind)d.wind.copy(apparentWind);
+      else d.wind.set(Math.sin(wr),0,-Math.cos(wr)).multiplyScalar(windSpeed);
+      const speed=d.wind.length(),angle=d.square?d.mesh.parent.rotation.y:0;
+      const pressure=speed>.01?Math.abs(d.wind.x*Math.sin(angle)+d.wind.z*Math.cos(angle))/speed:1;
+      const target=1-THREE.MathUtils.smoothstep(pressure,.15,.65);
+      const blend=1-Math.exp(-Math.max(dt,1/120)*2.5);
+      d.strength.value+=(clamp(speed/22,0,1.6)-d.strength.value)*blend;
+      d.luff.value+=(target-d.luff.value)*blend;
+      d.phase.value+=dt*(3.8+2.4*d.luff.value);
+    }
 
     // ------------------------------------------------------------------- the wheel
     if (parts.wheel) parts.wheel.rotation[parts.wheel.userData.axis ?? 'x'] = -helm * deg(S('motion_helm_throw_deg'));
@@ -714,5 +750,6 @@ export function createMotion(ship, opts = {}) {
   }
 
   parts.patchedCount = patched.length;
+  parts.cloth = [...clothDrivers.values()];
   return { update, uniforms, parts, dispose };
 }

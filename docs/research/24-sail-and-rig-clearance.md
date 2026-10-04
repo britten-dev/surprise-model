@@ -47,3 +47,15 @@ checks are separate regressions.
 Production-browser screenshots cover close views of all three masts, both
 sharp-braced poses and gathering cloth in Chromium and mobile WebKit. The
 existing 1.6m/960k/84k host triangle limits remain unchanged.
+
+## Wind-driven cloth movement
+
+Square sails now move at their free leeches while the head, foot and loaded
+corners stay attached. Each sail samples local apparent wind; low pressure
+across the cloth strengthens the edge shaking. Shared drivers keep bolt ropes
+and canvas together, and integrated phase avoids jumps when pressure changes.
+This is a procedural visual approximation, not a cloth solver.
+
+The clearance sweep includes the strongest new edge motion. The host's
+`tools/check-sail-motion.mjs` compares rendered pixels in Chromium and mobile
+WebKit for drawing, luffing, calm and furled sails. Geometry counts are unchanged.
