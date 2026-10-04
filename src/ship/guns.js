@@ -388,6 +388,7 @@ function carronadeSlide(cfg, { barrelLength, bore }) {
   bolt.translate(-pivotR * 2, bedY + dep, 0);
   parts.push(bolt);
 
+  const fixed=mergeGeometries(parts);parts.length=0;
   // The upper carriage, under the piece's loop, and the block right aft that the
   // elevating screw bears on.
   const loopX = SPEC.carronade_muzzle_beyond_pivot.value
@@ -401,7 +402,7 @@ function carronadeSlide(cfg, { barrelLength, bore }) {
   stop.translate(breechX - bore * 0.1, bedY + dep + bedDep * HALF, 0);
   parts.push(stop);
 
-  return mergeGeometries(parts);
+  return {fixed,moving:mergeGeometries(parts)};
 }
 
 // ---------------------------------------------------------------------------- siting
@@ -605,6 +606,22 @@ export function buildGuns(cfg, mats, model, ctx) {
   const atFcGun = siteRunOut(model, zFcGun, fcRise, axis4, trunnionFromFore);
   for (const side of [1, -1]) natures.four.at.push({ ...atFcGun, z: zFcGun, side, rise: fcRise });
 
+  const gunInfo=[];
+  for(const [name,nat]of Object.entries(natures))nat.at.forEach((g,index)=>{
+    g.gunId=gunInfo.length;
+    gunInfo.push({id:g.gunId,side:g.side>0?'starboard':'port',index,station:g.z,
+      barrel:`${name}_pounder_barrels`,moving:[`${name}_pounder_carriages`,`${name}_pounder_ironwork`],
+      muzzle:[nat.length*(1-SPEC.gun_trunnion_from_breech_u.value),nat.axis,0],
+      recoil:name==='nine'?.82:.60,power:name==='nine'?1:.72});
+  });
+  carronade.at.forEach((g,index)=>{
+    g.gunId=gunInfo.length;
+    gunInfo.push({id:g.gunId,side:g.side>0?'starboard':'port',index,station:g.z,
+      barrel:'carronade_barrels',moving:['carronade_beds'],
+      muzzle:[SPEC.carronade_muzzle_beyond_pivot.value,axisC,0],recoil:.38,power:.85});
+  });
+  group.userData.gunnery={guns:gunInfo,secured:!!ctx.portsShut};
+
   // ---- Tompions, in heavy weather.
   //
   // A plug in the muzzle of every gun that is exposed to the sky. The gundeck battery
@@ -675,7 +692,10 @@ export function buildGuns(cfg, mats, model, ctx) {
       }
       // The train tackle finishes at a deck ring, rather than a loose block.
       const trainEye=new THREE.TorusGeometry(.032,.007,4,10);trainEye.rotateX(Math.PI/2);
-      trainEye.translate(trunnionFromFore-length-SPEC.gun_train_tackle_length.value,.018,0);hardware.push(trainEye);
+      trainEye.translate(trunnionFromFore-length-SPEC.gun_train_tackle_length.value,.018,0);
+      const deckEyes=new THREE.InstancedMesh(trainEye,mats.gunIron,nat.at.length);
+      deckEyes.name=`${name}_pounder_deckeyes`;
+      nat.at.forEach((g,i)=>deckEyes.setMatrixAt(i,placement(g)));group.add(deckEyes);
       const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.gunIron,nat.at.length);
       fittings.name=`${name}_pounder_ironwork`;
       nat.at.forEach((g,i)=>fittings.setMatrixAt(i,placement(g)));
@@ -690,12 +710,15 @@ export function buildGuns(cfg, mats, model, ctx) {
 
   const carBarrels = new THREE.InstancedMesh(carronade.barrel, mats.gunIron, carronade.at.length);
   carBarrels.name = 'carronade_barrels';
-  const carSlides = new THREE.InstancedMesh(metreGrain(carronade.slide), mats.gunPaint, carronade.at.length);
+  const carSlides = new THREE.InstancedMesh(metreGrain(carronade.slide.fixed), mats.gunPaint, carronade.at.length);
   carSlides.name = 'carronade_slides';
+  const carBeds=new THREE.InstancedMesh(metreGrain(carronade.slide.moving),mats.gunPaint,carronade.at.length);
+  carBeds.name='carronade_beds';
   carronade.at.forEach((g, i) => {
     const mtx = placement(g);
     carBarrels.setMatrixAt(i, mtx);
     carSlides.setMatrixAt(i, mtx);
+    carBeds.setMatrixAt(i,mtx);
   });
   carBarrels.instanceMatrix.needsUpdate = true;
   carSlides.instanceMatrix.needsUpdate = true;
@@ -707,7 +730,7 @@ export function buildGuns(cfg, mats, model, ctx) {
     group.add(t);
   }
   audit(carBarrels, 'carronade_12pdr_count', 'count');
-  group.add(carBarrels, carSlides);
+  group.add(carBarrels, carSlides,carBeds);
 
   // ---- The breechings and the tackle. Every one of these is a different length and a
   // different shape, so they cannot be instanced; they are merged into one mesh apiece.
@@ -736,6 +759,14 @@ export function buildGuns(cfg, mats, model, ctx) {
   }
 
   return group;
+}
+
+// Per-vertex attachment weights let the host animate existing batches without
+// replacing the gun meshes or the detail controller. Fixed ends remain fixed.
+function recoilTag(geometry,id,weight){
+  const p=geometry.attributes.position,data=new Float32Array(p.count*2);
+  for(let i=0;i<p.count;i++){data[i*2]=id;data[i*2+1]=typeof weight==='function'?weight(i):weight;}
+  geometry.setAttribute('gunRecoil',new THREE.BufferAttribute(data,2));return geometry;
 }
 
 /** A point in a gun's own frame — outboard, up, fore and aft — put into the ship's. */
@@ -780,9 +811,11 @@ function breeching(cfg, model, nat, g) {
   const sag = SPEC.gun_breeching_sag.value * nat.carriageLength;
   pts[1].y -= sag;
   pts[3].y -= sag;
-  return ropeTube(new THREE.CatmullRomCurve3(pts), SPEC.gun_breeching_diameter.value * HALF, {
+  const rope=ropeTube(new THREE.CatmullRomCurve3(pts), SPEC.gun_breeching_diameter.value * HALF, {
     tubular: Math.max(4, cfg.ropeSegments * 2), radial: cfg.ropeRadial,
   });
+  return recoilTag(rope,g.gunId,i=>{const u=rope.attributes.uv.getX(i);
+    return THREE.MathUtils.smoothstep(u,0,.23)*THREE.MathUtils.smoothstep(1-u,0,.23);});
 }
 
 /**
@@ -803,7 +836,7 @@ function gunTackle(cfg, model, nat, g, blocks) {
     const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),dir);
     for(const p of [aa,bb]){
       const block=new THREE.SphereGeometry(1,10,6);block.scale(.084,.051,.039);
-      block.applyQuaternion(q);block.translate(p.x,p.y,p.z);blocks.push(block);
+      block.applyQuaternion(q);block.translate(p.x,p.y,p.z);blocks.push(recoilTag(block,g.gunId,p===aa?1:0));
     }
     const ropes=[];
     // Three separately reeved parts through the pair of wooden blocks.
@@ -818,6 +851,11 @@ function gunTackle(cfg, model, nat, g, blocks) {
       ring.scale(1,1.18,.94);ring.applyQuaternion(q);ring.translate(p.x,p.y,p.z);ropes.push(ring);
       ropes.push(ropeTube(new THREE.LineCurve3(end,p),r*.7,{tubular:1,radial:5}));
     }
+    const span=bb.clone().sub(aa),length2=span.lengthSq(),v=new THREE.Vector3();
+    for(const rope of ropes)recoilTag(rope,g.gunId,i=>{
+      v.fromBufferAttribute(rope.attributes.position,i).sub(aa);
+      return 1-clamp(v.dot(span)/Math.max(.001,length2),0,1);
+    });
     return ropes;
   };
   const out = [];
