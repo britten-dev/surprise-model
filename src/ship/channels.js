@@ -16,6 +16,7 @@
 // inboard edge sits on the real planking at whatever half-breadth the station has — so
 // the whole region moves with the hull rather than standing off it.
 import * as THREE from 'three';
+import { detailChoice } from './detail-lod.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { deadeyePair, pairAttachment } from './deadeyes.js';
 import { SPEC } from '../spec/spec.js';
@@ -389,6 +390,7 @@ export function buildChannels(cfg, mats, model, ctx) {
     const timber = [channelSlab(e)];
     const iron = [], faces = [], hemp = [], strops = [], pairRecords = [];
     let eyeMaterial = mats.timber;
+    const coarseFaces=[],coarseHemp=[],coarseStrops=[];
 
     const eyes = deadeyeRow(c, e);
 
@@ -436,6 +438,12 @@ export function buildChannels(cfg, mats, model, ctx) {
         faces.push(pair.timber.applyMatrix4(frame));
         hemp.push(pair.hemp.applyMatrix4(frame)); strops.push(pair.strop.applyMatrix4(frame));
         eyeMaterial = pair.material;
+        if(cfg.adaptiveDetail) {
+          const low=deadeyePair(eye.r,thickness,cfg,mats,shroudRadius,true);
+          coarseFaces.push(low.timber.applyMatrix4(frame));
+          coarseHemp.push(low.hemp.applyMatrix4(frame));
+          coarseStrops.push(low.strop.applyMatrix4(frame));
+        }
         pairRecords.push({ radius: eye.r, thickness, shroudRadius, authored: pair.authored,
           lower: eye.centre.toArray(), upper: eye.centre.clone().addScaledVector(up, pair.separation).toArray(),
           anchor: eye.centre.clone().addScaledVector(up, pair.attachment).toArray(), frame: frame.toArray() });
@@ -510,10 +518,11 @@ export function buildChannels(cfg, mats, model, ctx) {
     group.add(platform);
 
     if (faces.length) {
-      for (const [geometries, material, suffix] of [[faces, eyeMaterial, 'deadeyes'], [hemp, mats.runningRigging, 'lanyards'], [strops, mats.standingRigging, 'shroud_seizings']]) {
+      for (const [geometries, material, suffix, low] of [[faces, eyeMaterial, 'deadeyes',coarseFaces], [hemp, mats.runningRigging, 'lanyards',coarseHemp], [strops, mats.standingRigging, 'shroud_seizings',coarseStrops]]) {
         const mesh = new THREE.Mesh(mergeGeometries([...geometries, ...geometries.map(mirrored)]), material);
         mesh.name = `${c.name}_${suffix}`; mesh.castShadow = mesh.receiveShadow = true;
         if (suffix === 'deadeyes') mesh.userData.deadeyePairs = pairRecords;
+        if(cfg.adaptiveDetail)detailChoice(mesh,suffix==='deadeyes'?.065:.035,mergeGeometries([...low,...low.map(mirrored)]));
         group.add(mesh);
       }
     }

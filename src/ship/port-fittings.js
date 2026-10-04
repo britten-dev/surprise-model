@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { detailChoice } from './detail-lod.js';
 import { SPEC } from '../spec/spec.js';
 import { ropeCurve, ropeTube } from '../util/solids.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -110,7 +111,7 @@ export function portLid(cfg, mats, model, p, side, shut) {
 
 // All the lids are static within one sail/weather build. Batch by material so a
 // hundred fittings do not become a hundred extra shadow/reflection draw calls.
-export function batchPortLids(assemblies) {
+export function batchPortLids(assemblies, cfg = {}, mats = {}) {
   const batches = new Map();
   for (const root of assemblies) {
     root.updateMatrixWorld(true);
@@ -135,6 +136,8 @@ export function batchPortLids(assemblies) {
   return [...batches].map(([material, geometries], i) => {
     const mesh = new THREE.Mesh(mergeGeometries(geometries), material);
     mesh.name = `gunport_fittings_${i}`;
+    if(cfg.adaptiveDetail && material===mats.iron)detailChoice(mesh,.045);
+    if(cfg.adaptiveDetail && material===mats.runningRigging)detailChoice(mesh,.024);
     return mesh;
   });
 }

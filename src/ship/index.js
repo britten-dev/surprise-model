@@ -20,6 +20,7 @@ import { buildGroundTackle } from './ground-tackle.js';
 import { buildFlags } from './flags.js';
 import { buildRig } from './rig.js';
 import { buildCrew } from './crew.js';
+import { detailChoice } from './detail-lod.js';
 import { applyAmbientOcclusion } from './occlusion.js';
 
 export { LODS };
@@ -32,10 +33,12 @@ export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
 // import for the whole package.
 export { createMotion } from './motion.js';
 export { createSailHandling } from './sail-handling.js';
+export { createDetailLOD } from './detail-lod.js';
 
 /**
  * @param {object} [opts]
- * @param {string} [opts.lod]   'hero' | 'game' | 'distant'
+ * @param {string} [opts.lod]   'cinematic' | 'hero' | 'game' | 'distant'
+ * @param {boolean} [opts.adaptiveDetail=false] Prepare lightweight fitting geometry for createDetailLOD.
  * @param {string} [opts.sails] 'full' | 'topsails' | 'storm' | 'furled'
  * @param {string} [opts.weather] 'fair' | 'heavy'. Defaults to heavy in the storm state.
  *   This is what a ship *does* about the weather, as against what she is wearing, and it
@@ -53,7 +56,7 @@ export { createSailHandling } from './sail-handling.js';
  * @param {number} [opts.flagYear] Select the pre/post-1801 Union; defaults to the 1798 specification.
  * @param {boolean} [opts.crew=true] Omit visible figures and their rendering cost when false.
  */
-export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState, crew = true, animatedSails = false, ensign='blue',flagYear } = {}) {
+export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portState, crew = true, animatedSails = false, adaptiveDetail = false, ensign='blue',flagYear } = {}) {
   if(!['blue','white','red'].includes(ensign))throw new Error(`Unknown ensign: ${ensign}`);
   if(flagYear!==undefined&&(!Number.isFinite(flagYear)||flagYear<1606))throw new Error(`Invalid flag year: ${flagYear}`);
   if (!SAIL_STATES.includes(sails)) {
@@ -67,7 +70,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   }
   const heavyWeather = weather === undefined ? sails === 'storm' : weather === 'heavy';
   const portsShut = portState === undefined ? heavyWeather : portState === 'shut';
-  const cfg = { ...lodConfig(lod), ...(crew ? {} : { crew: false }) };
+  const cfg = { ...lodConfig(lod), adaptiveDetail, ...(crew ? {} : { crew: false }) };
   const mats = makeMaterials(cfg);
   const model = hullModel();
 
@@ -113,6 +116,15 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   // ask where anything actually touches anything else, which is exactly what none of
   // the modules above it know on their own.
   applyAmbientOcclusion(ship, cfg, mats);
+
+  if(adaptiveDetail)ship.traverse(mesh=>{
+    // These are secondary surface details only. Port boards, structural timber,
+    // gun barrels, chainplates and every load-bearing rigging span stay present.
+    if(!mesh.isMesh)return;
+    if(/_pounder_ironwork$/.test(mesh.name))detailChoice(mesh,.025);
+    if(mesh.name==='gun_tackles'||mesh.name==='gun_breechings')detailChoice(mesh,.025);
+    if(mesh.name.endsWith('_cordage_sail'))detailChoice(mesh,.024);
+  });
 
   return ship;
 }

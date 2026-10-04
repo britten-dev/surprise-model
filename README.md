@@ -438,3 +438,38 @@ nameboard with serif letters, and restrained scrolling ornament. The hull form,
 seven window apertures and afterdeck closure are retained. See
 [the stern finish notes](docs/research/18-stern-close-detail.md) for the
 reconstruction choices, glyph licence and rendering checks.
+
+
+## Detail that follows the camera
+
+Browser hosts can keep their selected quality ceiling and opt into finer detail
+only where the camera can resolve it:
+
+```js
+const model = buildShip({ lod: 'cinematic', crew: false, animatedSails: true,
+  adaptiveDetail: true });
+const motion = createMotion(model);
+const detail = createDetailLOD(model); // after motion/AO, once per model
+// Each frame, after positioning the ship and main camera, before any captures:
+detail.update(camera, renderer.domElement.height);
+```
+
+Import `createDetailLOD` alongside `buildShip`. Served mast bands, yard collars,
+rope hanks and deadeye/lanyard assemblies retain lighter geometry at distance.
+Tiny gun fittings, lid hardware and sail cordage stop drawing below screen
+resolution. Hull/deck shells, stern joinery, main rigging, sail cloth and flags
+keep their existing geometry. A 0.65–0.9 pixel dead band prevents repeated
+changes as the ship heaves; render resolution and camera field of view both
+count. Reflections and shadows use the main camera's selection.
+
+The controller swaps geometry on the existing meshes and uses layers for
+microdetail culling; animation visibility, morphs, names and transforms remain
+owned by the simulation. Keep one controller for each cached weather model.
+`detail.setEnabled(false)` restores the full geometry for comparison, and
+`detail.stats` reports selected triangles before frustum culling, not an FPS
+promise. `detail.dispose()` restores the originals and releases the owned
+coarse geometry when the host releases that model.
+
+This reduces rendering work, not initial asset download or the memory occupied
+by the full geometry. Alternatives are built once with the model. The default
+`buildShip`/GLB export path is unchanged when `adaptiveDetail` is omitted.

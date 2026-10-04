@@ -45,15 +45,15 @@ export function reeveLanyard(radius, thickness) {
   return { curve, radius: cord, lower: lo, upper: hi, half };
 }
 
-export function deadeyePair(radius, thickness, cfg, mats, shroudRadius) {
-  const asset = deadeyeAsset();
-  const eye = asset ? asset.geometry.clone().scale(radius, radius, thickness) : fallbackEye(radius, thickness, cfg);
+export function deadeyePair(radius, thickness, cfg, mats, shroudRadius, coarse = false) {
+  const asset = coarse ? null : deadeyeAsset();
+  const eye = asset ? asset.geometry.clone().scale(radius, radius, thickness) : fallbackEye(radius, thickness, coarse ? {...cfg,latheSegments:6} : cfg);
   const upper = eye.clone().rotateZ(Math.PI).translate(0, pairSeparation(radius), 0);
   const timber = mergeGeometries([eye, upper]);
   const lanyard = reeveLanyard(radius, thickness);
-  const hemp = [new THREE.TubeGeometry(lanyard.curve, cfg.textureSize >= 2048 ? 96 : 64, lanyard.radius, 5, false)];
+  const hemp = [new THREE.TubeGeometry(lanyard.curve, coarse ? 18 : cfg.textureSize >= 2048 ? 96 : 64, lanyard.radius, coarse ? 3 : 5, false)];
   // The stopper is a compact walnut knot on the starting end, outside the upper hole.
-  const knot = new THREE.TorusGeometry(lanyard.radius * 1.2, lanyard.radius * .8, 5, 10);
+  const knot = new THREE.TorusGeometry(lanyard.radius * 1.2, lanyard.radius * .8, coarse ? 3 : 5, coarse ? 6 : 10);
   knot.rotateX(.6); knot.translate(lanyard.upper[0].x, lanyard.upper[0].y, lanyard.half + lanyard.radius);
   hemp.push(knot);
   // The shroud turns around the score, then its doubled neck is seized above the eye.
@@ -64,16 +64,16 @@ export function deadeyePair(radius, thickness, cfg, mats, shroudRadius) {
     points.push(new THREE.Vector3((radius * .91 + r * .55) * Math.cos(a), sep + (radius * .91 + r * .55) * Math.sin(a), 0));
   }
   points.push(new THREE.Vector3(r * .8, pairAttachment(radius), 0));
-  dark.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 36, r, 6, false));
+  dark.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), coarse ? 12 : 36, r, coarse ? 3 : 6, false));
   for (const y of [sep + radius * 1.43, sep + radius * 1.79]) {
-    for (let i = 0; i < 4; i++) {
-      const ring = new THREE.TorusGeometry(r * 1.25, radius * .025, 4, 12);
+    for (let i = 0; i < (coarse ? 1 : 4); i++) {
+      const ring = new THREE.TorusGeometry(r * 1.25, radius * (coarse ? .08 : .025), coarse ? 3 : 4, coarse ? 6 : 12);
       ring.rotateX(Math.PI / 2); ring.scale(1.45, 1, 1); ring.translate(0, y + (i - 1.5) * radius * .052, 0); dark.push(ring);
     }
   }
   // Several turns expend the lanyard between the pair, visibly gathering its six parts.
   for (let i = 0; i < 3; i++) {
-    const loop = new THREE.TorusGeometry(radius * .43, lanyard.radius * .8, 4, 16);
+    const loop = new THREE.TorusGeometry(radius * .43, lanyard.radius * .8, coarse ? 3 : 4, coarse ? 6 : 16);
     loop.rotateX(Math.PI / 2); loop.scale(1, 1, (thickness * .5 + radius * .14) / (radius * .43));
     loop.translate(0, sep * .55 + i * lanyard.radius * 1.8, 0); hemp.push(loop);
   }

@@ -167,6 +167,6 @@ export function buildPorts(cfg, mats, model, ports, ctx = {}) {
   group.add(span);
 
   group.userData.assemblies = lids.map(l => l.userData.portLid);
-  group.add(...batchPortLids(lids));
+  group.add(...batchPortLids(lids,cfg,mats));
   return group;
 }

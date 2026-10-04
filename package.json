@@ -37,7 +37,8 @@
     "./views": "./viewer/views.js",
     "./package.json": "./package.json",
     "./motion": "./src/ship/motion.js",
-    "./crew": "./src/ship/crew.js"
+    "./crew": "./src/ship/crew.js",
+    "./detail": "./src/ship/detail-lod.js"
   },
   "files": [
     "src",

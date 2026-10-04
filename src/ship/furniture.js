@@ -18,6 +18,7 @@
 // calls.
 import * as THREE from 'three';
 import { authoredPart } from './authored-assets.js';
+import { detailChoice } from './detail-lod.js';
 import { belayedHank } from './rig-detail.js';
 import { deckEdgeHeight } from './deck-level.js';
 import { SPEC } from '../spec/spec.js';
@@ -210,7 +211,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
   // Canvas work: tarpaulins over the hatches, gripes over the boats. Tarred cloth, so it
   // takes the same near-black as the port lids rather than the timber's oak.
   const canvasWork = [];
-  const belayedRopes = [];
+  const belayedRopes = [], coarseHanks = [];
   const netting = [];
 
   const detailWheel = authoredPart('authored_wheel', cfg);
@@ -744,6 +745,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
           const hank=belayedHank(0,0,0,pr,i);
           hank.rotateY(-side*Math.PI/2).translate(x,p.y+.035,p.z);
           belayedRopes.push(hank);
+          if(cfg.adaptiveDetail)coarseHanks.push(belayedHank(0,0,0,pr,i,true).rotateY(-side*Math.PI/2).translate(x,p.y+.035,p.z));
         }
       }
     }
@@ -769,7 +771,10 @@ export function buildFurniture(cfg, mats, model, ctx) {
       for (let i = 0; i < nPin; i++) {
         const x=lerp(-half,half,(i+.5)/nPin);
         timber.push(pin(x,yRail-pl*.5,z));
-        if(cfg.textureSize>=2048 && i%2===0) belayedRopes.push(belayedHank(x,yRail+.03,z,pr,i));
+        if(cfg.textureSize>=2048 && i%2===0) {
+          belayedRopes.push(belayedHank(x,yRail+.03,z,pr,i));
+          if(cfg.adaptiveDetail)coarseHanks.push(belayedHank(x,yRail+.03,z,pr,i,true));
+        }
       }
     }
   }
@@ -813,7 +818,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
     if (!geoms.length) return;
     const mesh = new THREE.Mesh(mergeGeometries(geoms), material);
     mesh.name = name;
-    group.add(mesh);
+    group.add(mesh);return mesh;
   };
   bucket(timber, mats.timber, 'furniture_timber');
   bucket(iron, mats.iron, 'furniture_ironwork');
@@ -821,7 +826,8 @@ export function buildFurniture(cfg, mats, model, ctx) {
   bucket(copper, mats.copper, 'galley_funnel');
   bucket(black, mats.black, 'furniture_black');
   bucket(canvasWork, mats.black, 'battened_hatches');
-  bucket(belayedRopes, mats.runningRigging, 'belayed_rope_hanks');
+  const hanks=bucket(belayedRopes, mats.runningRigging, 'belayed_rope_hanks');
+  if(cfg.adaptiveDetail && hanks)detailChoice(hanks,.024,mergeGeometries(coarseHanks));
   bucket(glass, mats.glass, 'skylight_glazing');
 
   if (netting.length) {
