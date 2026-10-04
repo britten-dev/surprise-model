@@ -8,7 +8,7 @@
     "meshes": 475,
     "lines": 1658,
     "materials": 83,
-    "kb": 51814,
+    "kb": 53520,
     "inBudget": true
   },
   {
@@ -20,7 +20,7 @@
     "meshes": 466,
     "lines": 1658,
     "materials": 83,
-    "kb": 50960,
+    "kb": 52667,
     "inBudget": true
   },
   {
@@ -32,7 +32,7 @@
     "meshes": 468,
     "lines": 1658,
     "materials": 83,
-    "kb": 51570,
+    "kb": 53276,
     "inBudget": true
   },
   {
@@ -44,7 +44,7 @@
     "meshes": 459,
     "lines": 1658,
     "materials": 82,
-    "kb": 50453,
+    "kb": 52159,
     "inBudget": true
   },
   {
@@ -56,7 +56,7 @@
     "meshes": 219,
     "lines": 782,
     "materials": 23,
-    "kb": 7681,
+    "kb": 8226,
     "inBudget": true
   },
   {
@@ -68,7 +68,7 @@
     "meshes": 215,
     "lines": 782,
     "materials": 23,
-    "kb": 7661,
+    "kb": 8207,
     "inBudget": true
   },
   {
@@ -80,7 +80,7 @@
     "meshes": 218,
     "lines": 782,
     "materials": 23,
-    "kb": 7752,
+    "kb": 8298,
     "inBudget": true
   },
   {
@@ -92,7 +92,7 @@
     "meshes": 211,
     "lines": 782,
     "materials": 23,
-    "kb": 7650,
+    "kb": 8196,
     "inBudget": true
   },
   {
@@ -104,7 +104,7 @@
     "meshes": 83,
     "lines": 272,
     "materials": 11,
-    "kb": 1031,
+    "kb": 1113,
     "inBudget": true
   },
   {
@@ -116,7 +116,7 @@
     "meshes": 75,
     "lines": 272,
     "materials": 11,
-    "kb": 1022,
+    "kb": 1105,
     "inBudget": true
   }
 ]

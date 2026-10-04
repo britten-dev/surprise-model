@@ -7,8 +7,8 @@
 // those widths is a fraction of the canton's hoist. So the flag is painted on a canvas
 // the same way textures.js paints planking, out of numbers that live in the spec, which
 // means the pre-1801 Union and the post-1801 Union are the same drawing with one band
-// added. Ours is the pre-1801 one: SURPRISE is modelled in 1798 and St Patrick's
-// saltire did not join the Union until 1 January 1801.
+// added. The default model is 1798; hosts can select `flagYear: 1805` to include
+// St Patrick's saltire for a later scene.
 //
 // The second is that a flag is a sheet whose only fixed edge is the hoist. Everything
 // else — the stream downwind, the sag of heavy wool bunting at the fly, the long slow
@@ -29,6 +29,7 @@ import { ropeCurve, ropeTube, ropeLines } from '../util/solids.js';
 import { mergeGeometries } from '../util/loft.js';
 import { lerp } from '../util/math.js';
 import { audits } from '../audit/measure.js';
+import {dressBunting,installBuntingLight} from './bunting.js';
 
 const S = (key) => SPEC[key].value;
 
@@ -125,7 +126,7 @@ function flagCanvas(hoistPx, aspect) {
   const c = document.createElement('canvas');
   c.height = Math.max(8, Math.round(hoistPx));
   c.width = Math.max(8, Math.round(hoistPx * aspect));
-  return { c, g: c.getContext('2d') };
+  return { c, g: c.getContext('2d',{willReadFrequently:true}) };
 }
 
 /** The ensign: a plain field with the Union in the upper hoist quarter. */
@@ -134,7 +135,15 @@ function drawEnsign(hoistPx, fieldKey, post1801) {
   const { c, g } = flagCanvas(hoistPx, aspect);
   g.fillStyle = PAINT[fieldKey].hex;
   g.fillRect(0, 0, c.width, c.height);
-  drawUnion(g, 0, 0, c.width * S('ensign_canton_fly_frac'), c.height * S('ensign_canton_hoist_frac'), post1801);
+  // A white squadron ensign carries St George across the whole field.
+  // Colour alone never turns a blue ensign into a white naval ensign.
+  if(fieldKey==='ensign_white') {
+    const cross=c.height/10;
+    g.fillStyle=PAINT.ensign_red.hex;
+    g.fillRect(0,(c.height-cross)/2,c.width,cross);
+    g.fillRect((c.width-cross)/2,0,cross,c.height);
+    drawUnion(g,0,0,(c.width-cross)/2,(c.height-cross)/2,post1801);
+  }else drawUnion(g, 0, 0, c.width * S('ensign_canton_fly_frac'), c.height * S('ensign_canton_hoist_frac'), post1801);
   return c;
 }
 
@@ -167,17 +176,18 @@ function drawJack(hoistPx, post1801) {
   return c;
 }
 
-function buntingMaterial(mats, fieldKey, canvasEl) {
-  // The colour is already painted into the canvas out of PAINT, so the material's own
-  // tint is taken off to white and the map is left to carry it. Everything else about
-  // bunting — thin, matt, double-sided — comes from the shared factory.
-  const mat = mats.bunting(fieldKey);
-  const tex = new THREE.CanvasTexture(canvasEl);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.anisotropy = 8;
-  mat.map = tex;
-  mat.color.set(0xffffff);
+const buntingMaps=new Map();
+function buntingMaterial(mats, fieldKey, canvasEl, dimensions) {
+  const mat=mats.bunting(fieldKey);
+  // Fair/heavy weather models share immutable cloth maps. Their geometry and
+  // materials stay independent, but changing weather does not double texture memory.
+  const key=[fieldKey,canvasEl.width,canvasEl.height,dimensions.fly,dimensions.hoist,
+    dimensions.breadths,dimensions.post1801??false].join(':');
+  if(!buntingMaps.has(key))buntingMaps.set(key,dressBunting(canvasEl,dimensions));
+  Object.assign(mat,buntingMaps.get(key));
+  mat.color.set(0xffffff);mat.roughness=1;mat.bumpScale=.0018;
+  mat.userData.bunting='sewn-wool-v1';
+  installBuntingLight(mat);
   return mat;
 }
 
@@ -305,11 +315,11 @@ export function buildFlags(cfg, mats, model, ctx) {
   if (!cfg.flags) return group;
 
   const [segsU, segsV] = cfg.flagSegments;
-  const post1801 = S('canton_post_1801') > 0;
+  const post1801=ctx.flagYear===undefined?S('canton_post_1801')>0:ctx.flagYear>=1801;
   // The squadron colour. The reference photograph shows her wearing blue, which
   // research §6.2 accepts as plausible without documenting it; the red and white
   // ensigns are one word away because a ship wore her admiral's colour, not her own.
-  const fieldKey = 'ensign_blue';
+  const fieldKey=`ensign_${ctx.ensign??'blue'}`;
 
   // Where the wind is. Bearing is measured from dead ahead, turning to starboard; the
   // cloth streams the opposite way, which for a wind on the starboard bow is aft and
@@ -347,9 +357,11 @@ export function buildFlags(cfg, mats, model, ctx) {
       fly: S('ensign_fly'), hoist: S('ensign_hoist'), tipHoist: S('ensign_hoist'),
       segsU, segsV, phase: S('flag_wave_phase'),
     }),
-    buntingMaterial(mats, fieldKey, drawEnsign(cfg.textureSize / 2, fieldKey, post1801))
+    buntingMaterial(mats, fieldKey, drawEnsign(cfg.textureSize / 2, fieldKey, post1801),
+      {fly:S('ensign_fly'),hoist:S('ensign_hoist'),breadths:8,post1801})
   );
   ensign.name = 'ensign';
+  ensign.userData.colours={field:ctx.ensign??'blue',post1801};
   ensign.position.copy(ensignHead);
   // The flag's own origin is the point it is bent to, so this measures the gaff peak
   // itself rather than the bounding box of a piece of cloth blowing about.
@@ -377,7 +389,8 @@ export function buildFlags(cfg, mats, model, ctx) {
         segsU: Math.round(segsU * S('pennant_segment_multiple')), segsV,
         phase: S('flag_wave_phase_pennant'),
       }),
-      buntingMaterial(mats, fieldKey, drawPennant(cfg.textureSize / 8, fieldKey))
+      buntingMaterial(mats, fieldKey, drawPennant(Math.min(96,cfg.textureSize / 8), fieldKey),
+        {fly:S('pennant_length'),hoist:S('pennant_hoist'),breadths:3})
     );
     pennant.name = 'pennant';
     pennant.position.copy(truck);
@@ -401,7 +414,8 @@ export function buildFlags(cfg, mats, model, ctx) {
         fly: S('jack_fly'), hoist: S('jack_hoist'), tipHoist: S('jack_hoist'),
         segsU, segsV, phase: S('flag_wave_phase_jack'),
       }),
-      buntingMaterial(mats, fieldKey, drawJack(cfg.textureSize / 2, post1801))
+      buntingMaterial(mats, fieldKey, drawJack(cfg.textureSize / 2, post1801),
+        {fly:S('jack_fly'),hoist:S('jack_hoist'),breadths:4,post1801})
     );
     jack.name = 'jack';
     jack.position.copy(jackHead);

@@ -270,6 +270,12 @@ This is a visual attachment constraint, not a rope-tension or collision solver.
 `node tools/check-rigging-anchors.mjs` verifies attachments while bracing both
 ways, handling/reversing sail orders and moving the whole ship.
 
+Hosts can select `buildShip({ensign:'white',flagYear:1805})` for a white naval
+ensign with the post-1801 Union. The library default remains blue/1798. Flags
+have sewn breadths, hems, a reinforced heading and wool colour/bump/roughness
+maps; a modest directional backlighting term keeps the cloth from reading as
+sheet metal. See [evidence and reconstruction limits](docs/research/16-ensign-bunting.md).
+
 Flags accept `apparentWind` in ship-local metres per second, or an
 `apparentWindAt(localHoistPosition, out)` callback for air sampled at each flag.
 Otherwise they follow `windDeg` and `windSpeed`. Stronger air extends the cloth
