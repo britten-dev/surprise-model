@@ -673,6 +673,9 @@ export function buildGuns(cfg, mats, model, ctx) {
         const hub=roller(.026,.028,8);hub.translate(x,y,side*(width/2+.01));hardware.push(hub);
         const pin=bar(.010,.07,.008);pin.translate(x,y,side*(width/2+.026));hardware.push(pin);
       }
+      // The train tackle finishes at a deck ring, rather than a loose block.
+      const trainEye=new THREE.TorusGeometry(.032,.007,4,10);trainEye.rotateX(Math.PI/2);
+      trainEye.translate(trunnionFromFore-length-SPEC.gun_train_tackle_length.value,.018,0);hardware.push(trainEye);
       const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.gunIron,nat.at.length);
       fittings.name=`${name}_pounder_ironwork`;
       nat.at.forEach((g,i)=>fittings.setMatrixAt(i,placement(g)));

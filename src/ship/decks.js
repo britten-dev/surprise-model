@@ -13,6 +13,7 @@ import { sweep } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
 import { audit } from '../audit/measure.js';
 import {sternDeckBoundary} from './stern.js';
+import {walkingDeckMaterial,deckWaterways} from './deck-finish.js';
 import {cutGunOpenings,upperGunOpenings} from './gun-openings.js';
 
 /**
@@ -135,6 +136,7 @@ function railCap(model, cfg, zFrom, zTo, side) {
 export function buildDecks(cfg, mats, model) {
   const group = new THREE.Group();
   group.name = 'decks';
+  const surface=walkingDeckMaterial(cfg,mats.deck);
 
   const L = model.lengthOnDeck;
   const zStem = model.zFwd;
@@ -145,7 +147,7 @@ export function buildDecks(cfg, mats, model) {
   // The gundeck runs the whole length of the ship. Forward of the forecastle break and
   // abaft the quarterdeck break it is covered over, but it is still there, and in the
   // waist it is the deck you stand on.
-  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern, true), mats.deck);
+  const gundeck = new THREE.Mesh(deckSurface(model, cfg, 'gundeck', zStem + 0.6, zStern, true), surface);
   gundeck.name = 'gundeck';
   // The height of this deck is audited from a marker at the midship station in hull.js,
   // not from the mesh: the deck sweeps up at both ends with the sheer, so its average
@@ -155,14 +157,14 @@ export function buildDecks(cfg, mats, model) {
   // The forecastle and the quarterdeck, raised above it.
   const fc = new THREE.Mesh(
     deckSurface(model, cfg, 'forecastle', zStem + 0.8, zFcBreak),
-    mats.deck
+    surface
   );
   fc.name = 'forecastle';
   group.add(fc);
 
   const qd = new THREE.Mesh(
     deckSurface(model, cfg, 'quarterdeck', zQdBreak, zStern, true),
-    mats.deck
+    surface
   );
   qd.name = 'quarterdeck';
   group.add(qd);
@@ -183,7 +185,7 @@ export function buildDecks(cfg, mats, model) {
       for (let j = 0; j < 2; j++) {
         const x = (xOuter - j * w) * side;
         pos.push(x, y, z);
-        uvs.push(z / 2.4, j);
+        uvs.push(z / 2.4, x / 2.4);
       }
     }
     for (let i = 0; i < n - 1; i++) {
@@ -196,10 +198,13 @@ export function buildDecks(cfg, mats, model) {
     g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     g.setIndex(idx);
     g.computeVertexNormals();
-    const gw = new THREE.Mesh(g, mats.deck);
+    const gw = new THREE.Mesh(g, surface);
     gw.name = `gangway_${side > 0 ? 'starboard' : 'port'}`;
     group.add(gw);
   }
+
+  const waterways=deckWaterways(cfg,model,[['gundeck',zFcBreak,zQdBreak],['forecastle',zStem+.8,zFcBreak],['quarterdeck',zQdBreak,zStern-.12]]);
+  if(waterways)group.add(waterways);
 
   if (cfg.innerBulwarks) {
     const inner = new THREE.Mesh(innerBulwark(model, cfg, zStem + 0.5, zStern), mats.red);
