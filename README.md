@@ -432,3 +432,9 @@ colour maps as high-quality JPEG. Normal and roughness maps retain PNG encoding.
 The original GLB and packed Blender images remain in `build/`. Runtime consumers
 using `preloadSurfaceAssets()` receive the matching decoder automatically; smaller
 quality tiers download neither the GLB nor that decoder.
+
+Close-range stern detail uses horizontal painted-timber maps, a shallow black
+nameboard with serif letters, and restrained scrolling ornament. The hull form,
+seven window apertures and afterdeck closure are retained. See
+[the stern finish notes](docs/research/18-stern-close-detail.md) for the
+reconstruction choices, glyph licence and rendering checks.

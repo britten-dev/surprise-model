@@ -33,6 +33,7 @@ import { lerp, clamp, deg, smoothstep } from '../util/math.js';
 import { audit } from '../audit/measure.js';
 import { windowStrip } from './window-joinery.js';
 import { cutWindowApertures } from './window-apertures.js';
+import { finishSternShell, addSternOrnament } from './stern-detail.js';
 
 // ---------------------------------------------------------------------------
 // The stern profile: everything the closure and the ornament need to know about
@@ -955,77 +956,6 @@ function buildRudder(cfg, mats, model, sp, paintV, group) {
 // Carved work
 // ---------------------------------------------------------------------------
 
-// The alphabet the ship's name is cut in. Each letter is a set of open polylines in a
-// box one wide and one high, with y up from the baseline, and each leg of a polyline is
-// cut as one stroke.
-//
-// The letters were a three-by-five stroke alphabet before, and at the size a name board
-// is on a Sixth Rate's counter that alphabet cannot be read. Every round letter came out
-// as a rectangle: a squared S is a 5, and a squared P differs from an F only by a stroke
-// two units long at the far right of the box, which the letter beside it closed up
-// against. SURPRISE read as SURFRISE. So the round letters are drawn round — as
-// many-sided polygons through the real shape of the bowl — and the space between one
-// letter and the next comes from the spec rather than from dividing the board by the
-// number of letters, which left no space at all.
-const LETTERS = {
-  S: [[[0.94, 0.79], [0.82, 0.93], [0.58, 1.00], [0.30, 0.98], [0.09, 0.87], [0.04, 0.70],
-    [0.17, 0.58], [0.48, 0.52], [0.79, 0.45], [0.93, 0.32], [0.90, 0.14], [0.70, 0.02],
-    [0.40, 0.00], [0.15, 0.05], [0.02, 0.19]]],
-  U: [[[0.00, 1.00], [0.00, 0.30], [0.07, 0.12], [0.25, 0.01], [0.50, 0.00], [0.75, 0.03],
-    [0.90, 0.16], [0.94, 0.36], [0.94, 1.00]]],
-  R: [[[0.00, 0.00], [0.00, 1.00], [0.56, 1.00], [0.80, 0.93], [0.91, 0.78], [0.86, 0.62],
-    [0.62, 0.54], [0.00, 0.54]], [[0.44, 0.54], [0.96, 0.00]]],
-  P: [[[0.00, 0.00], [0.00, 1.00], [0.58, 1.00], [0.85, 0.92], [0.96, 0.74], [0.90, 0.55],
-    [0.62, 0.46], [0.00, 0.46]]],
-  I: [[[0.50, 0.00], [0.50, 1.00]], [[0.14, 1.00], [0.86, 1.00]], [[0.14, 0.00], [0.86, 0.00]]],
-  E: [[[0.94, 1.00], [0.00, 1.00], [0.00, 0.00], [0.96, 0.00]], [[0.00, 0.50], [0.74, 0.50]]],
-};
-
-/**
- * The ship's name in carved relief on the counter, standing on the field of its
- * cartouche.
- *
- * `field(x, y)` is how far the face of the cartouche stands off the counter at a point,
- * so that the letters sit on the board rather than being buried in it where it swells or
- * left hanging over it where it falls away to the chamfer.
- */
-function nameOnCounter(sp, name, yCentre, field) {
-  const hLetter = SPEC.stern_name_letter_height.value;
-  const wLetter = SPEC.stern_name_letter_width.value;
-  const pitch = wLetter + SPEC.stern_name_letter_gap.value;
-  const stroke = SPEC.stern_name_stroke.value;
-  const relief = SPEC.stern_name_relief.value;
-
-  const parts = [];
-  for (let i = 0; i < name.length; i++) {
-    const glyph = LETTERS[name[i]];
-    if (!glyph) continue;
-    // Laid out with x increasing to starboard, which is how the name reads the right way
-    // round from astern: a camera abaft the ship looking forward has starboard on its
-    // right, so +x is left-to-right in the picture.
-    const ox = (i - (name.length - 1) / 2) * pitch;
-    for (const line of glyph) {
-      for (let k = 0; k < line.length - 1; k++) {
-        const x0 = ox + (line[k][0] - 0.5) * wLetter, x1 = ox + (line[k + 1][0] - 0.5) * wLetter;
-        const y0 = yCentre + (line[k][1] - 0.5) * hLetter, y1 = yCentre + (line[k + 1][1] - 0.5) * hLetter;
-        // The stroke is run on past each end by its own width, so that two strokes
-        // meeting at a corner of a letter fill the corner instead of leaving a notch.
-        const len = Math.hypot(x1 - x0, y1 - y0) + stroke;
-        const g = new THREE.BoxGeometry(len, stroke, relief);
-        g.rotateZ(Math.atan2(y1 - y0, x1 - x0));
-        const my = (y0 + y1) / 2, mx = (x0 + x1) / 2;
-        const s = clamp(Math.abs(mx) / Math.max(sp.halfBreadth(my), 1e-4), 0, 1);
-        const n = sp.surfaceNormal(my, s);
-        g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
-        const mid = sp.surfaceAtX(my, mx, field(mx, my) + relief * 0.35);
-        g.translate(mid.x, mid.y, mid.z);
-        parts.push(g);
-      }
-    }
-  }
-  return parts;
-}
-
 // ---------------------------------------------------------------------------
 export function buildStern(cfg, mats, model, ctx) {
   const group = new THREE.Group();
@@ -1107,81 +1037,9 @@ export function buildStern(cfg, mats, model, ctx) {
   // 7. The rudder.
   buildRudder(cfg, mats, model, sp, paintV, group);
 
-  // 8. The carved and gilded work. English practice for a ship in RN service is a black
-  //    ground with the carving in gilt — "Stern, Stern Galleries, Quarter Badges: black
-  //    with yellow carvings" — which is also what the reference photograph shows here.
-  if (cfg.sternOrnament !== 'none') {
-    const gilt = [];
-    // The transom as a ground for carving: a point `out` metres off it along its own
-    // outward normal, which is what every boss here is cut on.
-    const on = (x, y, out) => sp.surfaceAtX(y, x, out);
-    const bevel = SPEC.stern_carving_bevel.value;
-    // Carved work is cheap in triangles only if its roundness is bought at the LOD's own
-    // rate, so every boss here is subdivided against the same switch.
-    const fine = cfg.sternOrnament === 'carved';
-    const seg = (a, b) => (fine ? a : b);
-
-    // The cartouche on the counter. ZAZ3067 is catalogued as showing "sternboard
-    // decoration and name in a cartouche on stern counter", so the name goes on it.
-    // It is a name board rather than a boss: a flat field with a chamfer round it, so
-    // that the letters have something flat to stand on.
-    const yName = lerp(sp.yTuck, sp.yWing, 0.78);
-    const cwid = SPEC.stern_cartouche_width.value, chgt = SPEC.stern_cartouche_height.value;
-    const crown = SPEC.stern_cartouche_relief.value;
-    const nameBevel = SPEC.stern_cartouche_bevel.value;
-    const panel = SPEC.stern_carving_panel_corner.value;
-    gilt.push(carved(on, 0, cwid / 2, yName, chgt / 2,
-      { crown, bevel: nameBevel, corner: panel, nu: seg(28, 14), nv: seg(4, 2) }));
-    // How high the face of that board stands at a point on it, so the letters can be
-    // stood on the board and not left hanging over the chamfer at its ends.
-    const field = (x, y) => reliefAt(
-      Math.min(1, carvedRadius(x / (cwid / 2), (y - yName) / (chgt / 2), panel)), crown, nameBevel);
-
-    // The taffrail's central cartouche, "a centre of attention within all the
-    // decoration", with scrollwork spreading either side of it and dying away toward
-    // the quarters.
-    const yOrn = lerp(lights.yHead + SPEC.stern_light_munion.value * 2, sp.yTaff, 0.42);
-    const ow = SPEC.taffrail_ornament_width.value, oh = SPEC.taffrail_ornament_height.value;
-    gilt.push(carved(on, 0, ow / 2, yOrn, oh / 2,
-      { crown: SPEC.taffrail_ornament_relief.value, bevel, nu: seg(24, 12), nv: seg(5, 3) }));
-    for (const s of [1, -1]) {
-      for (let i = 0; i < 3; i++) {
-        const x = s * (ow / 2 + lights.halfSpan * lerp(0.14, 0.62, i / 2));
-        const r = oh * lerp(0.34, 0.16, i / 2);
-        gilt.push(carved(on, x, r * 1.5, yOrn, r,
-          { crown: SPEC.stern_scroll_relief.value * lerp(1, 0.6, i / 2), bevel, nu: seg(14, 8), nv: seg(4, 2) }));
-      }
-    }
-
-    // The term pieces: Steel's "carved work under each end of the taffarel". These are
-    // the faces of the quarter pieces, which is where the stern is seen from abaft the
-    // beam, so they are cut as boldly as the cartouche.
-    const tw = SPEC.stern_term_piece_width.value;
-    for (const s of [1, -1]) {
-      const y0 = lights.yHead + SPEC.stern_light_munion.value;
-      const y1 = sp.yTaff - SPEC.taffrail_cap_thickness.value;
-      // Set in from the corner by its own width, not by half of it. The transom turns
-      // hard into the quarter at the corner, and a boss whose rim reaches the turn is
-      // dragged round it and reads as a smear of gold over the edge instead of as a
-      // piece of carving standing on the quarter piece.
-      const bAt = sp.halfBreadth((y0 + y1) / 2);
-      gilt.push(carved(on, (bAt - tw) * s, tw / 2, (y0 + y1) / 2, (y1 - y0) / 2,
-        { crown: SPEC.stern_term_piece_relief.value, bevel, nu: seg(14, 8), nv: seg(5, 3) }));
-    }
-
-    const carving = new THREE.Mesh(mergeGeometries(gilt), mats.gilt);
-    carving.name = 'stern_carving';
-    group.add(carving);
-
-    // The name itself, carved in relief on the gilt cartouche and picked out dark, which
-    // is the only way eight letters read at this size against gold.
-    if (cfg.sternOrnament === 'carved') {
-      const letters = new THREE.Mesh(mergeGeometries(nameOnCounter(sp, 'SURPRISE', yName, field)), mats.black);
-      letters.name = 'stern_name';
-      audit(letters, 'stern_name_length', 'extent_x');
-      group.add(letters);
-    }
-  }
+  // Fit close-range timber finish and restrained carved work after the apertures.
+  finishSternShell(shell,cfg,sp);
+  addSternOrnament(cfg,mats,sp,lights,group);
 
   return group;
 }

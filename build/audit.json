@@ -426,7 +426,7 @@
     "key": "stern_name_length",
     "metric": "extent_x",
     "expected": 1.3843,
-    "actual": 1.3859846591949463,
+    "actual": 1.3856531381607056,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §12.1 SURPRISE: eight letters of 4½ in with 2½ in between them, and the cut stroke over the ends"
   },
