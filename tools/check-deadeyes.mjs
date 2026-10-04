@@ -66,7 +66,7 @@ try {
       });
       check(pairs === expected, `${lod}: expected ${expected} pairs, got ${pairs}`);
       const stats = window.stats({ lod, sails: 'full', crew: false });
-      check(stats.tris < (lod === 'cinematic' ? 1500000 : lod === 'hero' ? 900000 : 80000), `${lod}: host budget exceeded`);
+      check(stats.tris < (lod === 'cinematic' ? 1600000 : lod === 'hero' ? 960000 : 84000), `${lod}: host budget exceeded`);
       rows.push({ lod, pairs, channelTriangles: triangles, channelMeshes: meshes, shipTriangles: stats.tris });
     }
     const sample = build({ lod: 'cinematic', sails: 'full', crew: false }).getObjectByName('main_deadeyes').userData.deadeyePairs[4];

@@ -21,7 +21,8 @@ import { runningRopeGeometry } from './rigging-bindings.js';
 import { channelAnchors } from './channels.js';
 import { mastWooldings, yardBindings, woodenLeadBlock } from './rig-detail.js';
 import { sparMaterials, sparUV } from './spar-finish.js';
-import { mastConstruction, yardFurniture, mastTop } from './spar-details.js';
+import { mastConstruction, yardFurniture } from './spar-details.js';
+import {buildMastTop, mastTopAnchor} from './mast-tops.js';
 import {ropeMaterials, laidRopeUV} from './rope-finish.js';
 
 const S = (k) => SPEC[k].value;
@@ -217,23 +218,9 @@ function buildMast(m, cfg, mats, group) {
   // third of the topmast's length, and its length fore and aft three quarters of that.
   if (m.topBreadth) {
     const t = S('top_platform_thickness');
-    const plat = new THREE.Mesh(
-      cfg.textureSize<512?new THREE.BoxGeometry(m.topBreadth,t,m.topLength):mastTop(m,t,cfg),
-      finish.top
-    );
-    const p = m.along(m.houndsH);
-    plat.position.set(0, p.y, p.z + m.topLength * 0.18);
-    plat.name = `${m.name}_top`;
+    const plat = buildMastTop(m,t,cfg,mats,S(`${m.name}_topmast_shroud_pairs`));
     if (m.name === 'main') audit(plat, 'main_top_breadth', 'extent_x');
     group.add(plat);
-
-    // Trestletrees and crosstrees under it.
-    const tree = new THREE.Mesh(
-      new THREE.BoxGeometry(m.topBreadth * 0.94, t * 1.6, m.topLength * 0.16),
-      mats.mastBlack
-    );
-    tree.position.set(0, p.y - t, p.z + m.topLength * 0.18);
-    group.add(tree);
 
     // The cap over the lower masthead, through which the topmast passes.
     const cap = new THREE.Mesh(
@@ -512,42 +499,31 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
         shrouds.push({ top, foot, curve: addRope(top, foot, 0.006) });
       }
 
-      // Ratlines: horizontal, thirteen inches apart, from just below the futtock stave
-      // down to just above the deadeyes.
-      if (cfg.ratlines) rattle(shrouds, ratlineCurves, cfg, { inset: true });
-
-      // Futtock shrouds: from the futtock stave on the lower shrouds up and outboard to
-      // the rim of the top.
-      const futtockN = S(`${name}_futtock_shroud_pairs`);
-      const staveY = m.along(m.houndsH).y - 0.42;
+      // Steel pp.158–159: the stave is as far below the trestles as the cap
+      // is above them. Sample the hanging shroud, not an imaginary straight line.
+      const staveY=m.along(m.houndsH).y-m.lowerHead;
+      if (cfg.ratlines) rattle(shrouds, ratlineCurves, cfg, { inset: true, ceiling:staveY });
+      const stave=shrouds.map(s=>pointOnShroudAtHeight(s,staveY));
+      for(let i=0;i<stave.length-1;i++)addRope(stave[i],stave[i+1],0,.026);
+      const futtockN = S(`${name}_futtock_shroud_pairs`),tmN=S(`${name}_topmast_shroud_pairs`);
+      const futtocks=[];
       for (let i = 0; i < futtockN; i++) {
-        const t = futtockN === 1 ? 0.5 : i / (futtockN - 1);
-        const rim = m.along(m.houndsH);
-        const a = new THREE.Vector3(
-          side * (m.topBreadth / 2) * 0.92,
-          rim.y,
-          rim.z + lerp(-m.topLength * 0.25, m.topLength * 0.4, t)
-        );
-        const idx = Math.min(shrouds.length - 1, Math.round(t * (shrouds.length - 1)));
-        const b = pointOnRopeAtHeight(shrouds[idx].top, shrouds[idx].foot, staveY);
-        addRope(a, b, 0, r * 0.8);
+        const t=futtockN===1?.5:i/(futtockN-1);
+        const plate=mastTopAnchor(m,side,Math.round(t*(tmN-1)),tmN,S('top_platform_thickness'));
+        const idx=Math.min(shrouds.length-1,Math.round(t*(shrouds.length-1)));
+        const top=plate.futtock,foot=stave[idx];
+        futtocks.push({top,foot,curve:addRope(top,foot,0,r*.8)});
       }
+      if(cfg.ratlines)rattle(futtocks,ratlineCurves,cfg,{inset:false});
 
-      // Topmast shrouds, from the topmast head down to the rim of the top.
-      const tmN = S(`${name}_topmast_shroud_pairs`);
+      // Every shroud terminates at the seized neck of a visible deadeye pair.
       const topmastShrouds = [];
       for (let i = 0; i < tmN; i++) {
         const t = tmN === 1 ? 0 : i / (tmN - 1);
         const top = m.along(m.topmastHoundsH + 0.2 + 0.3 * t);
         top.x += side * m.topmastDia * 0.45;
-        const rim = m.along(m.houndsH);
-        const foot = new THREE.Vector3(
-          side * (m.topBreadth / 2) * 0.88,
-          rim.y + S('top_platform_thickness'),
-          rim.z + lerp(-m.topLength * 0.22, m.topLength * 0.34, t)
-        );
-        addRope(top, foot, 0.005, r * 0.66);
-        topmastShrouds.push({ top, foot });
+        const foot=mastTopAnchor(m,side,i,tmN,S('top_platform_thickness')).shroud;
+        topmastShrouds.push({ top, foot, curve:addRope(top, foot, 0.005, r * 0.66) });
       }
       // "The topmast-shrouds are rattled in the same manner" — Steel. Without these the
       // upper rigging is bare and a man could not go aloft past the top.
@@ -709,10 +685,10 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
  * what `inset` does, and it is why a real ship's ratlines narrow at the top and bottom of
  * the shrouds instead of running square across like a ladder.
  */
-function rattle(shrouds, out, cfg, { inset = true } = {}) {
+function rattle(shrouds, out, cfg, { inset = true, ceiling = Infinity } = {}) {
   if (shrouds.length < 2) return;
   const spacing = S('ratline_spacing') * cfg.ratlineEvery;
-  const topY = shrouds[0].top.y - 0.35;
+  const topY = Math.min(shrouds[0].top.y - 0.35, ceiling - S('ratline_spacing'));
   const botY = shrouds[0].foot.y + 0.4;
   const count = Math.max(0, Math.floor((topY - botY) / spacing));
   for (let k = 0; k < count; k++) {
@@ -723,7 +699,7 @@ function rattle(shrouds, out, cfg, { inset = true } = {}) {
     if (last <= first) continue;
     const pts = [];
     for (let i = first; i <= last; i++) {
-      pts.push(pointOnRopeAtHeight(shrouds[i].top, shrouds[i].foot, y));
+      pts.push(pointOnShroudAtHeight(shrouds[i], y));
     }
     for (let i = 0; i < pts.length - 1; i++) {
       out.push(new THREE.CatmullRomCurve3([pts[i], pts[i + 1]]));
@@ -731,10 +707,11 @@ function rattle(shrouds, out, cfg, { inset = true } = {}) {
   }
 }
 
-/** Where a shroud, hanging between two points, crosses a given height. */
-function pointOnRopeAtHeight(top, foot, y) {
-  const t = clamp((y - foot.y) / (top.y - foot.y || 1), 0, 1);
-  return new THREE.Vector3().lerpVectors(foot, top, t);
+/** Intersection with the actual rope curve, including its sag. */
+function pointOnShroudAtHeight(shroud,y) {
+  let lo=0,hi=1;
+  for(let i=0;i<24;i++){const t=(lo+hi)/2;if(shroud.curve.getPoint(t).y>y)lo=t;else hi=t;}
+  return shroud.curve.getPoint((lo+hi)/2);
 }
 
 /**

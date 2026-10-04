@@ -42,16 +42,16 @@ lean against the heel. See **[A ship, not a model](#a-ship-not-a-model)**.
 
 | LOD | Triangles | Use |
 | --- | --- | --- |
-| `cinematic` | 380–1,700 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and optional crew. |
-| `hero` | 200–1,120 k | Close inspection with 1024 maps and authored detail. |
-| `game` | 30–80 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
-| `distant` | under 5 k | A silhouette on the horizon. |
+| `cinematic` | 380–1,880 k | Desktop exterior inspection. Round spars and ropes, 2048 maps, authored fittings and optional crew. |
+| `hero` | 200–1,260 k | Close inspection with 1024 maps and authored detail. |
+| `game` | 30–88 k | A ship at gameplay range, with her watch on deck. Hull about 38 m. |
+| `distant` | under 6.5 k | A silhouette on the horizon. |
 
 `cinematic` gives the desktop experience smoother geometry and larger surface maps.
 The browser generates the main ship and downloads a 7.6 MB library of Blender
 detail (3.24 MB with `crew: false`), plus a 260 kB deadeye asset. Phone quality
-uses `game` and skips these assets. Without people, the host retains 1.5 million
-cinematic / 900k hero limits. The standard GLB export
+uses `game` and skips these assets. Without people, the host retains 1.6 million
+cinematic / 960k hero limits. The standard GLB export
 matrix remains ten files; `tools/export-blender.mjs` separately exports the cinematic
 ship for the editable workshop. Counts depend on canvas, weather and loaded assets. These are allowance ranges,
 not detail targets; measure frame time, draw calls and memory before spending more.
@@ -473,3 +473,20 @@ coarse geometry when the host releases that model.
 This reduces rendering work, not initial asset download or the memory occupied
 by the full geometry. Alternatives are built once with the model. The default
 `buildShip`/GLB export path is unchanged when `adaptiveDetail` is omitted.
+
+
+### Mast tops and climbing access
+
+All three tops have actual lubber's openings beside the mast, trestletrees and
+crosstrees, an elliptical front rim, tapered ribs, and a four-post aft rail.
+Topmast deadeyes, lanyards and iron futtock plates share their coordinates with
+the attached shrouds. Ratlines meet the sagging ropes; futtock staves sit below
+the trestles by the masthead height. Close cinematic views resolve separate
+bevelled deals and bored deadeyes; camera-dependent detail preserves the
+openings, structural beams and rail at every distance.
+
+[Construction evidence and checks](docs/research/23-mast-tops-and-lubbers-holes.md).
+`node tools/check-mast-tops.mjs` ray-tests actual climbing passages and floor
+surfaces, checks rigging/hardware endpoints under ship transforms, and exercises
+near/far geometry on all four tiers. Host allowances are 1.6m cinematic, 960k
+hero and 84k phone triangles; export allowances above include optional people.

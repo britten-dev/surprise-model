@@ -26,6 +26,6 @@ try{
    rows.push({lod,weather,blocked,triangles,barrels});
   }return rows;
  });
- for(const r of rows){assert.deepEqual(r.blocked,[],`${r.lod} ${r.weather} blocked gunports`);assert.equal(r.barrels,40);assert.ok(r.triangles<(r.lod==='cinematic'?1500000:r.lod==='hero'?900000:80000),JSON.stringify(r));}
+ for(const r of rows){assert.deepEqual(r.blocked,[],`${r.lod} ${r.weather} blocked gunports`);assert.equal(r.barrels,40);assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?960000:84000),JSON.stringify(r));}
  assert.deepEqual(h.problems,[]);console.log(JSON.stringify(rows,null,2));
 }finally{await h.close();}

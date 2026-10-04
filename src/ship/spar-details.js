@@ -23,24 +23,6 @@ function band(radius,width,radial=24){
  return new T.LatheGeometry(shape.getPoints(1),radial);
 }
 
-/** Rounded forward corners, a real mast opening, and metre-scaled top planking. */
-export function mastTop(m,thickness,cfg){
- const w=m.topBreadth/2,d=m.topLength/2,r=Math.min(w,d)*.28;
- const shape=new T.Shape();shape.moveTo(-w,d);shape.lineTo(w,d);shape.lineTo(w,-d+r);
- shape.quadraticCurveTo(w,-d,w-r,-d);shape.lineTo(-w+r,-d);
- shape.quadraticCurveTo(-w,-d,-w,-d+r);shape.closePath();
- const hole=new T.Path(),h=m.lowerDia*.7,z=-m.topLength*.18;
- hole.moveTo(-h,z-h);hole.lineTo(-h,z+h);hole.lineTo(h,z+h);hole.lineTo(h,z-h);hole.closePath();shape.holes.push(hole);
- const g=new T.ExtrudeGeometry(shape,{depth:thickness,bevelEnabled:false,curveSegments:cfg.textureSize>=1024?8:3});
- g.rotateX(Math.PI/2);g.translate(0,thickness/2,0);
- const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
- for(let i=0;i<p.count;i++){
-  const horizontal=Math.abs(n.getY(i))>.5,side=Math.abs(n.getX(i))>.5;
-  uv.setXY(i,(side&&!horizontal?p.getZ(i):p.getX(i))/.8,(horizontal?p.getZ(i):p.getY(i))/4);
- }
- return g;
-}
-
 /** Local to the lower mast; small dimensions are a period-informed reconstruction. */
 export function mastConstruction(m,cfg,mats,radiusAt){
  const root=new T.Group();root.name=`${m.name}_mast_construction`;

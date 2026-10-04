@@ -48,7 +48,7 @@ try {
   }
   return rows;
  });
- for(const r of rows){assert.ok(r.triangles<(r.lod==='cinematic'?1500000:r.lod==='hero'?900000:80000));
+ for(const r of rows){assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?960000:84000));
   const crew=r.lod==='game'?4648:299096;assert.ok(r.triangles+crew<TRI_BUDGET[r.lod][1]);}
  assert.deepEqual(h.problems,[]);console.log(JSON.stringify(rows,null,2));
 }finally{await h.close();}

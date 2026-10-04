@@ -1,7 +1,7 @@
 // Geometry tiers used by the browser and asset tools. Cinematic includes the
 // Blender-authored fittings and eleven close-range crew; phones keep game.
-// The library allowance is 1.74 million including the optional watch (the host
-// allows 1.5 million without people), measured separately from
+// The library allowance is 1.88 million including the optional watch (the host
+// allows 1.6 million without people), measured separately from
 // ocean, reflection and shadow passes. tools/check-authored-detail.mjs exercises
 // every sail/weather combination; actual frame timing is checked in Chromium.
 export const LODS = ['cinematic', 'hero', 'game', 'distant'];
@@ -380,17 +380,14 @@ export function lodConfig(lod) {
 // The budget, and the one place it is written. tools/build.js imports it rather than
 // keeping a copy, because two copies of a budget is one budget and one lie.
 //
-// The game level was raised from 60 k to 80 k when the watch came aboard. That is a real
-// cost to a host that also carries a wave field, spume and cloud, and it was taken
-// deliberately: thirteen figures are about four thousand triangles and they are what give
-// the ship her scale, which no amount of ornament does. A host that cannot afford it has
-// the levers in `game` below — `boats` to 'block', `crew` to false, `deckFurniture` to
-// 'none' — in that order.
+// Mast tops retain open access and load-bearing structure at every tier. The
+// export budgets include the optional crew; the browser host measures its
+// crew-free animated ship separately (1.6m / 960k / 84k).
 export const TRI_BUDGET = {
   // Includes the optional 299k authored watch. The crew-free browser host still
-  // checks its 1.5m cinematic / 900k hero ship limits separately.
-  cinematic: [380000, 1740000],
-  hero: [200000, 1160000],
-  game: [30000, 80000],
-  distant: [1500, 5000],
+  // checks its 1.6m cinematic / 960k hero ship limits separately.
+  cinematic: [380000, 1880000],
+  hero: [200000, 1260000],
+  game: [30000, 88000],
+  distant: [1500, 6500],
 };
