@@ -43,7 +43,7 @@ export const MOTION_SPEC = {
   // The yards come round to the wind. This is what a square rig is *for*, and until the
   // sails were hung on their own yards it could not be done at all: the canvas was welded
   // to the hull, so the spars could not move without leaving it behind.
-  motion_brace_max_deg: n(62, `${R} how far round the yards can be braced before the shrouds stop them. A frigate braced sharp up lies her yards about this far off square, and no rig will go much further — the fore-and-aft stays and the lee rigging are in the way`, { noAudit: true }),
+  motion_brace_max_deg: n(55, `${R} upper visual brace limit for this reconstructed rig, checked against the forward stays and set canvas. Each yard also has a lower geometric stop where its standing shrouds intervene. This is not a surveyed Surprise angle`, { noAudit: true }),
   motion_brace_rate_deg: n(9, `${R} degrees a second. Braces are hauled by hand by a watch on deck, so the yards come round slowly; a rig that snaps to a new angle the instant the wind shifts is the plainest possible statement that nobody is working the ship`, { noAudit: true }),
 
   // ------------------------------------------------------------------- colours

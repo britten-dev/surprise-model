@@ -19,7 +19,9 @@ export function mastTopLayout(m) {
 // One coordinate contract for the hardware, topmast shrouds and futtock shrouds.
 export function mastTopAnchor(m,side,i,count,thickness) {
  const l=mastTopLayout(m),r=l.eyeRadius;
- const x=side*(l.B/2-l.rimWidth*.55),z=T.MathUtils.lerp(l.shoulder+.18,l.L/2-.22,count===1?.5:i/(count-1));
+ // Keep the shroud fan abaft the mast; the rounded fore working area is not
+ // a shroud anchorage. The previous row projected into the drawing topsail.
+ const x=side*(l.B/2-l.rimWidth*.55),z=T.MathUtils.lerp(-l.centerZ+.10,l.L/2-.22,count===1?.5:i/(count-1));
  const y=thickness/2+r+.04,base=new T.Vector3(x,y,z);
  const origin=m.along(m.houndsH).add(new T.Vector3(0,0,l.centerZ));
  return {base,shroud:base.clone().add(new T.Vector3(0,pairAttachment(r),0)).add(origin),

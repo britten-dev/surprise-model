@@ -490,3 +490,16 @@ openings, structural beams and rail at every distance.
 surfaces, checks rigging/hardware endpoints under ship transforms, and exercises
 near/far geometry on all four tiers. Host allowances are 1.6m cinematic, 960k
 hero and 84k phone triangles; export allowances above include optional people.
+
+### Sail clearance and sheeting
+
+Square canvas fills forward of yards that stand off their masts. Course feet
+remain sheeted to the hull; upper sail feet follow the lower yard. The same
+sheeting transform is used by colour/shadow rendering and CPU rope attachment
+queries, including while sails reef and furl. Yards stop at the standing rigging
+rather than rotating through it. This remains a reconstructed visual rig, with
+conservative brace limits rather than a full cloth/aerodynamic simulation.
+
+[Clearance changes and limitations](docs/research/24-sail-and-rig-clearance.md).
+`node tools/check-sail-clearance.mjs` tests square canvas against actual
+standing-rope paths through bracing, sail handling and sampled gale flutter.

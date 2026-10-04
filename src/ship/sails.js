@@ -51,17 +51,18 @@ export const SUIT = {
  * A square sail: a surface hung from the head yard, spread to the foot yard, bellying
  * away from the wind. `reef` shortens the drop, as taking in a reef does.
  */
-function squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef = 1, belly = S('sail_belly'), braceRad = 0 } = {}) {
+function squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef = 1, belly = S('sail_belly'), braceRad = 0, roach = S('sail_roach') } = {}) {
   const [nu, nv] = cfg.sailSegments;
   const drop = headCentre.distanceTo(footCentre) * reef;
   const foot = new THREE.Vector3().lerpVectors(headCentre, footCentre, reef);
 
   // The sail bellies to leeward. The yards are braced round by `braceRad`, so leeward
   // is square to the yard, not square to the ship.
-  const lee = new THREE.Vector3(Math.sin(braceRad), 0, Math.cos(braceRad)).normalize();
+  // Bow is -Z. Drawing canvas fills FORWARD of its yard, away from the
+  // mast and the shroud ladders. +Z inverted the pressure shape through them.
+  const lee = new THREE.Vector3(-Math.sin(braceRad), 0, -Math.cos(braceRad));
   const across = new THREE.Vector3(Math.cos(braceRad), 0, -Math.sin(braceRad)).normalize();
 
-  const roach = S('sail_roach');
   const leechCurve = S('sail_leech_curve');
 
   const pos = [], uvs = [], idx = [];
@@ -248,12 +249,21 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
       footCentre = head.mast.along(0).clone();
       footCentre.y = railY + 0.9;
       footCentre.z = head.mast.z0;
+      footCentre.z -= head.node.userData.yardPivot.clearance;
       footWidth = head.length * 1.0;
     }
 
     const reef = suit.reefs[sailName] ?? 1;
+    // The arched foot clears the lower masthead and its stay collar. A course's
+    // shallow foot cut is not suitable for a topsail or a topgallant.
+    const footRoach = foot ? Math.min(.48, Math.max(.15,
+      (head.mast.along(foot.tier === 'lower' ? head.mast.capH : head.mast.topmastCapH).y + .45 - footCentre.y)
+      / (headCentre.y - footCentre.y))) : S('sail_roach');
     const geometry = retileUV(
-      squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef, braceRad }),
+      squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef, braceRad, roach: footRoach,
+        // These two fore sails draw close to the bowsprit stays; leave room
+        // for their breathing/flutter rather than testing only the still pose.
+        belly: sailName === 'fore_course' || sailName === 'fore_topgallant' ? .065 : S('sail_belly') }),
       cloth++
     );
     // Into the yard's own frame, so that swinging the yard swings the sail. The sail was
@@ -263,6 +273,8 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
     head.node.updateMatrix();
     geometry.applyMatrix4(new THREE.Matrix4().copy(head.node.matrix).invert());
     geometry.userData.handling = { name: sailName, kind: 'square', headWidth, tiles: Math.round(PAINT.weather_sail_variants.value), reef: sailName === 'fore_course' ? .62 : .45 };
+    geometry.userData.sheetFrame = { foot: foot?.node.name ?? null, footCentre: footCentre.toArray(),
+      headCentre: head.centre.toArray(), brace: braceRad };
     squares.push({ geometry, yard: head, name: `${sailName}_sail` });
   }
 
@@ -358,7 +370,9 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
   // So each sail is built in its own yard's frame and added as a child of it. Seven more
   // draw calls buys a rig that works. The foot of each sail is spread to the yard below,
   // which is braced with it — yards on a mast come round together — so the sail stays
-  // bent to both spars however far round they go.
+  // bent to both spars however far round they go. sail-sheeting.js then follows
+  // the actual lower-yard angle (which can stop sooner at its shrouds) and keeps
+  // course feet sheeted to the hull rather than rigidly orbiting with the head.
   if (squares.length) {
     let first = null;
     for (const { geometry, yard, name } of squares) {
@@ -377,6 +391,7 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
         const cord = new THREE.Mesh(cordage, mats.sailCord);
         cord.name = name.replace(/_sail$/, '_cordage_sail');
         cord.geometry.userData.handling = geometry.userData.handling;
+        cord.geometry.userData.sheetFrame = geometry.userData.sheetFrame;
         yard.node.add(cord);
       }
       first ??= mesh;

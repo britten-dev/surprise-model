@@ -58,6 +58,7 @@ import { holdWheel } from './crew-ik.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { poseFlag } from './flags.js';
 import { createRiggingBindings } from './rigging-bindings.js';
+import { createSailSheeting, SHEETING_GLSL } from './sail-sheeting.js';
 import { clamp, deg } from '../util/math.js';
 
 const S = (k) => SPEC[k].value;
@@ -178,8 +179,9 @@ const SAIL_BODY = `
         / (2.0 * e * uSailSpan.y);
       vec3 tU = normalize(cross(objectNormal, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
       vec3 tV = cross(objectNormal, tU);
-      vNormal = normalize(normalMatrix * normalize(objectNormal - tU * dU - tV * dV));
+      vNormal = normalize(normalMatrix * sheetNormal(transformed, normalize(objectNormal - tU * dU - tV * dV)));
     #endif
+    transformed = sheetPosition(transformed);
   }
 `;
 
@@ -311,12 +313,13 @@ export function createMotion(ship, opts = {}) {
       mat.sheenRoughness = .78;
     }
     if (sail) {
+      Object.assign(own, mesh.userData.sheeting ?? {uSheetEnabled:{value:0},
+        uSheetRestFoot:{value:new THREE.Vector3(0,-1,0)},uSheetFoot:{value:new THREE.Vector3(0,-1,0)},uSheetTurn:{value:0}});
       own.uSailSpread = mesh.userData.sailSpread ?? { value: 1 };
       // Bolt ropes share the cloth's motion, including its phase and scale.
       const clothName = mesh.name.replace('_cordage_sail', '_sail');
       const geometry = mesh.parent?.getObjectByName(clothName)?.geometry ?? mesh.geometry;
-      geometry.computeBoundingBox();
-      const size = geometry.boundingBox.getSize(new THREE.Vector3());
+      const size = new THREE.Box3().setFromBufferAttribute(geometry.attributes.position).getSize(new THREE.Vector3());
       let hash = 0;
       for (const c of clothName) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
       own.uSailPhase = { value: (hash % 1000) / 1000 * Math.PI * 2 };
@@ -330,14 +333,15 @@ export function createMotion(ship, opts = {}) {
         pinnedRope ? '#define PINNED_ROPE\nattribute float aRopeFreedom;' : '',
         shadow ? '#define HW_SHADOW' : '',
         (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
-        aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '',
+        aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS + SHEETING_GLSL : '',
         wet ? 'varying float vShipYWet;' : '',
         hullProfile ? 'varying vec3 vHullWetPoint;' : '',
       ].filter(Boolean).join('\n');
       let v = shader.vertexShader.replace('#include <common>', `#include <common>\n${declarations}`);
       if (sail) {
         const normal = shadow ? '#ifndef USE_DISPLACEMENTMAP\nvec3 objectNormal = vec3(normal);\n#endif\n' : '';
-        v = v.replace('#include <begin_vertex>', `${normal}#include <begin_vertex>\n${SAIL_BODY}`);
+        v = v.replace('#include <begin_vertex>', `${normal}#include <begin_vertex>`);
+        v = v.replace('#include <morphtarget_vertex>', `#include <morphtarget_vertex>\n${SAIL_BODY}`);
       }
       if (wet) v = v.replace('#include <project_vertex>',
         'vShipYWet = dot(uShipRowY, modelMatrix * vec4(transformed, 1.0));\n#include <project_vertex>');
@@ -415,6 +419,7 @@ export function createMotion(ship, opts = {}) {
   // ---------------------------------------------------------------- what moves, and how
   const parts = { flags: [], crew: [], yards: [], wheel: null };
   parts.rigging=createRiggingBindings(ship);
+  parts.sheeting=createSailSheeting(ship);
   const named = (n) => ship.getObjectByName(n);
 
   // The canvas. The fore-and-aft sails are still one merged mesh — they are set on stays
@@ -610,7 +615,18 @@ export function createMotion(ship, opts = {}) {
       * (Math.sin(wr) >= 0 ? 1 : -1);
     const step = deg(S('motion_brace_rate_deg')) * dt;
     brace += clamp(braceWant - brace, -step, step);
-    for (const y of parts.yards) y.node.rotation.y = brace;
+    for (const y of parts.yards) {
+      const angle=clamp(brace,-(y.node.userData.braceLimit??Infinity),y.node.userData.braceLimit??Infinity);
+      y.node.rotation.y = angle;
+      // The truss/parrel carries the spar in front of the mast as it turns;
+      // rotating about the spar's old centre swings its middle through the mast.
+      const pivot = y.node.userData.yardPivot;
+      if (pivot) {
+        y.node.position.x = pivot.mast[0] - Math.sin(angle) * pivot.clearance;
+        y.node.position.z = pivot.mast[2] - Math.cos(angle) * pivot.clearance;
+      }
+    }
+    parts.sheeting.update();
     parts.rigging.update();
 
     // ------------------------------------------------------------------- the wheel
@@ -693,6 +709,7 @@ export function createMotion(ship, opts = {}) {
   }
 
   function dispose() {
+    parts.sheeting.dispose();
     for (const m of patched) m.dispose();
   }
 

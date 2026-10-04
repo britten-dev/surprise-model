@@ -1,0 +1,173 @@
+[
+  {
+    "lod": "game",
+    "poses": 48,
+    "segmentTests": 65568,
+    "maxHeadGap": 0.000001056771109570561,
+    "failures": [],
+    "limits": [
+      [
+        "fore_yard",
+        18.5
+      ],
+      [
+        "fore_topsail_yard",
+        45
+      ],
+      [
+        "fore_topgallant_yard",
+        45
+      ],
+      [
+        "fore_royal_yard",
+        45
+      ],
+      [
+        "main_yard",
+        16
+      ],
+      [
+        "main_topsail_yard",
+        55
+      ],
+      [
+        "main_topgallant_yard",
+        55
+      ],
+      [
+        "main_royal_yard",
+        55
+      ],
+      [
+        "crossjack_yard",
+        18
+      ],
+      [
+        "mizzen_topsail_yard",
+        40.5
+      ],
+      [
+        "mizzen_topgallant_yard",
+        55
+      ],
+      [
+        "mizzen_royal_yard",
+        55
+      ]
+    ]
+  },
+  {
+    "lod": "hero",
+    "poses": 48,
+    "segmentTests": 159168,
+    "maxHeadGap": 0.0000014409764603539744,
+    "failures": [],
+    "limits": [
+      [
+        "fore_yard",
+        18.5
+      ],
+      [
+        "fore_topsail_yard",
+        45
+      ],
+      [
+        "fore_topgallant_yard",
+        45
+      ],
+      [
+        "fore_royal_yard",
+        45
+      ],
+      [
+        "main_yard",
+        16
+      ],
+      [
+        "main_topsail_yard",
+        55
+      ],
+      [
+        "main_topgallant_yard",
+        55
+      ],
+      [
+        "main_royal_yard",
+        55
+      ],
+      [
+        "crossjack_yard",
+        18
+      ],
+      [
+        "mizzen_topsail_yard",
+        40.99999999999999
+      ],
+      [
+        "mizzen_topgallant_yard",
+        55
+      ],
+      [
+        "mizzen_royal_yard",
+        55
+      ]
+    ]
+  },
+  {
+    "lod": "cinematic",
+    "poses": 48,
+    "segmentTests": 194496,
+    "maxHeadGap": 0.000001154421095104558,
+    "failures": [],
+    "limits": [
+      [
+        "fore_yard",
+        18.5
+      ],
+      [
+        "fore_topsail_yard",
+        45
+      ],
+      [
+        "fore_topgallant_yard",
+        45
+      ],
+      [
+        "fore_royal_yard",
+        45
+      ],
+      [
+        "main_yard",
+        16
+      ],
+      [
+        "main_topsail_yard",
+        55
+      ],
+      [
+        "main_topgallant_yard",
+        55
+      ],
+      [
+        "main_royal_yard",
+        55
+      ],
+      [
+        "crossjack_yard",
+        18
+      ],
+      [
+        "mizzen_topsail_yard",
+        40.99999999999999
+      ],
+      [
+        "mizzen_topgallant_yard",
+        55
+      ],
+      [
+        "mizzen_royal_yard",
+        55
+      ]
+    ]
+  }
+]

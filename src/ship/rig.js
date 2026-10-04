@@ -112,7 +112,9 @@ export function mastGeometry(model) {
       // The heights the yards hang at. A course yard hangs just below the top; a
       // topsail yard just below the topmast crosstrees; and so on up.
       yardH: {
-        lower: houndsH - S('main_top_breadth') * 0.12,
+        // Sling the lower yard below the futtock fan, rather than through its
+        // widest part immediately under the top.
+        lower: houndsH - head * .8,
         topsail: topmastHoundsH - 0.9,
         // The topgallant yard hoists to the topgallant hounds, at the head of the stop;
         // the royal flies above it on the bare pole, there being no royal mast.
@@ -266,6 +268,11 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
   g.rotateZ(Math.PI / 2);
   const mesh = new THREE.Mesh(g, sparMaterials(cfg).black);
   const p = m.along(heightH);
+  const mastDia = tier === 'lower' ? m.lowerDia : tier === 'topsail' ? m.topmastDia : m.tgDia;
+  const clearance = mastDia * .5 + maxDia * .5 + .24;
+  mesh.userData.yardPivot = { mast: p.toArray(), clearance };
+  p.x -= Math.sin(deg(braceDeg)) * clearance;
+  p.z -= Math.cos(deg(braceDeg)) * clearance;
   mesh.position.copy(p);
   mesh.rotation.y = deg(braceDeg);
   mesh.name = name;
@@ -280,8 +287,7 @@ function buildYard(m, heightH, length, maxDia, braceDeg, cfg, mats, group, name,
 }
 
 /** The two ends of a yard, in world space, after bracing. */
-function yardArms(m, heightH, length, braceDeg) {
-  const p = m.along(heightH);
+function yardArms(p, length, braceDeg) {
   const a = deg(braceDeg);
   const half = length / 2;
   const dx = Math.cos(a) * half, dz = Math.sin(a) * half;
@@ -382,8 +388,8 @@ export function buildRig(cfg, mats, model, ctx) {
     yards[name] = {
       mast: m, tier, h,
       length: S(lenKey), diameter: S(diaKey),
-      arms: yardArms(m, h, S(lenKey), BRACE),
-      centre: m.along(h),
+      arms: yardArms(mesh.position, S(lenKey), BRACE),
+      centre: mesh.position.clone(),
       // The angle she is braced to as built, and the node that carries it. A sail is
       // hung on this node rather than merged into the ship, so that bracing the yard
       // brings its canvas round with it — see the head of src/ship/sails.js.
@@ -435,6 +441,38 @@ export function buildRig(cfg, mats, model, ctx) {
 
   // ------------------------------------------------------------------ standing rigging
   group.add(buildStandingRigging(cfg, mats, model, geo, ctx));
+  // Braces stop at the standing rigging. Test the actual shroud paths at the
+  // yard's height, with room for the spar and cloth head below it. This is done
+  // once at construction, not as a per-frame collision search.
+  for (const y of Object.values(yards)) {
+    const pivot=y.node.userData.yardPivot,at=new THREE.Vector3();
+    // The foremast's long stay to the jibboom also bounds the drawing cloth
+    // between yards. Its conservative envelope is checked through every furl.
+    const requestedLimit=Math.min(S('motion_brace_max_deg'),y.mast.name==='fore'?45:Infinity);
+    let limit=requestedLimit;
+    for (let degrees=0;degrees<=requestedLimit;degrees+=.5) {
+      const a=deg(degrees),s=Math.sin(a),c=Math.cos(a);
+      let blocked=false;
+      for (const {curve,radius,mast} of ctx.shroudPaths) {
+        if(mast!==y.mast.name)continue;
+        const first=curve.getPoint(0),last=curve.getPoint(1);
+        if(first.y<y.centre.y || last.y>y.centre.y-.12)continue;
+        // The spar and its bent-on cloth head. Below this the pressure shape
+        // moves forward; treating it as a rigid plane would over-limit bracing.
+        for(const below of [0,.12]) {
+          const height=y.centre.y-below;if(height>first.y||height<last.y)continue;
+          at.copy(pointOnShroudAtHeight({curve},height));
+          if(Math.abs(at.x)>y.length*.5)continue;
+          const ahead=(at.z-pivot.mast[2])*c-Math.abs(at.x)*s+pivot.clearance;
+          if(ahead<y.diameter*.5+radius+.04){blocked=true;break;}
+        }
+        if(blocked)break;
+      }
+      if(blocked){limit=Math.max(0,degrees-1);break;}
+    }
+    y.node.userData.braceLimit=deg(limit);
+  }
+  delete ctx.shroudPaths;
 
   group.add(buildSails(cfg, mats, model, ctx, geo, yards));
   if (cfg.runningRigging !== 'none') {
@@ -458,9 +496,13 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   const tubes = [];
   const lines = [];
   const r = S('shroud_diameter') / 2;
+  ctx.shroudPaths=[];
+  let recordingShrouds=true;
+  let shroudMast=null;
 
   const addRope = (a, b, sag, radius = r) => {
     const c = ropeCurve(a, b, sag, cfg.ropeSegments);
+    if(recordingShrouds)ctx.shroudPaths.push({curve:c,radius,mast:shroudMast});
     if (cfg.ropesAsTubes) tubes.push(laidRopeUV(ropeTube(c, radius, { tubular: cfg.ropeSegments, radial: cfg.ropeRadial }),c,radius));
     else lines.push(c);
     return c;
@@ -482,6 +524,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   const anchors = channelAnchors(model, cfg);
 
   for (const [name, countKey] of SHROUDS) {
+    shroudMast=name;
     const m = geo[name];
     const a = anchors[name];
     const n = Math.min(S(countKey), a.shrouds.length);
@@ -559,6 +602,7 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   }
 
   // ------------------------------------------------------------------------- stays
+  recordingShrouds=false;
   // Every stay runs forward and down from its masthead: the mizzen to the main, the
   // main to the foremast and the deck, the fore to the bowsprit.
   const sr = S('stay_diameter') / 2;
@@ -568,24 +612,24 @@ function buildStandingRigging(cfg, mats, model, geo, ctx) {
   // the same size, so that the loss of one in action does not bring the mast down. Steel
   // lists both for the fore and the main.
   const foreStayFoot = geo.bowsprit.at(geo.bowsprit.length * 0.55);
-  addRope(geo.fore.along(geo.fore.houndsH + 0.4), foreStayFoot, 0.012, sr);
-  addRope(geo.fore.along(geo.fore.houndsH + 0.1), geo.bowsprit.at(geo.bowsprit.length * 0.35), 0.012, sr * 0.85);
+  addRope(geo.fore.along(geo.fore.capH - .12), foreStayFoot, 0.012, sr);
+  addRope(geo.fore.along(geo.fore.capH - .30), geo.bowsprit.at(geo.bowsprit.length * 0.50), 0.012, sr * 0.85);
   // Fore topmast stay, out to the jibboom.
-  addRope(geo.fore.along(geo.fore.topmastHoundsH), geo.bowsprit.end.clone().lerp(geo.bowsprit.cap, 0.25), 0.008, sr * 0.6);
+  addRope(geo.fore.along(geo.fore.topmastCapH - .12), geo.bowsprit.end.clone().lerp(geo.bowsprit.cap, 0.25), 0.008, sr * 0.6);
   addRope(geo.fore.along(geo.fore.tgHeel + geo.fore.tgLength * 0.7), geo.bowsprit.end, 0.006, sr * 0.45);
 
   const mainStayFoot = new THREE.Vector3(0, deckAt(geo.fore.z0 + 1.2), geo.fore.z0 + 1.2);
-  addRope(geo.main.along(geo.main.houndsH + 0.4), mainStayFoot, 0.012, sr);
+  addRope(geo.main.along(geo.main.capH - .12), mainStayFoot, 0.012, sr);
   // The main preventer stay, set up a little abaft the main stay's collar.
-  addRope(geo.main.along(geo.main.houndsH + 0.05),
+  addRope(geo.main.along(geo.main.capH - .30),
     new THREE.Vector3(0, deckAt(geo.fore.z0 + 2.4) + 0.2, geo.fore.z0 + 2.4), 0.012, sr * 0.85);
-  addRope(geo.main.along(geo.main.topmastHoundsH), geo.fore.along(geo.fore.houndsH + 0.6), 0.008, sr * 0.6);
+  addRope(geo.main.along(geo.main.topmastCapH - .12), geo.fore.along(geo.fore.capH - .3), 0.008, sr * 0.6);
   addRope(geo.main.along(geo.main.tgHeel + geo.main.tgLength * 0.7), geo.fore.along(geo.fore.topmastHoundsH), 0.006, sr * 0.45);
 
-  addRope(geo.mizzen.along(geo.mizzen.houndsH + 0.3), geo.main.along(geo.main.above(0.30)), 0.010, sr * 0.75);
-  addRope(geo.mizzen.along(geo.mizzen.topmastHoundsH), geo.main.along(geo.main.houndsH + 0.7), 0.008, sr * 0.55);
+  addRope(geo.mizzen.along(geo.mizzen.capH - .12), geo.main.along(geo.main.above(0.30)), 0.010, sr * 0.75);
+  addRope(geo.mizzen.along(geo.mizzen.topmastCapH - .12), geo.main.along(geo.main.capH - .3), 0.008, sr * 0.55);
   // Mizzen topgallant stay, forward to the main topmast head.
-  addRope(geo.mizzen.along(geo.mizzen.tgHeel + geo.mizzen.tgStop * 0.8),
+  addRope(geo.mizzen.along(geo.mizzen.tgHeel + geo.mizzen.tgStop),
     geo.main.along(geo.main.topmastHoundsH), 0.006, sr * 0.4);
 
   // Bobstays and bowsprit shrouds, holding the bowsprit down and sideways against the
