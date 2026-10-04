@@ -17,6 +17,7 @@ import { mergeGeometries } from '../util/loft.js';
 import { deg, lerp, clamp } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
 import { buildSails } from './sails.js';
+import { runningRopeGeometry } from './rigging-bindings.js';
 import { channelAnchors } from './channels.js';
 import { mastWooldings, yardBindings, woodenLeadBlock } from './rig-detail.js';
 
@@ -432,11 +433,11 @@ export function buildRig(cfg, mats, model, ctx) {
   // ------------------------------------------------------------------ standing rigging
   group.add(buildStandingRigging(cfg, mats, model, geo, ctx));
 
-  if (cfg.runningRigging !== 'none') {
-    group.add(buildRunningRigging(cfg, mats, model, geo, yards, ctx, BRACE));
-  }
-
   group.add(buildSails(cfg, mats, model, ctx, geo, yards));
+  if (cfg.runningRigging !== 'none') {
+    group.updateMatrixWorld(true);
+    group.add(buildRunningRigging(cfg, mats, model, geo, yards, group));
+  }
 
   return group;
 }
@@ -723,20 +724,23 @@ function pointOnRopeAtHeight(top, foot, y) {
  * The running rigging that shows at model scale: the braces that swing the yards, the
  * lifts that hold the yardarms up, and the sheets.
  */
-function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
+function buildRunningRigging(cfg, mats, model, geo, yards, rig) {
   const group = new THREE.Group();
   group.name = 'running_rigging';
   const curves = [];
   const rr = S('running_rigging_diameter') / 2;
-  const add = (a, b, sag = 0.02) => curves.push(ropeCurve(a, b, sag, cfg.ropeSegments));
+  const add = (a,b,sag=.02,from=null,to=null,label='fixed') =>
+    curves.push({curve:ropeCurve(a,b,sag,cfg.ropeSegments),from,to,label});
+  const armBinding=(y,arm)=>({node:y.node.name,point:[Math.sign(arm.x)*y.length/2,0,0]});
 
   for (const [name, y] of Object.entries(yards)) {
     const m = y.mast;
     // Lifts: from each yardarm up to the masthead above it.
-    const aboveH = y.tier === 'lower' ? m.topmastHoundsH
-      : y.tier === 'topsail' ? m.tgHeel + m.tgLength * 0.5
-        : m.tgHeel + m.tgLength + m.poleLength * 0.8;
-    for (const arm of y.arms) add(arm, m.along(aboveH), 0.01);
+    // Each lift lands on an existing masthead. tgLength already includes the
+    // pole; adding that pole again put the upper lifts above the mast truck.
+    const aboveH = y.tier==='lower'?m.capH:y.tier==='topsail'?m.topmastCapH
+      :y.tier==='topgallant'?m.tgHeel+m.tgStop:m.truckH-.1;
+    for(const arm of y.arms)add(arm,m.along(aboveH),.01,armBinding(y,arm),null,`${name}:lift`);
 
     // Braces. The fore and main yards brace aft, to the mast behind them. The mizzen
     // family is the exception and braces FORWARD, to the mainmast: there is nothing
@@ -748,18 +752,31 @@ function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
       const h = forward
         ? lead.above(y.tier === 'lower' ? 0.55 : 0.85)
         : lead.houndsH * (y.tier === 'lower' ? 0.75 : 0.95);
-      add(arm, lead.along(h), 0.03);
+      add(arm,lead.along(h),.03,armBinding(y,arm),null,`${name}:brace`);
     }
   }
 
   if (cfg.runningRigging === 'full') {
-    // Sheets and tacks from the clews of the courses down to the deck and the rail.
-    for (const key of ['fore_yard', 'main_yard']) {
-      const y = yards[key];
-      const below = model.featureYAt(y.mast.z0).deck + 0.3;
-      for (const arm of y.arms) {
-        const z = y.mast.z0 + 3.5;
-        add(arm, new THREE.Vector3(Math.sign(arm.x) * model.halfBreadthAt(z, below) * 0.92, below, z), 0.05);
+    // Sheets terminate on the actual cloth clews, including during handling.
+    // Upper sheets lead to the yard below; course sheets lead to the rail.
+    for(const [sail,headKey,footKey] of [
+      ['fore_course','fore_yard',null],['main_course','main_yard',null],
+      ['fore_topsail','fore_topsail_yard','fore_yard'],
+      ['main_topsail','main_topsail_yard','main_yard'],
+      ['mizzen_topsail','mizzen_topsail_yard','crossjack_yard'],
+      ['fore_topgallant','fore_topgallant_yard','fore_topsail_yard'],
+      ['main_topgallant','main_topgallant_yard','main_topsail_yard'],
+      ['mizzen_topgallant','mizzen_topgallant_yard','mizzen_topsail_yard'],
+    ]) {
+      const cloth=rig.getObjectByName(`${sail}_sail`);if(!cloth)continue;
+      const y=yards[headKey],foot=footKey?yards[footKey]:null;
+      const [nu,nv]=cfg.sailSegments;
+      for(const side of [-1,1]) {
+        const vertex=nv*(nu+1)+(side>0?nu:0);
+        const a=cloth.getVertexPosition(vertex,new THREE.Vector3()).applyMatrix4(cloth.matrixWorld);
+        const z=y.mast.z0+3.5,below=model.standingDeckAt(z)+.3;
+        const b=foot?foot.arms.find(p=>Math.sign(p.x)===side):new THREE.Vector3(side*model.halfBreadthAt(z,below)*.92,below,z);
+        add(a,b,.025,{node:cloth.name,vertex},foot?armBinding(foot,b):null,`${sail}:sheet`);
       }
     }
     // Halliards down to the deck at the mast.
@@ -781,25 +798,15 @@ function buildRunningRigging(cfg, mats, model, geo, yards, ctx, braceDeg) {
         const a=Math.PI+i/12*Math.PI;
         turn.push(new THREE.Vector3(x,y+Math.sin(a)*.087,z+Math.cos(a)*.087));
       }
-      curves.push(new THREE.CatmullRomCurve3(turn));
+      curves.push({curve:new THREE.CatmullRomCurve3(turn)});
       add(new THREE.Vector3(x,y,z+.085),new THREE.Vector3(x-.15,y-.12,z+.025),.01);
     }
   }
 
   if (!curves.length) return group;
-  if (cfg.ropesAsTubes) {
-    const mesh = new THREE.Mesh(
-      // The radial count comes from the level, as every other rope tube in this file
-      // takes it. It used to be a hard-coded three, which meant the running rigging
-      // stayed a flat triangular prism however much a level was willing to spend — and a
-      // rope with a flat running down it is exactly what a close level exists to remove.
-      mergeGeometries(curves.map((c) => ropeTube(c, rr, { tubular: cfg.ropeSegments, radial: cfg.ropeRadial }))),
-      mats.runningRigging
-    );
-    mesh.name = 'running_rigging_ropes';
-    group.add(mesh);
-  } else {
-    group.add(new THREE.LineSegments(ropeLines(curves, cfg.ropeSegments), mats.ropeLine));
-  }
+  const geometry=runningRopeGeometry(curves,rr,cfg);
+  const mesh=cfg.ropesAsTubes?new THREE.Mesh(geometry,mats.runningRigging)
+    :new THREE.LineSegments(geometry,mats.ropeLine);
+  mesh.name='running_rigging_ropes';group.add(mesh);
   return group;
 }

@@ -250,7 +250,7 @@ motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 | The yards | Braced to the wind, and hauled round at nine degrees a second because braces are hauled by hand. Each square sail is hung on its own yard rather than merged into the suit, so the canvas comes round with the spar — which is what a square rig is *for*, and what a merged suit makes impossible. |
 | The rig | Every spar, rope and sail leans and recovers together, going as the square of the height above the deck and lagging the hull's roll. This is the *whip*, and everything aloft has to agree about it or the topmen stand in mid-air. |
 | Canvas | A ripple runs across each sail from luff to leech and the whole belly breathes with the gusts, dying to nothing at the head, the foot and both leeches, which are bent to a spar and cannot move. The normal is bent with it, or a shivering sail stays evenly lit and reads as plastic. |
-| Cordage | Shrouds and stays swing a little at the middle of their span, running rigging three times as far. |
+| Cordage | Lifts and braces follow their yardarms. Sheets follow the morphed sail clews and the yard below. Running spans sway between pinned ends; standing rigging and ratlines share the mast bend so their junctions stay together. |
 | Colours | The ensign, pennant and jack are re-evaluated on the processor each frame — they are a hundred and fifty vertices between them and the exact surface is worth the microsecond. |
 | The wheel | Turns with the helm, and the two men on it follow it with their shoulders. |
 | The rudder | The full-depth blade, pintle straps and tiller turn ±30° about the raked post. The post and gudgeons stay fixed. |
@@ -259,7 +259,16 @@ motion.update(t, { windSpeed: 24, windDeg: 155, heel, pitch, helm, spray });
 
 Three mechanisms, chosen per part by what that part is: a vertex shader for the merged
 meshes aloft, node transforms for the rigid things that have nodes, and rewritten vertices
-for the flags. The head of `src/ship/motion.js` says why each.
+for the flags and running-rope attachments. The head of `src/ship/motion.js` says why each.
+
+Running rigging remains one render batch. Each moving span stores a named
+fitting or sail-vertex attachment; `createMotion().update()` resolves those
+attachments after bracing, including the current furl/reef morph. Call the sail
+handler before the motion update. Intermediate vertices retain a curved span,
+with additional sway fading to zero at both ends in colour and shadow passes.
+This is a visual attachment constraint, not a rope-tension or collision solver.
+`node tools/check-rigging-anchors.mjs` verifies attachments while bracing both
+ways, handling/reversing sail orders and moving the whole ship.
 
 Flags accept `apparentWind` in ship-local metres per second, or an
 `apparentWindAt(localHoistPosition, out)` callback for air sampled at each flag.

@@ -1,0 +1,30 @@
+[
+  {
+    "lod": "game",
+    "bindings": 48,
+    "checks": 9792,
+    "maxGap": 0.0000014638899109120922,
+    "aboveTruck": 0,
+    "meanMotionMs": 0.11813724040985107
+  },
+  {
+    "lod": "cinematic",
+    "bindings": 64,
+    "checks": 13056,
+    "maxGap": 0.0000014793181457665284,
+    "aboveTruck": 0,
+    "meanMotionMs": 1.2539215625501146
+  },
+  {
+    "sails": "topsails",
+    "bindings": 54
+  },
+  {
+    "sails": "storm",
+    "bindings": 52
+  },
+  {
+    "sails": "furled",
+    "bindings": 48
+  }
+]

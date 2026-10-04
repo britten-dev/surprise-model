@@ -57,6 +57,7 @@ import * as THREE from 'three';
 import { holdWheel } from './crew-ik.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { poseFlag } from './flags.js';
+import { createRiggingBindings } from './rigging-bindings.js';
 import { clamp, deg } from '../util/math.js';
 
 const S = (k) => SPEC[k].value;
@@ -92,6 +93,9 @@ const ALOFT_GLSL = `
     if (uSwayFactor > 0.0) {
       float hf = clamp((shipY - uDeckY) / max(0.001, uTruckY - uDeckY), 0.0, 1.0);
       float span = sin(3.14159 * hf);
+      #ifdef PINNED_ROPE
+        span *= aRopeFreedom;
+      #endif
       float ph = uTime * 6.28318 / uSwayPeriod + wPos.z * 0.7 + wPos.x * 1.3;
       disp += uWindWorld * (uSway * uSwayFactor * uWind * span * sin(ph));
       disp.y += uSway * uSwayFactor * 0.25 * uWind * span * sin(ph * 1.7);
@@ -268,6 +272,7 @@ export function createMotion(ship, opts = {}) {
    */
   function patch(mesh, { aloft = false, sail = false, wet = false, alwaysWet = 0, sway = 0 }) {
     const mat = mesh.material.clone();
+    const pinnedRope=!!mesh.geometry.attributes.aRopeFreedom;
     const hullProfile = mesh.name === 'hull_shell' || mesh.userData.hullWetProfile === true;
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
     if (sail) {
@@ -287,6 +292,7 @@ export function createMotion(ship, opts = {}) {
       Object.assign(shader.uniforms, own);
       const declarations = [
         hullProfile ? '#define HULL_WET_PROFILE' : '',
+        pinnedRope ? '#define PINNED_ROPE\nattribute float aRopeFreedom;' : '',
         shadow ? '#define HW_SHADOW' : '',
         (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
         aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '', wet ? WET_PARS : '',
@@ -341,7 +347,7 @@ export function createMotion(ship, opts = {}) {
 
     // Each shape of patch needs its own compiled program. Without a key that says which,
     // three hands the sails the rigging's shader and nothing moves but the rigging.
-    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}`;
+    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}:${pinnedRope?'pinned':''}`;
     mat.customProgramCacheKey = () => key;
     mat.needsUpdate = true;
     mesh.material = mat;
@@ -358,6 +364,7 @@ export function createMotion(ship, opts = {}) {
 
   // ---------------------------------------------------------------- what moves, and how
   const parts = { flags: [], crew: [], yards: [], wheel: null };
+  parts.rigging=createRiggingBindings(ship);
   const named = (n) => ship.getObjectByName(n);
 
   // The canvas. The fore-and-aft sails are still one merged mesh — they are set on stays
@@ -368,11 +375,9 @@ export function createMotion(ship, opts = {}) {
   // they simply stopped shivering, and the check is what noticed.
   const isSail = (n) => n === 'fore_and_aft_sails' || /_sail$/.test(n);
   const runningNames = new Set(['running_rigging_ropes']);
-  const ropeNames = new Set(['shrouds_and_stays', 'ratlines']);
 
-  // Everything in the rig and the canvas moves; what differs is how freely. A shroud is
-  // set up taut and barely moves; a brace is not and swings several times as far; a spar
-  // does not swing at all and only goes where the rig takes it.
+  // Everything aloft shares the mast bend. Standing rigging and ratlines keep
+  // their junctions together; running spans sway between pinned attachments.
   const rig = named('rig');
   if (rig) {
     rig.traverse((o) => {
@@ -380,8 +385,7 @@ export function createMotion(ship, opts = {}) {
       if (isSail(o.name)) patch(o, { aloft: true, sail: true });
       else if (runningNames.has(o.name)) {
         patch(o, { aloft: true, sway: S('motion_running_rope_factor') });
-      } else if (ropeNames.has(o.name)) patch(o, { aloft: true, sway: 1 });
-      else patch(o, { aloft: true });
+      } else patch(o, { aloft: true });
     });
   }
 
@@ -555,6 +559,7 @@ export function createMotion(ship, opts = {}) {
     const step = deg(S('motion_brace_rate_deg')) * dt;
     brace += clamp(braceWant - brace, -step, step);
     for (const y of parts.yards) y.node.rotation.y = brace;
+    parts.rigging.update();
 
     // ------------------------------------------------------------------- the wheel
     if (parts.wheel) parts.wheel.rotation[parts.wheel.userData.axis ?? 'x'] = -helm * deg(S('motion_helm_throw_deg'));
