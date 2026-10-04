@@ -22,3 +22,17 @@ Checks: `node tools/check-motion.js` (22 checks), and the consuming app's
 morning, golden backlighting, close cloth at two instants and moonlight; tests
 check the thickness range and shader errors. Draw calls and triangles are
 unchanged by the lighting pass.
+
+The next pass broadens the pressure shape and introduces restrained folds from
+the loaded clews. It replaces the former repeating edge ripple; this is still
+an artistic pressure surface, not a cloth simulation. Slow, overlapping pressure
+changes animate the belly while the head and loaded corners remain pinned.
+Close views add ropebands around the tapered yards and sewn rope eyes at the
+clews. Ropebands share the yard's movement, survive furling, and disappear below
+a pixel-size threshold; the phone model omits them. Running-rigging flutter is
+now phased in the ship's frame so travel over the ocean cannot change its rate.
+
+`check-rigging-anchors.mjs` checks full, reefed and furled attachments, finite
+ropebands, their close/distant detail selection, and translation-invariant
+flutter. The app's sail/cabin check exercises the complete furling and setting
+sequence and checks the triangle budget.

@@ -9,6 +9,7 @@ try {
   const {createSailHandling}=await import('/src/ship/sail-handling.js');
   const {mastGeometry}=await import('/src/ship/rig.js');
   const {hullModel}=await import('/src/ship/hull.js');
+  const {createDetailLOD}=await import('/src/ship/detail-lod.js');
   const geo=mastGeometry(hullModel()),report=[];
   for(const lod of ['game','cinematic']) {
    const ship=window.build({lod,sails:'full',animatedSails:true,crew:false});
@@ -45,7 +46,31 @@ try {
     const mast=geo[r.from.node.name==='crossjack_yard'?'mizzen':r.from.node.name.split('_')[0]];
     aboveTruck=Math.max(aboveTruck,r.restB.y-mast.along(mast.truckH).y);
    }
-   report.push({lod,bindings:rig.bindings.length,checks,maxGap,aboveTruck,meanMotionMs:updateMs/(time*4)});
+   const robands=[];ship.traverse(o=>{if(o.name.endsWith('_robands'))robands.push(o);});
+   if(robands.length!==(lod==='cinematic'?8:0))throw Error('Wrong yard lashings for detail level');
+   for(const tie of robands){
+    if(!tie.parent.name.endsWith('_yard'))throw Error('Lashing is not carried by its yard');
+    if(!tie.geometry.attributes.position.array.every(Number.isFinite))throw Error('Nonfinite lashing');
+   }
+   const detail=createDetailLOD(ship),camera=new T.PerspectiveCamera(50,1,.1,2000);
+   camera.position.set(0,100,1500);camera.updateMatrixWorld();detail.update(camera,1000);
+   if(robands.some(t=>t.layers.mask!==0))throw Error('Distant lashings waste draw calls');
+   if(robands.length){
+    robands[0].getWorldPosition(camera.position);camera.position.z+=2;
+    camera.updateMatrixWorld();detail.update(camera,1000);
+    if(!robands[0].layers.mask)throw Error('Close lashings were not restored');
+   }
+   // Moving across the sea must not accelerate the flutter phase of a rope.
+   const phase=()=>{
+    const p=new T.Vector4(3,24,-5,1).applyMatrix4(ship.matrixWorld);
+    return motion.uniforms.uShipRowX.value.dot(p)*1.3+motion.uniforms.uShipRowZ.value.dot(p)*.7;
+   };
+   const originalPhase=phase();ship.position.add(new T.Vector3(800,3,-1200));
+   motion.update(time,{windSpeed:28,windDeg:280});
+   if(Math.abs(phase()-originalPhase)>1e-6)throw Error('Travel over the sea changes rig flutter');
+   report.push({lod,bindings:rig.bindings.length,checks,maxGap,aboveTruck,
+    lashings:robands.reduce((n,t)=>n+t.geometry.userData.robandCount,0),meanMotionMs:updateMs/(time*4)});
+   detail.dispose();
    motion.dispose();
   }
   // Static export suits must not retain a sheet attached to an absent sail.

@@ -12,7 +12,9 @@
 //   storm     a reefed foresail and a close-reefed main topsail, nothing else
 //   furled    every sail handed and stowed on its yard
 import * as THREE from 'three';
-import { sailCordage } from './sail-detail.js';
+import { sailCordage, headRobands } from './sail-detail.js';
+import { canvasDepth } from './canvas-shape.js';
+import { detailChoice } from './detail-lod.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
 import { spar } from '../util/solids.js';
@@ -80,15 +82,8 @@ function squareSail(headCentre, headWidth, footCentre, footWidth, cfg, { reef = 
       const s = (u - 0.5) * width;
       // The belly: fullest in the middle of the sail and dying away at head, foot and
       // both leeches, where the sail is held to a spar or a rope.
-      const b = Math.sin(Math.PI * u) * Math.sin(Math.PI * vv) * belly * width;
+      const b = canvasDepth(u, v, vv, width, drop, belly, cfg.textureSize >= 1024);
       const p = centre.clone().addScaledVector(across, s).addScaledVector(lee, b);
-      // Small strain folds radiate from the sheeted clews. The head and clews
-      // remain fixed, and the broad belly still carries almost all the shape.
-      if (cfg.textureSize >= 1024) {
-        const edge = Math.exp(-Math.min(u, 1-u) * 13);
-        const pull = Math.sin((u < .5 ? u : 1-u) * 43 + v * 11);
-        p.addScaledVector(lee, .055 * edge * Math.sin(Math.PI * v) * pull);
-      }
       pos.push(p.x, p.y, p.z);
       uvs.push(u, 1 - v);
     }
@@ -370,6 +365,13 @@ export function buildSails(cfg, mats, model, ctx, geo, yards) {
       const mesh = new THREE.Mesh(geometry, mats.sail);
       mesh.name = name;
       yard.node.add(mesh);
+      const ties = headRobands(yard, cfg);
+      if (ties) {
+        const robands = new THREE.Mesh(ties, mats.runningRigging);
+        robands.name = name.replace(/_sail$/, '_robands');
+        detailChoice(robands, .055);
+        yard.node.add(robands);
+      }
       const cordage = sailCordage(geometry, cfg);
       if (cordage) {
         const cord = new THREE.Mesh(cordage, mats.sailCord);

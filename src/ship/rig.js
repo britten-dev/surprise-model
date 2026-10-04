@@ -380,7 +380,7 @@ export function buildRig(cfg, mats, model, ctx) {
       AUDITED.has(name) ? `${name}_length` : null);
     yards[name] = {
       mast: m, tier, h,
-      length: S(lenKey),
+      length: S(lenKey), diameter: S(diaKey),
       arms: yardArms(m, h, S(lenKey), BRACE),
       centre: m.along(h),
       // The angle she is braced to as built, and the node that carries it. A sail is

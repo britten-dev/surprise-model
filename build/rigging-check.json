@@ -5,7 +5,8 @@
     "checks": 9792,
     "maxGap": 0.0000014638899109120922,
     "aboveTruck": 0,
-    "meanMotionMs": 0.11813724040985107
+    "lashings": 0,
+    "meanMotionMs": 0.12328431068682204
   },
   {
     "lod": "cinematic",
@@ -13,7 +14,8 @@
     "checks": 13056,
     "maxGap": 0.0000014793181457665284,
     "aboveTruck": 0,
-    "meanMotionMs": 1.2539215625501146
+    "lashings": 169,
+    "meanMotionMs": 1.289460788754856
   },
   {
     "sails": "topsails",

@@ -83,6 +83,8 @@ const ALOFT_GLSL = `
   uniform float uSway;
   uniform float uSwayPeriod;
   uniform float uSwayFactor;
+  uniform vec4 uShipRowX;
+  uniform vec4 uShipRowZ;
 
   float whipAt(float y) {
     return pow(clamp((y - uDeckY) / max(0.001, uTruckY - uDeckY), 0.0, 1.0), uWhipExp);
@@ -96,7 +98,9 @@ const ALOFT_GLSL = `
       #ifdef PINNED_ROPE
         span *= aRopeFreedom;
       #endif
-      float ph = uTime * 6.28318 / uSwayPeriod + wPos.z * 0.7 + wPos.x * 1.3;
+      // The phase lives on the rig, not the ocean's world coordinates.
+      float ph = uTime * 6.28318 / uSwayPeriod
+        + dot(uShipRowZ, wPos) * 0.7 + dot(uShipRowX, wPos) * 1.3;
       disp += uWindWorld * (uSway * uSwayFactor * uWind * span * sin(ph));
       disp.y += uSway * uSwayFactor * 0.25 * uWind * span * sin(ph * 1.7);
     }
@@ -153,7 +157,8 @@ const SAIL_PARS = `
     float phase = k * q.x * uSailSpan.x - uTime * uWaveSpeed * 2.4 + uSailPhase;
     float ripple = sin(phase + q.y * 1.4)
       + 0.32 * sin(phase * 1.73 + q.y * 4.0 + uSailPhase);
-    float breath = uBreathe * 2.0 * sin(uTime * 0.48 + uSailPhase + q.y * 1.3);
+    float breath = uBreathe * 3.6 * (0.7 * sin(uTime * 0.43 + uSailPhase - q.y * 1.1)
+      + 0.3 * sin(uTime * 0.79 + uSailPhase * 1.7 - q.y * 2.0));
     float leech = mix(1.0, uLuff, pow(1.0 - across, 3.0));
     return uSailSpread * uFlutter * uWind * freedom * (ripple * 0.16 * leech + breath);
   }
@@ -222,6 +227,8 @@ export function createMotion(ship, opts = {}) {
     uDeckY: { value: 0 },
     uTruckY: { value: 1 },
     uShipRowY: { value: new THREE.Vector4(0, 1, 0, 0) },
+    uShipRowX: { value: new THREE.Vector4(1, 0, 0, 0) },
+    uShipRowZ: { value: new THREE.Vector4(0, 0, 1, 0) },
     uWindWorld: { value: new THREE.Vector3(0, 0, 1) },
     uWind: { value: 1 },
     uSway: { value: S('motion_rope_sway') },
@@ -501,6 +508,8 @@ export function createMotion(ship, opts = {}) {
     inv.copy(ship.matrixWorld).invert();
     const e = inv.elements;
     uniforms.uShipRowY.value.set(e[1], e[5], e[9], e[13]);
+    uniforms.uShipRowX.value.set(e[0], e[4], e[8], e[12]);
+    uniforms.uShipRowZ.value.set(e[2], e[6], e[10], e[14]);
     ship.getWorldQuaternion(q);
 
     // The wind as a strength the shaders multiply by. A gale is about 22 m/s, which is

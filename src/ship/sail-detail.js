@@ -1,4 +1,31 @@
 import * as THREE from 'three';
+import { mergeGeometries } from '../util/loft.js';
+
+/** Ropebands tie the canvas head to the tapered wooden yard. They share its
+ * node and mast bend, and stay fixed while the body of the cloth gathers. */
+export function headRobands(yard, cfg) {
+  if (cfg.textureSize < 1024) return null;
+  const pieces = [], width = yard.length * .94;
+  const count = Math.max(8, Math.round(width / .62));
+  const taper = [1, 30/31, 7/8, 7/10, 3/7];
+  for (let i = 0; i <= count; i++) {
+    const x = (i / count - .5) * width;
+    const f = Math.min(3.999, Math.abs(x) / (yard.length * .5) * 4), j = Math.floor(f);
+    const radius = yard.diameter * .5 * THREE.MathUtils.lerp(taper[j], taper[j + 1], f - j) + .012;
+    const points = [new THREE.Vector3(x - .017, -.12, 0)];
+    for (let k = 0; k <= 14; k++) {
+      const a = -Math.PI / 2 + k / 14 * Math.PI * 2;
+      points.push(new THREE.Vector3(x + (k / 14 - .5) * .035,
+        Math.sin(a) * radius, Math.cos(a) * radius));
+    }
+    points.push(new THREE.Vector3(x + .017, -.12, 0));
+    pieces.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 20, .007, 5, false));
+  }
+  const geometry = mergeGeometries(pieces);
+  for (const piece of pieces) piece.dispose();
+  geometry.userData.robandCount = count + 1;
+  return geometry;
+}
 
 /** Edge ropes and paired reef points, sampled from the actual lofted cloth.
  * Positions, rest normals and UVs share the cloth's frame and motion shader. */
@@ -49,6 +76,18 @@ export function sailCordage(surface, cfg) {
       points.push(point(edge < 2 ? edge : t, edge < 2 ? t : edge - 2));
     }
     tube(points, .012);
+  }
+  // Sewn rope eyes at the loaded corners, with the upper edge meeting the
+  // existing bolt rope and sheet attachment.
+  for (const u of [0, 1]) {
+    const at = point(u, 1), eye = [];
+    for (let j = 0; j <= 16; j++) {
+      const a = j / 16 * Math.PI * 2;
+      const s = { p: at.p.clone(), n: at.n, uv: at.uv };
+      s.p.x += Math.sin(a) * .065; s.p.y += (Math.cos(a) - 1) * .065;
+      eye.push(s);
+    }
+    tube(eye, .012);
   }
   for (const v of [1/7, 2/7]) {
     for (let i = 1; i < 20; i++) {
