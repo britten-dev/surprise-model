@@ -198,22 +198,41 @@ const WET_PARS = `
     uniform sampler2D uHullWetProfile;
     uniform vec4 uHullWetExtent;
     varying vec3 vHullWetPoint;
+    float wetGrain(float x) {
+      float i=floor(x),f=fract(x);f=f*f*(3.0-2.0*f);
+      return mix(fract(sin(i*127.1)*43758.5453),fract(sin((i+1.0)*127.1)*43758.5453),f);
+    }
   #endif
 
   // How wet this fragment is: everything the sea reached, and the decks always, because
   // in this weather a deck is never dry.
-  float wetAmount() {
+  vec2 wetSurface() {
     #ifdef HULL_WET_PROFILE
       if (uHullWetExtent.w > 0.5) {
         float column = clamp((vHullWetPoint.z-uHullWetExtent.x)/(uHullWetExtent.y-uHullWetExtent.x),0.0,1.0)*(uHullWetExtent.z-1.0);
         float row = vHullWetPoint.x < 0.0 ? 0.25 : 0.75;
-        float a = texture2D(uHullWetProfile,vec2((floor(column)+.5)/uHullWetExtent.z,row)).r;
-        float b = texture2D(uHullWetProfile,vec2((min(floor(column)+1.0,uHullWetExtent.z-1.0)+.5)/uHullWetExtent.z,row)).r;
-        float reached = mix(a,b,fract(column));
-        return max(uWetness*.25,1.0-smoothstep(reached-.14,reached+.24,vHullWetPoint.y));
+        vec3 a = texture2D(uHullWetProfile,vec2((floor(column)+.5)/uHullWetExtent.z,row)).rgb;
+        vec3 b = texture2D(uHullWetProfile,vec2((min(floor(column)+1.0,uHullWetExtent.z-1.0)+.5)/uHullWetExtent.z,row)).rgb;
+        vec3 contact = mix(a,b,fract(column));
+        // Object-space drainage paths: no travelling noise or timed sparkle.
+        // The channels appear only where an actual crest wetted the hull.
+        float run=vHullWetPoint.z+vHullWetPoint.x*.63;
+        float reached=contact.r-.07+.14*wetGrain(run*1.9);
+        float y=vHullWetPoint.y,water=contact.g,reserve=clamp(contact.b,0.0,1.0);
+        float absorbed=1.0-smoothstep(reached-.24,reached+.16,y);
+        float wetNow=1.0-smoothstep(water-.12,water+.14,y);
+        float channels=wetGrain(run*7.3+.18*sin(y*1.2+wetGrain(run)*6.0));
+        float aa=max(.04,fwidth(channels)*1.4);
+        float rivulet=smoothstep(.58-aa,.58+aa,channels);
+        float drainingTop=max(water,reached-(1.0-reserve)*1.7);
+        float draining=1.0-smoothstep(drainingTop-.35,drainingTop+.15,y);
+        float film=max(wetNow,absorbed*reserve*draining*(.2+.8*rivulet));
+        float damp=absorbed*(.84+.16*wetGrain(run*3.1));
+        return vec2(max(uWetness*.25,damp),max(uWetness*.1,film));
       }
     #endif
-    return uWetness * max(uAlwaysWet, 1.0 - smoothstep(uWetY - 1.2, uWetY + 0.8, vShipYWet));
+    float amount=uWetness * max(uAlwaysWet, 1.0 - smoothstep(uWetY - 1.2, uWetY + 0.8, vShipYWet));
+    return vec2(amount);
   }
 `;
 
@@ -310,7 +329,9 @@ export function createMotion(ship, opts = {}) {
         pinnedRope ? '#define PINNED_ROPE\nattribute float aRopeFreedom;' : '',
         shadow ? '#define HW_SHADOW' : '',
         (aloft || sail || wet) ? 'uniform vec4 uShipRowY;' : '',
-        aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '', wet ? WET_PARS : '',
+        aloft ? ALOFT_GLSL : '', sail ? SAIL_PARS : '',
+        wet ? 'varying float vShipYWet;' : '',
+        hullProfile ? 'varying vec3 vHullWetPoint;' : '',
       ].filter(Boolean).join('\n');
       let v = shader.vertexShader.replace('#include <common>', `#include <common>\n${declarations}`);
       if (sail) {
@@ -360,10 +381,11 @@ export function createMotion(ship, opts = {}) {
           .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
             // Water smooths the finish but cannot erase plank grain and beaten
             // copper. Preserve that variation instead of making every wet face a mirror.
-            roughnessFactor = mix(roughnessFactor, max(uWetRough, roughnessFactor * 0.62), wetAmount());
+            roughnessFactor = mix(roughnessFactor, max(uWetRough, roughnessFactor * 0.56), hullSurfaceWet.y);
           `)
           .replace('#include <color_fragment>', `#include <color_fragment>
-            diffuseColor.rgb *= 1.0 - uWetDarken * wetAmount();
+            vec2 hullSurfaceWet=wetSurface();
+            diffuseColor.rgb *= 1.0 - uWetDarken * hullSurfaceWet.x;
           `);
       }
     };
