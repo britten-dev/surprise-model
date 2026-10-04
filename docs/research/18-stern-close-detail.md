@@ -58,3 +58,14 @@ library models; this follow-up stays within that allowance and the browser's
 1.5 million uncrewed limit. Phone
 letter faces and scrolls are simplified to retain the existing 80,000 limit,
 including the library's optional crew.
+
+A further finish pass adds 7 mm bedding edges around the 42 individual stern
+panes. Their small bevels catch grazing light without covering the transparent
+openings. They are a single batch, omitted on phones and hidden below a pixel
+threshold. Their section is a visual reconstruction rather than a surveyed
+Surprise detail.
+
+The name and carved decoration now use a separate physical-scale finish:
+restrained burnishing strokes, small losses exposing warm ground, and varied
+roughness. Those details share three small 256-square textures, with mipmaps
+for distant views. They do not change the lettering dimensions or add triangles.

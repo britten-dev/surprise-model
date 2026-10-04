@@ -27,12 +27,20 @@ try {
     for(const lod of ['cinematic','hero','game'])for(const weather of ['fair','heavy']) {
       const ship=build({lod,sails:'full',weather,crew:false}),parts=[];
       ship.traverse(o=>{
-        if(!o.isMesh||!/^(stern_light_frames|quarter_gallery_frames|stern_glazing_bars|quarter_gallery_glazing_bars|stern_munions)$/.test(o.name))return;
+        if(!o.isMesh||!/^(stern_light_frames|quarter_gallery_frames|stern_glazing_bars|quarter_gallery_glazing_bars|stern_munions|stern_pane_bedding)$/.test(o.name))return;
         for(const a of Object.values(o.geometry.attributes))if(!a.array.every(Number.isFinite))throw new Error('Nonfinite joinery');
         parts.push({name:o.name,solid:o.userData.solidJoinery,triangles:(o.geometry.index?.count??o.geometry.attributes.position.count)/3});
       });
       const frames=parts.filter(p=>p.name.endsWith('_frames'));
       if(frames.length!==3||frames.some(p=>p.solid!==(lod!=='game')))throw new Error('Missing frames or wrong detail tier');
+      const bed=ship.getObjectByName('stern_pane_bedding');
+      if(!!bed!==(lod!=='game'))throw new Error('Pane bedding must follow the close-detail tier');
+      if(bed&&bed.userData.panes!==42)throw new Error('Every individual stern pane needs its own edge');
+      for(const name of ['stern_name','stern_carving']){
+        const o=ship.getObjectByName(name);if(!o)continue;
+        if(!o.geometry.attributes.uv1?.array.every(Number.isFinite))throw new Error('Missing physical gilt coordinates');
+        if(![o.material.map,o.material.normalMap,o.material.roughnessMap].every(m=>m?.channel===1))throw new Error('Gilt finish is missing its close maps');
+      }
       rows.push({lod,weather,parts,triangles:window.stats({lod,sails:'full',weather,crew:false}).tris});
     }
     return rows;

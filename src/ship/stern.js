@@ -36,6 +36,7 @@ import { furnishCabin } from './cabin-interior.js';
 import { windowStrip } from './window-joinery.js';
 import { cutWindowApertures } from './window-apertures.js';
 import { finishSternShell, addSternOrnament } from './stern-detail.js';
+import { detailChoice } from './detail-lod.js';
 
 // ---------------------------------------------------------------------------
 // The stern profile: everything the closure and the ornament need to know about
@@ -466,7 +467,7 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   const pitch = w + SPEC.stern_light_munion.value;
 
   const at = (out) => (x, y) => sp.surfaceAtX(y, x, out);
-  const frames = [], glass = [], bars = [], openings = [], reveals = [];
+  const frames = [], glass = [], bars = [], openings = [], reveals = [], bedding = [];
   const joinery = (u0, u1, v0, v1, top, base, nu, nv) => cfg.windowJoinery
     ? windowStrip((u, v, d) => sp.surfaceAtX(v, u, d), u0, u1, v0, v1, { base, top, nu, nv })
     : patch(at(top), u0, u1, v0, v1, nu, nv);
@@ -490,6 +491,16 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
     frames.push(joinery(x0, x1, fy0, ySill, depth, .008, 3, 1));
     frames.push(joinery(x0, x1, yHead, fy1, depth, .008, 3, 1));
     glass.push(patch(at(glassDepth), x0, x1, ySill, yHead, 3, 3));
+    // Fine bevelled bedding around individual panes catches the light at
+    // their edges. These are narrow solid strips, never an opaque pane.
+    if(cfg.windowJoinery)for(let row=0;row<SPEC.stern_panes_high.value;row++)for(let col=0;col<SPEC.stern_panes_wide.value;col++){
+      const nx=SPEC.stern_panes_wide.value,ny=SPEC.stern_panes_high.value,b=.007;
+      const a=lerp(x0,x1,col/nx)+(col?bar/2:0),z=lerp(x0,x1,(col+1)/nx)-(col<nx-1?bar/2:0);
+      const low=lerp(ySill,yHead,row/ny)+(row?bar/2:0),high=lerp(ySill,yHead,(row+1)/ny)-(row<ny-1?bar/2:0);
+      for(const [u0,u1,v0,v1]of[[a,a+b,low,high],[z-b,z,low,high],[a+b,z-b,low,low+b],[a+b,z-b,high-b,high]])
+        bedding.push(windowStrip((u,v,d)=>sp.surfaceAtX(v,u,d),u0,u1,v0,v1,
+          {base:glassDepth+.0005,top:glassDepth+.0045,bevel:.002,nu:1,nv:1}));
+    }
     if (!cfg.galleryGlazing) continue;
     // Glazing bars: small rectangular panes in a grid, as contemporary sash windows were
     // glazed. Leaded diamond quarries were a century out of date by 1798.
@@ -539,6 +550,11 @@ function sternLights(cfg, mats, sp, group, build = true, ctx = {}) {
   frame.userData.solidJoinery = !!cfg.windowJoinery;
   audit(frame, 'stern_light_count', 'count');
   group.add(frame);
+  if(bedding.length){
+    const bed=new THREE.Mesh(mergeGeometries(bedding),joineryFinish(cfg));
+    bed.name='stern_pane_bedding';bed.userData.panes=count*SPEC.stern_panes_wide.value*SPEC.stern_panes_high.value;
+    group.add(bed);if(cfg.adaptiveDetail)detailChoice(bed,.007);
+  }
 
   // Deadlights, in heavy weather. Solid shutters shipped over the whole of each light and
   // bedded against the outside of its frame, so the glass behind them is protected and

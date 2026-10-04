@@ -5,7 +5,7 @@ import {SPEC,PAINT} from '../spec/spec.js';
 import {mergeGeometries} from '../util/loft.js';
 import {audit} from '../audit/measure.js';
 import {normalFrom,asTexture} from './textures.js';
-import {joineryFinish} from './stern-finishes.js';
+import {joineryFinish,carvedGiltFinish} from './stern-finishes.js';
 
 const font=new FontLoader().parse(lettering), finishes=new Map();
 const hash=n=>{const x=Math.sin(n*127.1+31.7)*43758.5453;return x-Math.floor(x);};
@@ -69,10 +69,12 @@ export function finishSternShell(shell,cfg,sp){
 
 export function addSternOrnament(cfg,mats,sp,lights,group){
  if(cfg.sternOrnament==='none')return;
- const fine=cfg.sternOrnament==='carved',gold=mats.ochre.clone();
- gold.vertexColors=false;gold.name='stern_carved_ochre';gold.color.set(PAINT.gilt.hex);gold.metalness=.32;gold.roughness=.53;
- // Gilt relief is not another plank: do not stretch timber seams across letters.
- gold.map=null;gold.normalMap=null;gold.roughnessMap=null;
+ const fine=cfg.sternOrnament==='carved',gold=carvedGiltFinish(cfg);
+ const giltUV=g=>{
+  const p=g.attributes.position,uv=[];
+  for(let i=0;i<p.count;i++)uv.push(p.getX(i)/.28,p.getY(i)/.22);
+  g.setAttribute('uv1',new T.Float32BufferAttribute(uv,2));return g;
+ };
  const details=[],grounds=[];
  const on=(x,y,d)=>sp.surfaceAtX(y,x,d);
  const tube=(points,radius=.009,steps=32)=>{
@@ -130,7 +132,7 @@ export function addSternOrnament(cfg,mats,sp,lights,group){
   const y=nameY+(p.getY(i)-center.y)*SPEC.stern_name_letter_height.value/size.y;
   const v=on(x,y,depth+.008+p.getZ(i));p.setXYZ(i,v.x,v.y,v.z);
  }
- text.computeVertexNormals();text.computeBoundingBox();text.computeBoundingSphere();const name=new T.Mesh(text,gold);name.name='stern_name';audit(name,'stern_name_length','extent_x');group.add(name);
+ text.computeVertexNormals();text.computeBoundingBox();text.computeBoundingSphere();const name=new T.Mesh(giltUV(text),gold);name.name='stern_name';audit(name,'stern_name_length','extent_x');group.add(name);
  const cy=T.MathUtils.lerp(lights.yHead+SPEC.stern_light_munion.value*2,sp.yTaff,.42);
  const ow=SPEC.taffrail_ornament_width.value,oh=SPEC.taffrail_ornament_height.value;
  grounds.push(panel(0,cy,ow*.94,oh*.82,.012,oh*.32));
@@ -162,5 +164,5 @@ export function addSternOrnament(cfg,mats,sp,lights,group){
   for(const offset of [-.03,.03])details.push(tube([[x+offset,lights.yHead+.10,.022],[x+offset-side*.035,cy,.034],[x+offset,sp.yTaff-.16,.022]],.011,24));
  }
  const base=new T.Mesh(mergeGeometries(grounds),mats.black);base.name='stern_carving_ground';group.add(base);
- const carving=new T.Mesh(mergeGeometries(details),gold);carving.name='stern_carving';group.add(carving);
+ const carving=new T.Mesh(giltUV(mergeGeometries(details)),gold);carving.name='stern_carving';group.add(carving);
 }
