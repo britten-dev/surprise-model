@@ -301,6 +301,7 @@ export function createMotion(ship, opts = {}) {
     const clothLight = sail && !!mesh.material.sailLayerMap;
     const pinnedRope=!!mesh.geometry.attributes.aRopeFreedom;
     const hullProfile = mesh.name === 'hull_shell' || mesh.userData.hullWetProfile === true;
+    const hullFinish = mesh.material.aoMap?.name === 'hull-fitting-contact';
     const own = { ...uniforms, uSwayFactor: { value: sway }, uAlwaysWet: { value: alwaysWet } };
     if (clothLight) {
       own.uClothLayers = { value: mesh.material.sailLayerMap };
@@ -388,11 +389,15 @@ export function createMotion(ship, opts = {}) {
             diffuseColor.rgb *= 1.0 - uWetDarken * hullSurfaceWet.x;
           `);
       }
+      if(hullFinish)shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+        vec3 fittingFinish=texture2D(aoMap,vAoMapUv).rgb;
+        diffuseColor.rgb *= (1.0-fittingFinish.g*vec3(.15,.20,.25))*(.95+fittingFinish.b*.10);
+      `);
     };
 
     // Each shape of patch needs its own compiled program. Without a key that says which,
     // three hands the sails the rigging's shader and nothing moves but the rigging.
-    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${clothLight ? 'layers' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${alwaysWet}:${sway}:${pinnedRope?'pinned':''}`;
+    const key = `motion:${aloft ? 'a' : ''}${sail ? 's' : ''}${clothLight ? 'layers' : ''}${wet ? 'w' : ''}${hullProfile?'h':''}${hullFinish?'finish':''}${alwaysWet}:${sway}:${pinnedRope?'pinned':''}`;
     mat.customProgramCacheKey = () => key;
     mat.needsUpdate = true;
     mesh.material = mat;

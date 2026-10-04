@@ -82,6 +82,11 @@ export function hullTimber(size,kind='colour'){
     g.quadraticCurveTo(x+len*.45,yy+metre*.005,x+len,yy-metre*.002);g.stroke();
    }
    g.restore();
+   if(height){
+    const bevel=g.createLinearGradient(x,0,x+metre*.014,0);
+    bevel.addColorStop(0,'#656565');bevel.addColorStop(.45,'#797979');bevel.addColorStop(1,'rgba(128,128,128,0)');
+    g.fillStyle=bevel;g.fillRect(x,y0,metre*.014,h);
+   }
    // Caulking, rather than open black slots. Bevel slopes live in the height
    // field; the colour seam is thinner and remains subdued under paint.
    g.fillStyle=grey(height?66:rough?185:85);
@@ -91,6 +96,11 @@ export function hullTimber(size,kind='colour'){
     for(let k=0;k<5;k++){const yy=y0+hash(row*29+k)*h;
      g.fillStyle='rgba(177,164,136,.12)';g.fillRect(x+metre*.01,yy,metre*(.012+hash(k+row)*.055),Math.max(.5,metre*.002));}
    }
+  }
+  if(height){
+   const eased=g.createLinearGradient(0,y0,0,y0+h*.07);
+   eased.addColorStop(0,'#626262');eased.addColorStop(.4,'#797979');eased.addColorStop(1,'rgba(128,128,128,0)');
+   g.fillStyle=eased;g.fillRect(0,y0,size,h*.07);
   }
   g.fillStyle=grey(height?66:rough?185:80);
   g.fillRect(0,y0,size,Math.max(.7,metre*.005));

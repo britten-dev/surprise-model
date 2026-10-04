@@ -22,6 +22,7 @@ import { buildRig } from './rig.js';
 import { buildCrew } from './crew.js';
 import { detailChoice } from './detail-lod.js';
 import { applyAmbientOcclusion } from './occlusion.js';
+import { finishHullContact } from './hull-contact.js';
 
 export { LODS };
 export const SAIL_STATES = ['full', 'topsails', 'storm', 'furled'];
@@ -116,6 +117,7 @@ export function buildShip({ lod = 'hero', sails = 'full', weather, ports: portSt
   // ask where anything actually touches anything else, which is exactly what none of
   // the modules above it know on their own.
   applyAmbientOcclusion(ship, cfg, mats);
+  finishHullContact(ship,cfg,model,ports);
 
   if(adaptiveDetail)ship.traverse(mesh=>{
     // These are secondary surface details only. Port boards, structural timber,

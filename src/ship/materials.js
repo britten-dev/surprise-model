@@ -421,7 +421,7 @@ function buildMaterials(cfg) {
   const copperArgs = {
     sheetsX: PAINT.copper_sheets_along.value,
     sheetsY: PAINT.copper_sheets_up.value,
-    variation: PAINT.copper_sheet_variation.value * 0.4,
+    variation: PAINT.copper_sheet_variation.value * 0.72,
     lap: PAINT.copper_lap_relief.value * 0.5,
     nailRelief: PAINT.copper_nail_relief.value * 0.5,
     size: hullSize,
