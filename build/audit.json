@@ -99,7 +99,7 @@
     "key": "crew_figure_height",
     "metric": "extent_y",
     "expected": 1.6764000000000001,
-    "actual": 1.6763180804908275,
+    "actual": 1.7282897098272278,
     "tolerance": 0.05,
     "source": "RECONSTRUCTED §9 the average height of a British seaman in the 1790s, from the surviving Marine and Navy muster descriptions. This is the number that gives the ship her scale"
   },
@@ -426,7 +426,7 @@
     "key": "stern_name_length",
     "metric": "extent_x",
     "expected": 1.3843,
-    "actual": 1.3856531381607056,
+    "actual": 1.3860008120536804,
     "tolerance": 0.03,
     "source": "RECONSTRUCTED §12.1 SURPRISE: eight letters of 4½ in with 2½ in between them, and the cut stroke over the ends"
   },

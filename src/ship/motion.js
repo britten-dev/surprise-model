@@ -55,6 +55,7 @@
 // whole ship over forty degrees.
 import * as THREE from 'three';
 import { holdWheel } from './crew-ik.js';
+import { crewRig, poseCrew } from './crew-pose.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { poseFlag } from './flags.js';
 import { createRiggingBindings } from './rigging-bindings.js';
@@ -492,6 +493,8 @@ export function createMotion(ship, opts = {}) {
 
   // -------------------------------------------------------------------------- the watch
   const crewGroup = named('crew');
+  // Men brace wider and bend deeper at the knee in the weather they are dressed for.
+  const heavyWeather = ship.userData.weather === 'heavy';
   if (crewGroup) {
     for (const [i, f] of crewGroup.children.entries()) {
       const info = f.userData.crew ?? {};
@@ -509,6 +512,9 @@ export function createMotion(ship, opts = {}) {
         // Each man has a phase of his own, so that thirteen of them do not sway as one.
         phase: i * 1.37,
         f: whipAt(f.position.y, deckY, truckY, uniforms.uWhipExp.value),
+        rank: info.rank,
+        // The photographed men are posed bone by bone; see src/ship/crew-pose.js.
+        rig: info.skinned ? crewRig(f) : null,
       });
     }
   }
@@ -674,7 +680,8 @@ export function createMotion(ship, opts = {}) {
     // -------------------------------------------------------------------- the watch
     const swayAmp = deg(S('motion_crew_sway_deg'));
     const swayW = (Math.PI * 2) / S('motion_crew_sway_period');
-    for (const c of parts.crew) {
+    // A host that has hidden the watch to save frame time saves the posing too.
+    for (const c of crewGroup?.visible === false ? [] : parts.crew) {
       // A man stands upright in the world, not square to a deck that is heeled: what has
       // to be leaned is the ship's tilt, taken off him. His own heading has already been
       // applied, so the tilt is rotated into his frame before it is set — otherwise the
@@ -713,6 +720,19 @@ export function createMotion(ship, opts = {}) {
           c.home.position.y,
           c.home.position.z + whip.z * c.f
         );
+      }
+      if (c.rig) {
+        // Most of the lean goes into his spine and only the rest into the whole man, so
+        // his feet stay near the deck while his shoulders stay over them. At the wheel he
+        // has the spokes to hold and leans on them, so less of it goes anywhere.
+        const helmsman = c.role === 'helm';
+        const keep = helmsman ? .15 : .35, upper = (1 - keep) * (helmsman ? .3 : 1);
+        const spineX = c.node.rotation.x * upper, spineZ = c.node.rotation.z * upper;
+        c.node.rotation.x *= keep;
+        c.node.rotation.z *= keep;
+        c.node.userData.crew.gripError = poseCrew(c.rig, { time, phase: c.phase, role: c.role,
+          pose: c.pose, rank: c.rank, spineX, spineZ, heavy: heavyWeather, wheel: parts.wheel, helm });
+        continue;
       }
       if (c.pose === 'haul') {
         // The one thing anybody on deck is actually *doing*. A man posed as though he
