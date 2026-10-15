@@ -4,6 +4,7 @@ import { preloadAuthoredAssets } from './authored-assets.js';
 import { preloadCrew } from './crew-assets.js';
 import { preloadDeadeyes } from './deadeye-assets.js';
 import { preloadProps } from './prop-assets.js';
+import { preloadHullScan } from './hull-scan.js';
 let deckImage = null;
 let pending;
 export function getDeckImage() { return deckImage; }
@@ -17,9 +18,10 @@ export function preloadSurfaceAssets({ detail = true, crew = true } = {}) {
   });
   // The quarterdeck fittings only: the watch now comes from src/ship/crew-assets.js, and
   // the Blender-authored crew in quarterdeck-detail.glb is no longer fetched by default.
-  // The boats and deck clutter (src/ship/prop-assets.js) come with the detail.
+  // The boats and deck clutter (src/ship/prop-assets.js) and the photographed hull planking
+  // (src/ship/hull-scan.js) come with the detail.
   return detail
     ? Promise.all([pending, preloadAuthoredAssets({ crew: false }), crew && preloadCrew(), preloadDeadeyes(),
-      preloadProps()])
+      preloadProps(), preloadHullScan()])
     : pending;
 }

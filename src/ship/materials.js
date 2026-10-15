@@ -16,6 +16,7 @@ import {
 } from './textures.js';
 import { hullStains, deckStains, sailStains } from './weathering.js';
 import { getDeckImage } from './surface-assets.js';
+import { getHullScan } from './hull-scan.js';
 import { hullTimber } from './hull-timber.js';
 
 const col = (key) => new THREE.Color(PAINT[key].hex);
@@ -385,7 +386,7 @@ const materialCache = new Map();
 
 export function makeMaterials(cfg) {
   const key = [cfg.textureSize, cfg.hullTextureSize, cfg.copperNails, cfg.hullRelief, cfg.surfaceDetail,
-    cfg.mouldingSweeps, !!getDeckImage()].join(':');
+    cfg.mouldingSweeps, !!getDeckImage(), !!getHullScan()].join(':');
   if (!materialCache.has(key)) materialCache.set(key, buildMaterials(cfg));
   return materialCache.get(key);
 }
@@ -430,6 +431,8 @@ function buildMaterials(cfg) {
     copperSheathing({
       ...copperArgs,
       base: PAINT.copper.hex, edge: PAINT.copper_dark.hex, nail: PAINT.copper_bright.hex,
+      // The photographed sheet (src/ship/hull-scan.js) where a sheet is big enough to show it.
+      mottle: hullSize >= 1024 ? getHullScan()?.copper ?? null : null,
     }),
     { repeat: [1, 1] }
   );
@@ -716,7 +719,8 @@ function buildMaterials(cfg) {
   mats.hullSurface = hullSurfaceMap(Math.min(1024, cfg.textureSize), hullTimber(Math.min(1024, cfg.textureSize),'roughness'), copperTex.image);
 
   mats.hull = std({
-    map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, hullSize),
+    map: combinePlankAndPaint(hullPlank.image, copperTex.image, mats.hullPaint, hullSize,
+      !!getHullScan() && hullSize >= 1024),
     // The lengthwise wear, which hull.js writes into the vertex colours because the map
     // repeats along her and cannot carry anything that varies from bow to stern.
     vertexColors: true,
@@ -754,7 +758,7 @@ function buildMaterials(cfg) {
       : null,
     normalScale: new THREE.Vector2(0.82, 0.82),
   });
-  mats.hull.userData.hullFinish='caulked-timber-v3';
+  mats.hull.userData.hullFinish = getHullScan() && hullSize >= 1024 ? 'scanned-timber-v1' : 'caulked-timber-v3';
 
   return mats;
 }
@@ -771,8 +775,16 @@ function buildMaterials(cfg) {
  *
  * Below the copper line the shading comes from the sheathing instead, because the
  * underwater body is sheets of copper, not planks.
+ *
+ * `scanned` is the one exception to the paint keeping its colour. A multiply cannot show
+ * a scratch through black paint — near-black times anything is near-black — so where the
+ * photographed boards (src/ship/hull-scan.js) are at their brightest, the worn primer and
+ * timber under the paint is added on top. It is a few per cent of the planking, in scuffs
+ * and scratches, and the drawn planking never reaches the threshold.
  */
-function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
+// Weathered primer over grey timber, as it shows through a scratch in the paint.
+const WORN = [62, 55, 45];
+function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size, scanned = false) {
   const read = (src) => {
     const c = document.createElement('canvas');
     c.width = c.height = size;
@@ -805,9 +817,10 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size) {
     const depth = underwater ? PAINT.copper_pattern_depth.value : 0.40;
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
-      const k = 1 + (lum(src, i) - 0.5) * 2 * depth;
+      const l = lum(src, i), k = 1 + (l - 0.5) * 2 * depth;
+      const worn = scanned && !underwater ? Math.max(0, Math.min(1, (l - 0.70) / 0.25)) : 0;
       for (let c=0;c<3;c++) d[i+c] = Math.min(255, underwater
-        ? copper[i+c] * (0.9 + 0.1*k) : d[i+c] * k);
+        ? copper[i+c] * (0.9 + 0.1*k) : d[i+c] * k + worn * WORN[c]);
       d[i + 3] = 255;
     }
   }
