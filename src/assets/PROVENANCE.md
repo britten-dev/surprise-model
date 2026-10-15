@@ -57,3 +57,37 @@ position against the original. Base-colour maps use JPEG quality 94 with 4:4:4
 chroma; normal and roughness data remain PNG. The uncompressed source is kept
 in `build/quarterdeck-detail-uncompressed.glb`, and the editable Blender file
 retains its original packed image maps.
+
+# The watch
+
+`crew/seaman.glb`, `crew/oilskin.glb`, `crew/officer.glb` and `crew/midshipman.glb`
+were generated with Meshy (meshy.ai) on 15 October 2026: image to 3D (Meshy 7.1),
+texturing from the same image, remeshing to about 10,000 triangles, and Meshy's
+automatic humanoid rig on its Mixamo skeleton template. They are fictional people;
+no named person's likeness is represented. `tools/compress-crew.mjs` turns the
+downloads into these files (stock clips removed, four bone weights per vertex,
+JPEG maps).
+
+Licences differ by figure:
+
+- `seaman.glb` was generated on Meshy's free plan and is licensed **CC BY 4.0**.
+  Attribution: "Seaman figure created with Meshy AI (meshy.ai), CC BY 4.0." Any
+  host that shows it should carry that credit.
+- `oilskin.glb`, `officer.glb` and `midshipman.glb` were generated on Meshy Pro
+  with the Private licence and belong to this project.
+
+Reference images. The seaman's was made with ChatGPT from this prompt:
+
+> Full-body front view of an ordinary seaman of the Royal Navy, about 1805. Standing in a relaxed A-pose, arms held slightly away from the body, legs slightly apart, feet flat. Plain light grey background, soft even studio light, no shadows, no props. He wears a short dark blue wool jacket, open, with plain horn buttons; a loose white linen shirt; a black neckerchief tied loosely; wide white canvas trousers to the ankle, worn and a little dirty; plain black buckled shoes; a low round black tarred hat with a narrow brim. Weathered, tanned man of about 30, stubble, short hair with a short tarred pigtail. Photographic and realistic, natural creases in the cloth. Not a pirate: no sword, no pistols, no eyepatch, no belt of weapons.
+
+The other three were made with Meshy's image tool (Nano Banana Pro, A-pose, 3:4),
+each with the seaman's picture as its style reference and these prompts:
+
+> Full-body front view photo of a Royal Navy lieutenant, about 1805, standing in a relaxed A-pose, arms slightly away from the body, feet slightly apart, whole body from hat to shoes in frame. Plain light grey studio background, soft even light, same photographic style as the reference image. Dark navy blue wool tailcoat with stand-up collar, white piping and gilt buttons; white waistcoat; white breeches; white stockings; black buckled shoes; black bicorne cocked hat worn side to side. Weathered clean-shaven man of about 35, hair tied back. Clothes worn and a little salt-stained. No sword, no epaulettes, no props.
+
+> Full-body front view photo of a Royal Navy seaman in foul-weather gear, about 1805, standing in a relaxed A-pose, arms slightly away from the body, feet slightly apart, whole body from hat to shoes in frame. Plain light grey studio background, soft even light, same photographic style as the reference image. Long tarred canvas coat to mid-thigh, stiff, dark brown-black with a wet sheen, buttoned to the neck; grey knitted wool scarf; wide canvas trousers soaked dark grey; plain black shoes; low black tarred round hat with a brim, tied under the chin. Weathered man of about 40, stubble, rain-soaked face. No props, no weapons.
+
+> Full-body front view photo of a Royal Navy midshipman, about 1805, a slim boy of about 15, standing in a relaxed A-pose, arms slightly away from the body, feet slightly apart, whole body from hat to shoes in frame. Plain light grey studio background, soft even light, same photographic style as the reference image. Short dark navy blue tailcoat with small white patches on the collar and gilt buttons; white waistcoat; white trousers to the ankle; plain black shoes; black round hat with a narrow brim. Freckled, short brown hair, wind-reddened cheeks. Clothes worn and slightly dirty. No sword, no dirk, no props.
+
+The Blender-authored crew in `quarterdeck-detail.glb` is no longer loaded by
+default; `preloadSurfaceAssets()` now fetches the fittings-only file and these.

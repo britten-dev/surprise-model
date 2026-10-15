@@ -12,7 +12,9 @@ try {
     return {lod,withCrew,withoutCrew,savedTriangles:withCrew.tris-withoutCrew.tris,savedMeshes:withCrew.meshes-withoutCrew.meshes};
   }));
   for(const r of rows){assert.ok(r.savedTriangles>0);assert.ok(r.savedMeshes>0);}
-  assert.ok(rows.find(r=>r.lod==='cinematic').savedTriangles>200000);
+  // Thirteen photographed figures of about ten thousand triangles each: fewer than the
+  // Blender-authored watch they replace (over two hundred thousand), still worth skipping.
+  assert.ok(rows.find(r=>r.lod==='cinematic').savedTriangles>100000);
   assert.deepEqual(h.problems.filter(p=>p.startsWith('[pageerror]')),[]);
   await writeFile('build/crew-option-check.json',JSON.stringify(rows,null,2));
   console.log(JSON.stringify(rows,null,2));

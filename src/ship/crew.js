@@ -20,6 +20,7 @@
 // do any of that.
 import * as THREE from 'three';
 import { authoredFigure } from './authored-assets.js';
+import { crewFigure } from './crew-assets.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { SPEC, PAINT } from '../spec/spec.js';
 import { mergeGeometries } from '../util/loft.js';
@@ -74,17 +75,30 @@ const DRESS = {
  * six colours about him and still be one draw call. See `mats.crew`.
  */
 function figure(mats, { rank = 'seaman', pose = 'stand', seed = 0, detail = false, cfg } = {}) {
-  const authored = cfg && authoredFigure(cfg, { rank, pose, seed });
-  if (authored) return authored;
-  const group = new THREE.Group();
   const dress = DRESS[rank] ?? DRESS.seaman;
   const r = rng(seed * 7 + 3);
 
   // No two men are the same size. It is a few per cent and it does more for a group of
   // figures than any amount of work on any one of them.
   const vary = S('crew_build_variation');
+  const base = dress.coat === 'officer_coat' ? S('crew_officer_height') : S('crew_figure_height');
   const scale = dress.tall * (1 + (r() - 0.5) * 2 * vary);
-  const h = (dress.coat === 'officer_coat' ? S('crew_officer_height') : S('crew_figure_height')) * scale;
+  const h = base * scale;
+
+  // The photographed watch when it has been loaded (src/ship/crew-assets.js), then the
+  // Blender-authored one, and only then the figure built below.
+  //
+  // The photographed men take their few per cent from a hash of the seed, not from `r`.
+  // The generator's first draw is always close to nought for seeds this small, which has
+  // left every built figure the same five per cent short; the built ones are left as they
+  // were, because the exports and audits are measured against them.
+  const spread = Math.abs((Math.sin(seed * 12.9898 + 1.7) * 43758.5453) % 1);
+  const real = cfg && cfg.textureSize >= 1024
+    && crewFigure({ rank, pose, seed, height: base * dress.tall * (1 + (spread - 0.5) * 2 * vary) });
+  if (real) return real;
+  const authored = cfg && cfg.authoredCrew !== false && authoredFigure(cfg, { rank, pose, seed });
+  if (authored) return authored;
+  const group = new THREE.Group();
   const broad = 1 + (r() - 0.5) * 2 * vary;
 
   const legH = h * S('crew_leg_fraction');
@@ -447,7 +461,10 @@ export function buildCrew(cfg, mats, model, ctx) {
       const p = m.along(m.houndsH);
       const half = (m.topBreadth ?? 3.4) / 2;
       for (const [i, sx] of [-1, 1].entries()) {
-        const f = figure(mats, { pose: i ? 'haul' : 'hold', rank: hand, seed: seed++, detail: cfg.textureSize >= 1024 });
+        // No `cfg` for the Blender-authored figures: they were made for the quarterdeck and
+        // their faces are wasted forty metres up. The photographed ones go aloft too.
+        const f = figure(mats, { pose: i ? 'haul' : 'hold', rank: hand, seed: seed++, detail: cfg.textureSize >= 1024,
+          cfg: { ...cfg, authoredCrew: false } });
         // Stand on the forward part of the top, clear of the topsail's belly aft.
         // At the mast centre the moving cloth sliced through their heads and torsos.
         f.position.set(sx * half * Math.min(S('crew_top_inset'), 0.36), p.y + SPEC.top_platform_thickness.value,
