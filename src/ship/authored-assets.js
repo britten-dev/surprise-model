@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SPEC } from '../spec/spec.js';
+import { fetchAsset } from './asset-fetch.js';
 
 const libraries = new Map(), pending = new Map();
 export async function preloadAuthoredAssets({ crew = true } = {}) {
@@ -10,9 +11,7 @@ export async function preloadAuthoredAssets({ crew = true } = {}) {
     try {
       const url = crew ? new URL('../assets/quarterdeck-detail.glb', import.meta.url)
         : new URL('../assets/quarterdeck-fittings.glb', import.meta.url);
-      const response = await fetch(url, { signal: abort.signal });
-      if (!response.ok) throw new Error(`Detailed ship assets: HTTP ${response.status}`);
-      const bytes = await response.arrayBuffer();
+      const bytes = await fetchAsset(url, { signal: abort.signal });
       const [{ GLTFLoader },{ MeshoptDecoder }] = await Promise.all([
         import('three/addons/loaders/GLTFLoader.js'),
         import('three/addons/libs/meshopt_decoder.module.js'),

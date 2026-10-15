@@ -10,6 +10,7 @@
 // have finished before `buildShip`, and if it has not — offline, a slow connection, a host
 // that never asked — src/ship/crew.js falls back to the figures it has always built.
 import * as THREE from 'three';
+import { fetchAsset } from './asset-fetch.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // Rank -> which of the four bodies he is. The bosun is a seaman to look at; the captain
@@ -32,9 +33,8 @@ export function preloadCrew() {
       ]);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       await Promise.all([...new Set(Object.values(BODY))].map(async (name) => {
-        const response = await fetch(new URL(`../assets/crew/${name}.glb`, import.meta.url), { signal: abort.signal });
-        if (!response.ok) throw new Error(`Crew figure ${name}: HTTP ${response.status}`);
-        const gltf = await loader.parseAsync(await response.arrayBuffer(), '');
+        const bytes = await fetchAsset(new URL(`../assets/crew/${name}.glb`, import.meta.url), { signal: abort.signal });
+        const gltf = await loader.parseAsync(bytes, '');
         const scene = gltf.scene;
         scene.traverse((o) => {
           if (!o.isMesh) return;

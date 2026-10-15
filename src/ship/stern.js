@@ -36,6 +36,7 @@ import { furnishCabin } from './cabin-interior.js';
 import { windowStrip } from './window-joinery.js';
 import { cutWindowApertures } from './window-apertures.js';
 import { finishSternShell, addSternOrnament } from './stern-detail.js';
+import { carvingModel, bendCarving } from './carving-assets.js';
 import { detailChoice } from './detail-lod.js';
 
 // ---------------------------------------------------------------------------
@@ -797,14 +798,31 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   const nv = Math.max(3, Math.round(cfg.sternStations * 0.28));
   const onSide = (z, y, out) => new THREE.Vector3((sideAt(z, y) + out) * side, y, z);
   const panel = SPEC.stern_carving_panel_corner.value;
-  const carvings = [];
+  const carvings = [], brackets = [];
+  // The photographed bracket (src/ship/carving-assets.js) where it is loaded: its back on
+  // the ship's side, its head under the rim, sized by its height to the bracket's drop and
+  // standing out from the side a little less than in proportion, so it carries the badge
+  // rather than reaching past it. Cinematic only: hero has no triangles to spare, and at
+  // the distances hero is seen from a bracket is a few pixels of gold either way.
+  const bracket = cfg.textureSize >= 2048 ? carvingModel('bracket', cfg) : null;
   for (const u of [0.20, 0.80]) {
     const zc = lerp(z0, z1, u);
     // The bracket hangs from the lower rim of the badge and drops its full depth below
     // it, so its head is under the rim rather than behind the badge.
     const yRim = yBotAt(zc);
-    carvings.push(carved(onSide, zc, bLen / 2, yRim - drop * 0.45, drop * 0.45,
-      { crown: relief, bevel, corner: panel, nu, nv, flip: side > 0 }));
+    if (bracket) {
+      const box = bracket.geometry.boundingBox, s = drop / (box.max.y - box.min.y);
+      brackets.push(bendCarving(bracket, (x, y, z) => onSide(zc + x * s, yRim - drop / 2 + y * s, z * s * 0.6)));
+    } else {
+      carvings.push(carved(onSide, zc, bLen / 2, yRim - drop * 0.45, drop * 0.45,
+        { crown: relief, bevel, corner: panel, nu, nv, flip: side > 0 }));
+    }
+  }
+  if (brackets.length) {
+    const photographed = new THREE.Mesh(mergeGeometries(brackets), bracket.material);
+    photographed.name = 'quarter_gallery_brackets';
+    photographed.userData.authored = true;
+    group.add(photographed);
   }
   // The boss on the hood, worked in the fore-and-aft and up-the-section coordinates of
   // the badge itself so that it lies on the bell-top however the bell-top is shaped.
