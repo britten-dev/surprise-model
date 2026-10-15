@@ -467,7 +467,7 @@ export function createMotion(ship, opts = {}) {
 
   // The hull and everything standing on her deck: no movement of their own, but they get
   // wet. The deck is always wet in this weather; the topsides only where the sea reached.
-  for (const name of ['hull', 'decks', 'furniture', 'guns', 'ports', 'boats']) {
+  for (const name of ['hull', 'decks', 'furniture', 'guns', 'ports', 'boats', 'clutter']) {
     const g = named(name);
     if (!g) continue;
     const always = name === 'decks' ? 1 : 0;

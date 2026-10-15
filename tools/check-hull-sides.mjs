@@ -44,11 +44,14 @@ try {
    const ship=build({lod,sails:'full',weather,crew:false}),part=ship.getObjectByName('hull_side_joinery');
    if(!part?.userData.hullWetProfile)throw new Error('Raised timber must share the hull water-contact profile');
    if(part.userData.bands.length!==(lod==='game'?1:2))throw new Error('Wrong quality tier');
-   rows.push({lod,weather,bands:part.userData.bands,triangles:window.stats({lod,sails:'full',weather,crew:false}).tris});
+   const triangles=window.stats({lod,sails:'full',weather,crew:false}).tris;
+   // The watch as it is actually loaded (the photographed figures, about 134k at hero and
+   // above), not a remembered figure for the Blender-authored one it replaced.
+   rows.push({lod,weather,bands:part.userData.bands,triangles,crew:window.stats({lod,sails:'full',weather}).tris-triangles});
   }
   return rows;
  });
  for(const r of rows){assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?960000:84000));
-  const crew=r.lod==='game'?4648:299096;assert.ok(r.triangles+crew<TRI_BUDGET[r.lod][1]);}
+  assert.ok(r.triangles+r.crew<TRI_BUDGET[r.lod][1],`${r.lod} ${r.weather}: ${r.triangles}+${r.crew} over export budget`);}
  assert.deepEqual(h.problems,[]);console.log(JSON.stringify(rows,null,2));
 }finally{await h.close();}

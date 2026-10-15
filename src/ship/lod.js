@@ -384,8 +384,9 @@ export function lodConfig(lod) {
 // export budgets include the optional crew; the browser host measures its
 // crew-free animated ship separately (1.6m / 960k / 84k).
 export const TRI_BUDGET = {
-  // Includes the optional 299k authored watch. The crew-free browser host still
-  // checks its 1.6m cinematic / 960k hero ship limits separately.
+  // Includes the optional watch (the photographed figures, about 134k from hero up). The
+  // crew-free browser host still checks its 1.6m cinematic / 960k hero ship limits
+  // separately.
   cinematic: [380000, 1880000],
   hero: [200000, 1260000],
   game: [30000, 88000],

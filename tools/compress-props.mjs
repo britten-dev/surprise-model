@@ -2,9 +2,9 @@
 //
 // Meshy hands back every object fitted to a box about 1.9 m on its longest side, with
 // three 2048-4096 pixel PNG maps, whatever its real size. This puts each one at the size
-// it really was, sitting on y = 0 with its length along x, and shrinks it the way
-// tools/compress-crew.mjs shrinks the watch: JPEG maps (colour and normals 1024, or 1536
-// for the boats, which are seen close; roughness half that) and meshopt.
+// it really was, sitting on y = 0 with its length along x (a boat along z, stem forward,
+// as src/ship/boats.js builds them), and shrinks it the way tools/compress-crew.mjs
+// shrinks the watch: JPEG maps (colour and normals 1024, roughness half that) and meshopt.
 //
 // The downloads live in build/crew-prototype/props/, which git ignores; the output, in
 // src/assets/props/, is committed.
@@ -36,7 +36,7 @@ const PROPS = {
   'shot-garland.glb': { name: 'shot_garland', along: 1.6 },
   'rope-coil.glb': { name: 'rope_coil', along: 0.7 },
 };
-const MAX_BYTES = { prop: 1.2e6, boat: 2.5e6 };
+const MAX_BYTES = { prop: 1.2e6, boat: 1.6e6 };
 
 await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
@@ -100,10 +100,29 @@ for (const [file, spec] of Object.entries(PROPS)) {
       normal.setElement(i, m.map(v => v / l));
     }
   }
+  // A boat goes into src/ship/boats.js's own frame: her length along z with the stem at
+  // -z. The stem is the end that is narrower across the gunwales.
+  if (spec.boat) {
+    const L = size[0] * scale[0], top = size[1] * scale[1] * 0.6;
+    const beamAt = [0, 0];
+    for (let i = 0; i < count; i++) {
+      position.getElement(i, p);
+      if (p[1] < top) continue;
+      if (p[0] < -L * 0.38) beamAt[0] = Math.max(beamAt[0], Math.abs(p[2]));
+      if (p[0] > L * 0.38) beamAt[1] = Math.max(beamAt[1], Math.abs(p[2]));
+    }
+    // Quarter turn about y: -x to -z when the stem is at -x, +x to -z when it is at +x.
+    const sign = beamAt[0] < beamAt[1] ? -1 : 1;
+    const quarter = (v) => [sign * v[2], v[1], -sign * v[0]];
+    for (let i = 0; i < count; i++) {
+      position.getElement(i, p); position.setElement(i, quarter(p));
+      if (normal) { normal.getElement(i, n); normal.setElement(i, quarter(n)); }
+    }
+  }
   for (const node of root.listNodes()) node.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([1, 1, 1]);
 
   const roughness = new Set(root.listMaterials().map(m => m.getMetallicRoughnessTexture()));
-  const base = spec.boat ? 1536 : 1024;
+  const base = 1024;
   for (const texture of root.listTextures()) {
     const size = roughness.has(texture) ? base / 2 : base;
     const jpeg = await sharp(texture.getImage())
