@@ -46,12 +46,13 @@ export function buildClutter(cfg, mats, model, ctx) {
   const zMain = ctx.zQdBreak - 1.3, zMizzen = model.fromStem(SPEC.wheel_station_from_stem.value) - 2.4;
 
   // ------------------------------------------------------------------- the waist
-  // The scuttlebutt by the mainmast, where the watch could get at it, and a pair of casks
-  // brought up from the hold and lashed to a chock until they are struck below again.
-  place('scuttlebutt', 1.95, gapNear(ctx.zQdBreak - 7.2));
+  // The scuttlebutt forward of the boats, where the watch could get at it and anyone above
+  // can see it, and a pair of casks brought up from the hold and lashed to a chock until
+  // they are struck below again.
+  place('scuttlebutt', 1.95, gapNear(ctx.zQdBreak - 11.0));
   place('lashed_casks', -1.85, gapNear(ctx.zQdBreak - 9.0), along);
   // Shot garlands along the hatchway coamings, round shot ready to hand for the guns.
-  place('shot_garland', 1.45, gapNear(ctx.zQdBreak - 11.0), along);
+  place('shot_garland', 1.45, gapNear(ctx.zQdBreak - 7.2), along);
   place('shot_garland', -1.45, gapNear(ctx.zQdBreak - 6.0), along);
   // The main tack and sheet coiled down at the foot of the mainmast.
   place('rope_coil', 0.85, ctx.zQdBreak - 2.0, 0.3);
