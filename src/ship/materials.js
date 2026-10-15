@@ -677,13 +677,19 @@ function buildMaterials(cfg) {
     runningRigging: std({ color: col('rigging_hemp'), roughness: PAINT.rigging_hemp.roughness,
       metalness: 0, normalMap: laidRopeNormal, normalScale: new THREE.Vector2(0.3, 0.3) }),
 
+    // Plain see-through glazing, as the stern lights have always cloned it. Not
+    // `transmission`, for the reason over the sail above and a worse one: while any
+    // transmissive pane is in view, three draws every opaque thing in the scene a second
+    // time, the whole sea included, into a full-size multisampled copy of the frame. Two
+    // quarter-gallery panes and a skylight were costing the game 40% of its GPU time.
     glass: new THREE.MeshPhysicalMaterial({
       color: col('glazing'),
       roughness: PAINT.glazing.roughness,
       metalness: 0,
-      transmission: 0.85,
-      thickness: 0.01,
       ior: 1.52,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
       side: THREE.DoubleSide,
     }),
 
