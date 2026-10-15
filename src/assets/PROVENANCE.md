@@ -91,3 +91,25 @@ each with the seaman's picture as its style reference and these prompts:
 
 The Blender-authored crew in `quarterdeck-detail.glb` is no longer loaded by
 default; `preloadSurfaceAssets()` now fetches the fittings-only file and these.
+
+# Deck clutter and the ship's boats
+
+`props/launch.glb`, `pinnace.glb`, `jolly_boat.glb`, `scuttlebutt.glb`,
+`lashed_casks.glb`, `hen_coop.glb`, `fire_buckets.glb`, `shot_garland.glb` and
+`rope_coil.glb` were generated with Meshy (meshy.ai) on 15 October 2026 on Meshy
+Pro with the Private licence: a reference picture from Meshy's image tool (Nano
+Banana Pro), image to 3D (Meshy 7.1, textured), then Meshy's remesh to about
+3,000 triangles (props) or 10,000 (boats). They are artistic reconstructions,
+not copies of surviving objects. `tools/compress-props.mjs` turns the downloads
+into these files: real size and orientation, JPEG maps, meshopt.
+
+Each picture was asked for as a photorealistic product photo, three-quarter view
+from slightly above, on a plain light grey studio background with soft even
+light, of: a coil of tarred hemp rope flemished down on deck; a scuttlebutt (oak
+water cask with iron hoops on a low stand, square hole with hinged lid, tin
+dipper); a hen coop (long low crate, sloping plank roof, slatted front, three
+hens); a shot garland (plank rack of cast-iron round shot); three leather fire
+buckets with a painted crown in a wooden rack; two oak casks lashed to a chock;
+and a 24 ft launch, a 24 ft pinnace and a 16 ft jolly boat, white-painted but
+weathered, chipped and salt-stained, bare oiled wood inside, oars lashed along
+the thwarts.
