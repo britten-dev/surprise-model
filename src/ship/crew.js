@@ -398,8 +398,11 @@ export function buildCrew(cfg, mats, model, ctx) {
     const y = model.standingDeckAt(zWheel);
     for (const sx of [-1, 1]) {
       const f = figure(mats, { pose: 'helm', rank: heavy ? 'oilskin' : 'seaman', seed: seed++, detail: cfg.textureSize >= 1024, cfg });
-      f.position.x = sx * .68;
-      f.position.z = zWheel - S('wheel_barrel_length') / 2 - .05 + .40;
+      // The photographed men have a real arm's length, shorter than the authored figures'
+      // reach, so they stand closer in to the wheel and a little nearer the hub.
+      const close = f.userData.crew.skinned;
+      f.position.x = sx * (close ? .60 : .68);
+      f.position.z = zWheel - S('wheel_barrel_length') / 2 - .05 + (close ? .25 : .40);
       const halfBeam = model.halfBreadthAt(f.position.z, y);
       f.position.y = model.standingDeckAt(f.position.z)
         + S('deck_camber') * (1 - (f.position.x / halfBeam) ** 2);

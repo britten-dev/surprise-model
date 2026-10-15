@@ -53,15 +53,22 @@ export function crewRig(figure) {
     footQ: [new THREE.Quaternion(), new THREE.Quaternion()], gripError: 0 };
 }
 
+// Positions and turns are read straight from matrices brought up to date top-down once per
+// man per frame. `getWorldPosition` and its kin walk back up through the whole ship on
+// every call, which for thirteen men and a few hundred lookups each was most of the cost.
+const scratchP = new THREE.Vector3(), scratchS = new THREE.Vector3();
+const place = (b, out) => out.setFromMatrixPosition(b.matrixWorld);
+const facing = (b, out) => { b.matrixWorld.decompose(scratchP, out, scratchS); return out; };
+
 const from = new THREE.Vector3(), to = new THREE.Vector3();
 /** Turn `bone` so that its child lies along `worldDir`. */
 function aim(bone, child, worldDir) {
-  bone.getWorldPosition(from);
-  child.getWorldPosition(to);
+  place(bone, from);
+  place(child, to);
   to.sub(from).normalize();
   q1.setFromUnitVectors(to, worldDir);
-  bone.getWorldQuaternion(q2);
-  bone.parent.getWorldQuaternion(q3).invert();
+  facing(bone, q2);
+  facing(bone.parent, q3).invert();
   bone.quaternion.copy(q3.multiply(q1.multiply(q2)));
   bone.updateMatrixWorld(true);
 }
@@ -71,8 +78,8 @@ function turn(bone, axis, angle) {
   if (!angle) return;
   v1.copy(axis).applyQuaternion(figureQ);
   q1.setFromAxisAngle(v1, angle);
-  bone.getWorldQuaternion(q2);
-  bone.parent.getWorldQuaternion(q3).invert();
+  facing(bone, q2);
+  facing(bone.parent, q3).invert();
   bone.quaternion.copy(q3.multiply(q1.multiply(q2)));
   bone.updateMatrixWorld(true);
 }
@@ -83,9 +90,9 @@ function turn(bone, axis, angle) {
  * toward `bend`. Returns how far short of the goal the reach fell, in metres.
  */
 function reachTo(upper, lower, end, goal, bend) {
-  upper.getWorldPosition(shoulder);
-  lower.getWorldPosition(elbow);
-  end.getWorldPosition(v3);
+  place(upper, shoulder);
+  place(lower, elbow);
+  place(end, v3);
   const l1 = shoulder.distanceTo(elbow), l2 = elbow.distanceTo(v3);
   dir.subVectors(goal, shoulder);
   const wanted = dir.length();
@@ -117,8 +124,8 @@ export function poseCrew(rig, { time, phase = 0, role = 'deck', pose = 'stand', 
   const { figure, bone } = rig;
   for (const [b, q] of rig.rest) b.quaternion.copy(q);
   bone.Hips.position.copy(rig.hips);
-  figure.updateMatrixWorld(true);
-  figure.getWorldQuaternion(figureQ);
+  figure.updateWorldMatrix(true, true);
+  facing(figure, figureQ);
   const scale = rig.armLength / .45;
 
   // ------------------------------------------------------------------- the legs
@@ -129,7 +136,7 @@ export function poseCrew(rig, { time, phase = 0, role = 'deck', pose = 'stand', 
   const haul = hauling ? .5 - .5 * Math.cos(time * (Math.PI * 2) / SPEC.motion_haul_period.value + phase) : 0;
   const give = (heavy ? .035 : .015) + haul * .04;
   const shift = .015 * Math.sin(time * .41 + phase * 1.7);
-  for (const [i, foot] of [bone.LeftFoot, bone.RightFoot].entries()) foot.getWorldQuaternion(rig.footQ[i]);
+  for (const [i, foot] of [bone.LeftFoot, bone.RightFoot].entries()) facing(foot, rig.footQ[i]);
   const hipsAt = at(rig, rig.hipsAt.x + shift * scale, rig.hipsAt.y - give * scale, rig.hipsAt.z, v3);
   bone.Hips.position.copy(bone.Hips.parent.worldToLocal(hipsAt.clone()));
   bone.Hips.updateMatrixWorld(true);
@@ -138,7 +145,7 @@ export function poseCrew(rig, { time, phase = 0, role = 'deck', pose = 'stand', 
     [bone.RightUpLeg, bone.RightLeg, bone.RightFoot]].entries()) {
     const f = rig.feet[i];
     reachTo(up, leg, foot, at(rig, f.x + Math.sign(f.x) * wide * scale, f.y, f.z), toward(Math.sign(f.x) * .15, 0, 1));
-    bone[i ? 'RightFoot' : 'LeftFoot'].parent.getWorldQuaternion(q3).invert();
+    facing(foot.parent, q3).invert();
     foot.quaternion.copy(q3.multiply(rig.footQ[i]));
     foot.updateMatrixWorld(true);
   }
@@ -159,25 +166,30 @@ export function poseCrew(rig, { time, phase = 0, role = 'deck', pose = 'stand', 
   const s = scale, sy = rig.shoulderY;
   rig.gripError = 0;
   if (role === 'helm' && wheel) {
-    // Hands on the rim on his own side, the inner one about level with his shoulder and
-    // the outer one at his chest, through a short working arc as she is steered —
-    // regripping rather than following the spokes round. Measured from his shoulder,
-    // not fixed on the clock face, so a shorter man does not hold the wheel above his head.
+    // Each hand takes the rim where it is nearest his own shoulder, the inner hand a
+    // little higher and the outer a little lower, through a short working arc as she is
+    // steered — regripping rather than following the spokes round. Measured from his
+    // shoulders, not fixed on the clock face, so a shorter man does not hold the wheel
+    // above his head and a shorter-armed one is not left reaching past it.
     const r = SPEC.wheel_diameter.value / 2 - SPEC.wheel_rim_thickness.value / 2;
     // The wheel's own frame turns with the spokes; measure him in the frame it has when
     // the helm is amidships, which is the frame the rim targets are written in below.
     wheel.updateWorldMatrix(true, false);
     const still = (p) => wheel.worldToLocal(p).applyAxisAngle(axle, wheel.rotation.z);
-    const side = Math.sign(still(bone.Hips.getWorldPosition(v1)).x) || 1;
-    const local = arms.map(([a]) => still(a.getWorldPosition(new THREE.Vector3())));
+    const side = Math.sign(still(place(bone.Hips, v1)).x) || 1;
+    const local = arms.map(([a]) => still(place(a, new THREE.Vector3())));
     for (const [i, [a, f, h, sx]] of arms.entries()) {
       const outer = local[i].x * side > local[1 - i].x * side;
-      const height = local[i].y - (outer ? .22 : .04) * s;
-      const angle = Math.acos(THREE.MathUtils.clamp(height / r, -.9, .95))
+      const nearest = Math.atan2(local[i].x * side, local[i].y - .12 * s);
+      const angle = THREE.MathUtils.clamp(nearest + (outer ? .2 : -.2), .25, 2.4)
         + .04 * Math.sin(time * .8 + i * Math.PI) * Math.abs(helm);
       target.set(side * Math.sin(angle) * r, Math.cos(angle) * r, .025)
         .applyAxisAngle(axle, -wheel.rotation.z);
       wheel.localToWorld(target);
+      // The hand bone is the wrist; stop it a palm's breadth short so the fingers close on
+      // the rim rather than the wrist sitting on it.
+      place(a, v1);
+      target.addScaledVector(v2.subVectors(v1, target).normalize(), .06 * s);
       rig.gripError = Math.max(rig.gripError, reachTo(a, f, h, target, toward(sx * .8, -.4, -.2)));
     }
   } else if (role === 'aloft') {

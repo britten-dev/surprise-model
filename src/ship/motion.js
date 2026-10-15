@@ -680,7 +680,8 @@ export function createMotion(ship, opts = {}) {
     // -------------------------------------------------------------------- the watch
     const swayAmp = deg(S('motion_crew_sway_deg'));
     const swayW = (Math.PI * 2) / S('motion_crew_sway_period');
-    for (const c of parts.crew) {
+    // A host that has hidden the watch to save frame time saves the posing too.
+    for (const c of crewGroup?.visible === false ? [] : parts.crew) {
       // A man stands upright in the world, not square to a deck that is heeled: what has
       // to be leaned is the ship's tilt, taken off him. His own heading has already been
       // applied, so the tilt is rotated into his frame before it is set — otherwise the
