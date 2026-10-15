@@ -9,6 +9,7 @@
 // before `buildShip`, and if it has not — offline, a slow connection, a host that never
 // asked — src/ship/boats.js builds its own boats and the deck stays as clean as it was.
 import * as THREE from 'three';
+import { fetchAsset } from './asset-fetch.js';
 
 export const PROP_NAMES = ['launch', 'pinnace', 'jolly_boat', 'scuttlebutt', 'lashed_casks',
   'hen_coop', 'fire_buckets', 'shot_garland', 'rope_coil'];
@@ -26,9 +27,8 @@ export function preloadProps() {
       ]);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       await Promise.all(PROP_NAMES.map(async (name) => {
-        const response = await fetch(new URL(`../assets/props/${name}.glb`, import.meta.url), { signal: abort.signal });
-        if (!response.ok) throw new Error(`Prop ${name}: HTTP ${response.status}`);
-        const gltf = await loader.parseAsync(await response.arrayBuffer(), '');
+        const bytes = await fetchAsset(new URL(`../assets/props/${name}.glb`, import.meta.url), { signal: abort.signal });
+        const gltf = await loader.parseAsync(bytes, '');
         const mesh = gltf.scene.getObjectByProperty('isMesh', true);
         mesh.castShadow = mesh.receiveShadow = true;
         mesh.material.envMapIntensity = .65;

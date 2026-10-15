@@ -1,5 +1,6 @@
 // A small Blender-made mesh shared by every detailed channel deadeye.
 import * as THREE from 'three';
+import { fetchAsset } from './asset-fetch.js';
 let prototype = null, pending;
 export function deadeyeAsset() { return prototype; }
 export function preloadDeadeyes() {
@@ -7,9 +8,7 @@ export function preloadDeadeyes() {
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), 15000);
     try {
-      const response = await fetch(new URL('../assets/rigging-deadeye.glb', import.meta.url), { signal: abort.signal });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const bytes = await response.arrayBuffer();
+      const bytes = await fetchAsset(new URL('../assets/rigging-deadeye.glb', import.meta.url), { signal: abort.signal });
       const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
       const { scene } = await new GLTFLoader().parseAsync(bytes, '');
       scene.updateMatrixWorld(true);

@@ -119,8 +119,10 @@ the thwarts.
 `hull/planks-colour.jpg` and `hull/planks-height.jpg` are cut from "Black Painted
 Planks" by Dimitrios Savva, Poly Haven (polyhaven.com/a/black_painted_planks), CC0.
 `hull/copper.jpg` is the brightness of Metal058B, ambientCG
-(ambientcg.com/a/Metal058B), CC0. Neither needs credit; both are named here so the
-source is on record.
+(ambientcg.com/a/Metal058B), CC0. `hull/spar.jpg` is the grain of "Oak Veneer 01",
+Poly Haven (polyhaven.com/a/oak_veneer_01), CC0, smoothed along the grain so the oak's
+rays go, and laid on the masts and yards by `src/ship/spar-finish.js`. None needs credit;
+all are named here so the source is on record.
 
 `tools/import-scans.mjs` fetches the 2K maps and makes these files: one strip per
 board of the plank scan, each board centred on mid-grey, the height inverted and
@@ -130,3 +132,20 @@ behind. The ship's paint and copper colours still come from the spec — the sca
 only bring light and shade. They are loaded with the rest of the detail by
 `preloadSurfaceAssets()` and used at hero and cinematic; the game level, which
 phones build, keeps its drawn planks.
+
+# The stern's carving
+
+`carvings/cartouche.glb`, `scroll.glb` and `bracket.glb` were generated with Meshy
+(meshy.ai) on 15 October 2026 on Meshy Pro with the Private licence: a reference
+picture from Meshy's image tool (Nano Banana Pro), image to 3D (Meshy 7.1, textured),
+then Meshy's remesh to about 10,000 triangles (cartouche and scroll) or 3,000
+(bracket). They are period-style reconstructions, not copies of Surprise's own carving,
+which is not recorded. `tools/compress-carvings.mjs` turns the downloads into these
+files: JPEG maps, the colour moved to the spec's gilt, meshopt.
+
+Each picture was asked for as a photorealistic product photo on a plain light grey
+studio background with soft even light, of carved oak covered in worn gold leaf with a
+flat back, from the stern of a 1790s Royal Navy frigate: an oval cartouche of acanthus
+leaves round a scallop shell, seen straight on; a long scroll of acanthus curling into
+a spiral at one end, seen straight on; and an S-shaped acanthus console from under the
+quarter gallery, gadrooned underneath, seen from the side.

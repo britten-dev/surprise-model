@@ -5,10 +5,13 @@
 // scan, laid along x, about mid-grey. `colour` is the scuffs, scratches and grain under
 // the paint; `height` is the same inverted and softened, a scratch being a shallow groove.
 // `copper` is the brightness of a photographed sheet of weathered copper (Metal058B,
-// ambientCG, CC0), for src/ship/textures.js's copperSheathing.
+// ambientCG, CC0), for src/ship/textures.js's copperSheathing, and `spar` the grain of a
+// long sliced board ("Oak Veneer 01", Poly Haven, CC0), for src/ship/spar-finish.js.
 //
 // Like the photographed crew and boats they are optional: `preloadHullScan()` has to have
 // finished before `buildShip`, and if it has not, the planks keep their drawn grain.
+import { fetchImage } from './asset-fetch.js';
+
 export const HULL_SCAN = {
   strip: 64,        // pixels per board across
   length: 1024,     // pixels per board along
@@ -22,15 +25,10 @@ export function getHullScan() { return scan; }
 export function preloadHullScan() {
   pending ??= new Promise((resolve) => {
     const deadline = setTimeout(() => resolve(false), 15000);
-    const load = (name) => new Promise((done, fail) => {
-      const image = new Image();
-      image.onload = () => done(image);
-      image.onerror = fail;
-      image.src = new URL(`../assets/hull/${name}.jpg`, import.meta.url).href;
-    });
-    Promise.all([load('planks-colour'), load('planks-height'), load('copper')]).then(([colour, height, copper]) => {
+    const load = (name) => fetchImage(new URL(`../assets/hull/${name}.jpg`, import.meta.url));
+    Promise.all(['planks-colour', 'planks-height', 'copper', 'spar'].map(load)).then(([colour, height, copper, spar]) => {
       clearTimeout(deadline);
-      scan = { ...HULL_SCAN, colour, height, copper, boards: Math.floor(colour.naturalHeight / HULL_SCAN.strip) };
+      scan = { ...HULL_SCAN, colour, height, copper, spar, boards: Math.floor(colour.naturalHeight / HULL_SCAN.strip) };
       resolve(true);
     }, () => { clearTimeout(deadline); resolve(false); });
   });

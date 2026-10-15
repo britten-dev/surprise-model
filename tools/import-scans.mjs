@@ -21,8 +21,11 @@
 // her a few months out of dock, brown rather than green, and src/ship/weathering.js
 // already paints what verdigris she has.
 //
-// Sources: "Black Painted Planks" by Dimitrios Savva, Poly Haven, CC0, and Metal058B,
-// ambientCG, CC0. The 2K maps are fetched into build/scans/ (git-ignored) on first run.
+// The spars get the grain of a varnished board, at the bottom of this file.
+//
+// Sources: "Black Painted Planks" by Dimitrios Savva and "Oak Veneer 01", Poly Haven, CC0,
+// and Metal058B, ambientCG, CC0. The 2K maps are fetched into build/scans/ (git-ignored)
+// on first run.
 // Provenance is in src/assets/PROVENANCE.md.
 //
 //   node tools/import-scans.mjs
@@ -131,4 +134,38 @@ try { await access(metalFile); } catch {
   const jpeg = await sharp(out, { raw: { width: 1024, height: 1024, channels: 1 } }).jpeg({ quality: 85 }).toBuffer();
   await writeFile(new URL('copper.jpg', target), jpeg);
   console.log(`copper    1024x1024, ${(jpeg.length / 1024).toFixed(0)} KB (scan mean ${mean.toFixed(0)}, sd ${sd.toFixed(1)})`);
+}
+
+// The spars: a 512 square for src/ship/spar-finish.js, whose tile is 0.8 m round the spar
+// and 4 m along it. "Oak Veneer 01" (Poly Haven, CC0) is long, straight grain with the
+// drawn-out cathedral figure a shaved, tapered spar shows where its taper cuts the growth
+// rings, and no seams. Its colour is not used — the spec's bright varnish is — only the
+// grain. It is 1.83 m square: one copy goes round the spar's 0.8 m and two, end to end,
+// make up the 4 m. The scan tiles, so the square does too, both ways.
+{
+  const SPAR = 'oak_veneer_01', size = 512, copies = 2, each = Math.round(size / copies);
+  const file = new URL(`${SPAR}_diff_2k.jpg`, scans);
+  try { await access(file); } catch {
+    const url = `https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/${SPAR}/${SPAR}_diff_2k.jpg`;
+    const response = await fetch(url);
+    assert.ok(response.ok, `${url}: HTTP ${response.status}`);
+    await writeFile(file, Buffer.from(await response.arrayBuffer()));
+  }
+  const copy = await sharp(await readFile(file)).greyscale().resize(size, each, { fit: 'fill' }).raw().toBuffer();
+  const stacked = await sharp(Buffer.concat(Array(copies).fill(copy)), { raw: { width: size, height: each * copies, channels: 1 } })
+    .resize(size, size, { fit: 'fill' }).extractChannel(0).raw().toBuffer();
+  // Smoothed along the grain, wrapping round, so that the oak's rays — short flecks across
+  // the grain, which a fir spar does not have — go, and the streaks and the figure stay.
+  const RUN = 12, grey = new Float64Array(size * size);
+  for (let x = 0; x < size; x++) for (let y = 0; y < size; y++) {
+    let t = 0; for (let k = -RUN; k <= RUN; k++) t += stacked[((y + k + size) % size) * size + x];
+    grey[y * size + x] = t / (2 * RUN + 1);
+  }
+  let mean = 0; for (const v of grey) mean += v; mean /= grey.length;
+  let sd = 0; for (const v of grey) sd += (v - mean) ** 2; sd = Math.sqrt(sd / grey.length);
+  const out = Buffer.alloc(grey.length);
+  for (let i = 0; i < grey.length; i++) out[i] = Math.max(0, Math.min(255, Math.round(128 + (grey[i] - mean) / sd * 24)));
+  const jpeg = await sharp(out, { raw: { width: size, height: size, channels: 1 } }).jpeg({ quality: 88 }).toBuffer();
+  await writeFile(new URL('spar.jpg', target), jpeg);
+  console.log(`spar      ${size}x${size}, ${(jpeg.length / 1024).toFixed(0)} KB (scan mean ${mean.toFixed(0)}, sd ${sd.toFixed(1)})`);
 }

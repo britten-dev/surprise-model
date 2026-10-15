@@ -6,6 +6,7 @@ import {mergeGeometries} from '../util/loft.js';
 import {audit} from '../audit/measure.js';
 import {normalFrom,asTexture} from './textures.js';
 import {joineryFinish,carvedGiltFinish} from './stern-finishes.js';
+import {carvingModel,bendCarving} from './carving-assets.js';
 
 const font=new FontLoader().parse(lettering), finishes=new Map();
 const hash=n=>{const x=Math.sin(n*127.1+31.7)*43758.5453;return x-Math.floor(x);};
@@ -135,6 +136,21 @@ export function addSternOrnament(cfg,mats,sp,lights,group){
  text.computeVertexNormals();text.computeBoundingBox();text.computeBoundingSphere();const name=new T.Mesh(giltUV(text),gold);name.name='stern_name';audit(name,'stern_name_length','extent_x');group.add(name);
  const cy=T.MathUtils.lerp(lights.yHead+SPEC.stern_light_munion.value*2,sp.yTaff,.42);
  const ow=SPEC.taffrail_ornament_width.value,oh=SPEC.taffrail_ornament_height.value;
+ // The photographed carving (src/ship/carving-assets.js) where it is loaded: the cartouche
+ // filling the counter between the heads of the lights and the taffrail, and a scroll each
+ // side of it out to where the drawn scrollwork ends, curling at the outer end. Each is
+ // bent round the counter through the same surface everything else here is cut on.
+ const cartouche=carvingModel('cartouche',cfg),scroll=carvingModel('scroll',cfg);
+ if(cartouche&&scroll){
+  const lo=lights.yHead+SPEC.stern_light_munion.value*2,hi=sp.yTaff-.06,mid=(lo+hi)/2;
+  const cb=cartouche.geometry.boundingBox,cs=(hi-lo)*.86/(cb.max.y-cb.min.y),halfWidth=(cb.max.x-cb.min.x)*cs/2;
+  const pieces=[new T.Mesh(bendCarving(cartouche,(x,y,z)=>on(x*cs,mid+y*cs,.004+z*cs)),cartouche.material)];
+  const sb=scroll.geometry.boundingBox,start=halfWidth+.03,end=lights.halfSpan*.84;
+  const ss=(end-start)/(sb.max.x-sb.min.x);
+  for(const side of [-1,1])pieces.push(new T.Mesh(bendCarving(scroll,
+   (x,y,z)=>on(side*(start+(x-sb.min.x)*ss),mid+y*ss,.004+z*ss)),scroll.material));
+  pieces.forEach((m,i)=>{m.name=i?'stern_scroll':'stern_cartouche';m.userData.authored=true;group.add(m);});
+ }else{
  grounds.push(panel(0,cy,ow*.94,oh*.82,.012,oh*.32));
  details.push(oval(0,cy,ow*.48,oh*.44,.035,.012));
  details.push(oval(0,cy,ow*.42,oh*.35,.034,.006));
@@ -145,7 +161,9 @@ export function addSternOrnament(cfg,mats,sp,lights,group){
   details.push(tube([[0,cy-oh*.24,.025],[Math.sin(a)*ow*.15,cy+oh*.04,.048],[Math.sin(a)*ow*.29,cy+Math.cos(a)*oh*.26,.025]],.006,12));
   details.push(leaf(0,cy-oh*.22,Math.sin(a)*ow*.29,cy+Math.cos(a)*oh*.26,ow*.073,.029));
  }
+ }
  for(const side of [-1,1]){
+  if(!(cartouche&&scroll)){
   const start=ow*.55,end=lights.halfSpan*.84;
   for(let k=0;k<2;k++){
    const cx=T.MathUtils.lerp(start,end,(k+.5)/2),rx=(end-start)*.23,ry=oh*(k?.23:.29);
@@ -159,10 +177,11 @@ export function addSternOrnament(cfg,mats,sp,lights,group){
     details.push(leaf(x,y,x+side*rx*.47,y-ry*.35,ry*.30));
    }
   }
+  }
   // Paired narrow channels give the end pieces relief without large gold blobs.
   const x=side*(sp.halfBreadth(cy)-SPEC.stern_term_piece_width.value);
   for(const offset of [-.03,.03])details.push(tube([[x+offset,lights.yHead+.10,.022],[x+offset-side*.035,cy,.034],[x+offset,sp.yTaff-.16,.022]],.011,24));
  }
- const base=new T.Mesh(mergeGeometries(grounds),mats.black);base.name='stern_carving_ground';group.add(base);
+ if(grounds.length){const base=new T.Mesh(mergeGeometries(grounds),mats.black);base.name='stern_carving_ground';group.add(base);}
  const carving=new T.Mesh(giltUV(mergeGeometries(details)),gold);carving.name='stern_carving';group.add(carving);
 }

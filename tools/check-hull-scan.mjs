@@ -1,4 +1,4 @@
-// The photographed planking and copper change the hull's finish and nothing else.
+// The photographed planking, copper and spar grain change the finish and nothing else.
 //
 // Builds the hull's materials before and after src/ship/hull-scan.js has loaded, and asks:
 //
@@ -8,6 +8,7 @@
 //     stays black and ochre stays ochre;
 //   - the scan shows: the planking and the copper both carry more fine variation than
 //     the drawing did;
+//   - the spars keep the spec's bright varnish and black, and the scan shows on them too;
 //   - the game level, the one phones build, is pixel for pixel what it was.
 //
 //   node tools/check-hull-scan.mjs
@@ -22,6 +23,7 @@ try {
     const { lodConfig } = await import('/src/ship/lod.js');
     const { preloadHullScan } = await import('/src/ship/hull-scan.js');
     const { V } = await import('/src/ship/hull.js');
+    const { sparMaterials } = await import('/src/ship/spar-finish.js');
     const { PAINT } = await import('/src/spec/spec.js');
     const pixels = (texture) => {
       const { width, height } = texture.image;
@@ -47,10 +49,18 @@ try {
     const hash = ({ data }) => { let a = 0; for (let i = 0; i < data.length; i += 7) a = (a * 31 + data[i]) >>> 0; return a; };
     const build = (lod) => makeMaterials.uncached(lodConfig(lod));
 
+    // A spar map's mean colour and its fine detail across the grain, as for the hull rows.
+    const spar = (texture) => {
+      const r = rows(pixels(texture));
+      return { mean: [0, 1, 2].map((c) => r.reduce((t, row) => t + row.mean[c], 0) / r.length), fine: r.reduce((t, row) => t + row.fine, 0) / r.length };
+    };
+    const spars = (finish) => ({ bright: spar(finish.bright.map), black: spar(finish.black.map) });
+    const drawnSpars = spars(sparMaterials(lodConfig('cinematic')));
     const drawnCinematic = build('cinematic'), drawnGame = build('game');
     const before = { cin: rows(pixels(drawnCinematic.hull.map)), game: hash(pixels(drawnGame.hull.map)) };
     const loaded = await preloadHullScan();
     const scannedCinematic = build('cinematic'), scannedGame = build('game');
+    const scannedSpars = spars(sparMaterials(lodConfig('cinematic')));
     const after = { cin: rows(pixels(scannedCinematic.hull.map)), game: hash(pixels(scannedGame.hull.map)) };
 
     const size = before.cin.length;
@@ -79,7 +89,7 @@ try {
       if (delta >= worst.delta) worst = { delta, rows: [a, b], paint: colour, before: was.map(Math.round), after: now.map(Math.round) };
     }
     return {
-      loaded, worst, spread, bands: bands.length,
+      loaded, worst, spread, bands: bands.length, spars: { drawn: drawnSpars, scanned: scannedSpars },
       finish: [drawnCinematic.hull.userData.hullFinish, scannedCinematic.hull.userData.hullFinish, scannedGame.hull.userData.hullFinish],
       gameSame: before.game === after.game,
     };
@@ -92,10 +102,17 @@ try {
     const [drawn, scanned] = report.spread[part];
     assert.ok(scanned > drawn * 1.1, `${part}: the scan shows (fine detail ${drawn.toFixed(0)} drawn, ${scanned.toFixed(0)} scanned)`);
   }
+  for (const kind of ['bright', 'black']) {
+    const { drawn, scanned } = { drawn: report.spars.drawn[kind], scanned: report.spars.scanned[kind] };
+    const delta = Math.max(...scanned.mean.map((m, c) => Math.abs(m - drawn.mean[c])));
+    assert.ok(delta <= 6, `${kind} spars keep their colour (${drawn.mean.map(Math.round)} drawn, ${scanned.mean.map(Math.round)} scanned)`);
+  }
+  assert.ok(report.spars.scanned.bright.fine > 0.5, `the spar grain shows (${report.spars.scanned.bright.fine.toFixed(2)})`);
   assert.ok(report.gameSame, 'the game level hull is unchanged');
   console.log(`ok   hull scan: ${report.bands} bands within ${report.worst.delta.toFixed(1)} grey levels; `
     + `fine detail planks ${report.spread.plank.map((v) => v.toFixed(0)).join(' -> ')}, `
-    + `copper ${report.spread.copper.map((v) => v.toFixed(0)).join(' -> ')}; game level unchanged`);
+    + `copper ${report.spread.copper.map((v) => v.toFixed(0)).join(' -> ')}; `
+    + `spars ${report.spars.drawn.bright.mean.map(Math.round)} -> ${report.spars.scanned.bright.mean.map(Math.round)}; game level unchanged`);
 } finally {
   const errors = h.problems.filter((p) => /pageerror/.test(p));
   await h.close();
