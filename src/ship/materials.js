@@ -685,6 +685,11 @@ function buildMaterials(cfg) {
     // transmissive pane is in view, three draws every opaque thing in the scene a second
     // time, the whole sea included, into a full-size multisampled copy of the frame. Two
     // quarter-gallery panes and a skylight were costing the game 40% of its GPU time.
+    //
+    // One pass, both faces. Left to itself three draws a see-through double-sided material
+    // twice, back faces then front, and marks it for a fresh shader check before each draw,
+    // every frame in every pass. A flat pane has no back faces behind its front ones to
+    // sort, so the second draw buys nothing.
     glass: new THREE.MeshPhysicalMaterial({
       color: col('glazing'),
       roughness: PAINT.glazing.roughness,
@@ -694,6 +699,7 @@ function buildMaterials(cfg) {
       opacity: 0.16,
       depthWrite: false,
       side: THREE.DoubleSide,
+      forceSinglePass: true,
     }),
 
     bunting: (key) => std({
