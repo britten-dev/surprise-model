@@ -122,10 +122,10 @@ export function planking({
 export function copperSheathing({
   base = '#8d5a3c', edge = '#6d4028', nail = '#a97a55',
   sheetsX = 16, sheetsY = 20, size = 1024, seed = 23,
-  variation = 0.16, lap = 0.34, nailRelief = 0.55, height = false,
+  variation = 0.16, lap = 0.34, nailRelief = 0.55, height = false, mottle = null,
 } = {}) {
   const key = `copper:${base}:${edge}:${nail}:${sheetsX}x${sheetsY}:${size}:${seed}`
-    + `:${variation}:${lap}:${nailRelief}:${height}`;
+    + `:${variation}:${lap}:${nailRelief}:${height}:${!!mottle}`;
   return memo(key, () => {
     const { c, g } = canvas(size);
     const r = rng(seed);
@@ -164,6 +164,19 @@ export function copperSheathing({
         // The seeded positions match in colour and relief; no baked sun direction.
         g.save();
         g.beginPath(); g.rect(px, py, w, h); g.clip();
+        // `mottle`, when given, is a photographed sheet's brightness about mid-grey, and
+        // every sheet takes its own patch of it, overlaid so the face keeps its shade.
+        // The patch is chosen by the sheet's place in the repeat, not by `r`, so the
+        // colour and height passes stay in step and the half sheets either side of the
+        // wrap are the two halves of one sheet.
+        if (mottle && !height) {
+          const n = y * sheetsX + ((x % sheetsX) + sheetsX) % sheetsX;
+          const pick = (k) => { const v = Math.sin(n * 91.7 + k * 13.1) * 43758.5453; return v - Math.floor(v); };
+          const cw = mottle.width * 0.6, ch = cw * (h / w);
+          g.globalCompositeOperation = 'overlay'; g.globalAlpha = 0.75;
+          g.drawImage(mottle, pick(1) * (mottle.width - cw), pick(2) * (mottle.height - ch), cw, ch, px, py, w, h);
+          g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+        }
         for (let k = 0; k < 4; k++) {
           const cx = px + r() * w, cy = py + r() * h;
           const radius = h * (0.5 + r());

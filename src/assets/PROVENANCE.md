@@ -113,3 +113,20 @@ buckets with a painted crown in a wooden rack; two oak casks lashed to a chock;
 and a 24 ft launch, a 24 ft pinnace and a 16 ft jolly boat, white-painted but
 weathered, chipped and salt-stained, bare oiled wood inside, oars lashed along
 the thwarts.
+
+# Photographed hull planking and copper
+
+`hull/planks-colour.jpg` and `hull/planks-height.jpg` are cut from "Black Painted
+Planks" by Dimitrios Savva, Poly Haven (polyhaven.com/a/black_painted_planks), CC0.
+`hull/copper.jpg` is the brightness of Metal058B, ambientCG
+(ambientcg.com/a/Metal058B), CC0. Neither needs credit; both are named here so the
+source is on record.
+
+`tools/import-scans.mjs` fetches the 2K maps and makes these files: one strip per
+board of the plank scan, each board centred on mid-grey, the height inverted and
+softened from the colour (the scan's own displacement and roughness maps were flat
+or a copy of the colour); and the copper sheet's brightness alone, its green left
+behind. The ship's paint and copper colours still come from the spec — the scans
+only bring light and shade. They are loaded with the rest of the detail by
+`preloadSurfaceAssets()` and used at hero and cinematic; the game level, which
+phones build, keeps its drawn planks.
