@@ -49,11 +49,64 @@ await copyDir(
   path.join(three, 'build'),
   (_, e) => e.isDirectory() || (e.name.endsWith('.js') && !e.name.includes('.cjs'))
 );
-await copyDir(
-  path.join(ROOT, 'node_modules/three/examples/jsm/controls'),
-  path.join(three, 'examples/jsm/controls'),
-  (_, e) => e.isDirectory() || e.name === 'OrbitControls.js'
-);
+// The add-ons: every file under examples/jsm that the shipped code imports, and everything
+// those files import in turn, worked out from the imports themselves.
+//
+// This used to be a list written by hand, and that is deliberately gone. The list named
+// `OrbitControls.js` exactly, and the day viewer/post.js started importing six modules out
+// of `postprocessing/`, and the generator started using RoundedBoxGeometry and GLTFLoader,
+// the deployed site broke completely — not gracefully, but with an empty control panel and
+// a black canvas, because a failed module import kills the whole script that was going to
+// draw the ship. Nothing in the local development server notices: it serves node_modules
+// straight off the disk, so the only place the omission exists is the built site.
+//
+// So nothing here names an add-on. Every `three/addons/` specifier in src/ and viewer/ is
+// a starting point, static and dynamic imports alike, and each add-on's own imports are
+// followed from there, which is how the passes bring in shaders/ and GLTFLoader brings in
+// utils/. A specifier naming a file three does not have stops the build here, rather than
+// becoming a 404 on the live site. All of examples/jsm would also work, but it is 14 MB,
+// most of it decoders and physics engines nothing here loads.
+const JSM = path.join(ROOT, 'node_modules/three/examples/jsm');
+const ADDON = /['"]three\/addons\/([^'"]+)['"]/g;
+const IMPORT =
+  /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)|\b(?:import|export)\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+const addons = new Map(); // add-on file -> the file that first asked for it
+const want = (file, from, spec) => {
+  if (addons.has(file)) return;
+  addons.set(file, { from, spec });
+};
+for (const dir of ['src', 'viewer']) {
+  for (const e of await fs.readdir(path.join(ROOT, dir), { withFileTypes: true, recursive: true })) {
+    if (!e.isFile() || !/\.(m?js|html)$/.test(e.name)) continue;
+    const file = path.join(e.parentPath, e.name);
+    for (const [spec, rest] of (await fs.readFile(file, 'utf8')).matchAll(ADDON)) {
+      want(path.join(JSM, rest), file, spec);
+    }
+  }
+}
+// The Map grows while it is walked, which is what follows the imports all the way down.
+for (const [file, { from, spec }] of addons) {
+  let text;
+  try {
+    text = await fs.readFile(file, 'utf8');
+  } catch {
+    throw new Error(`${path.relative(ROOT, from)} imports '${spec}', which three does not have.`);
+  }
+  // Comments first: three's own documentation shows imports in them.
+  text = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const m of text.matchAll(IMPORT)) {
+    const next = m[1] ?? m[2];
+    // `three` itself is the build directory, copied whole above.
+    if (next.startsWith('three/addons/')) want(path.join(JSM, next.slice(13)), file, next);
+    else if (next.startsWith('.')) want(path.resolve(path.dirname(file), next), file, next);
+  }
+}
+for (const file of addons.keys()) {
+  const dst = path.join(three, 'examples/jsm', path.relative(JSM, file));
+  await fs.mkdir(path.dirname(dst), { recursive: true });
+  await fs.copyFile(file, dst);
+}
+console.log(`  ${addons.size} three add-on file(s) included`);
 
 // The viewer is the site.
 await fs.copyFile(path.join(ROOT, 'viewer/index.html'), path.join(DIST, 'index.html'));
