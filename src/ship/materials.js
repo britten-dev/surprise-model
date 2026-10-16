@@ -852,12 +852,14 @@ function scannedWood(drawn, grain) {
  *
  * `scanned` is the one exception to the paint keeping its colour. A multiply cannot show
  * a scratch through black paint — near-black times anything is near-black — so where the
- * photographed boards (src/ship/hull-scan.js) are at their brightest, the worn primer and
- * timber under the paint is added on top. It is a few per cent of the planking, in scuffs
- * and scratches, and the drawn planking never reaches the threshold.
+ * photographed boards (src/ship/hull-scan.js) are at their brightest, the paint gives
+ * way to the bare weathered timber under it: a few per cent of the planking, in chips and
+ * scratches, and the drawn planking never reaches the threshold. With it comes the dirt
+ * gathered under every ledge; both are wear, and both keep each band its own colour.
  */
-// Weathered primer over grey timber, as it shows through a scratch in the paint.
-const WORN = [62, 55, 45];
+// Bare weathered timber, as it shows where the paint has chipped off: lighter than the
+// black round it and darker than the ochre, so a chip reads on either.
+const WORN = [112, 92, 70];
 function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size, scanned = false) {
   const read = (src) => {
     const c = document.createElement('canvas');
@@ -883,6 +885,51 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size, scanned
 
   const lum = (a, i) => (a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114) / 255;
 
+  // Dirt under every ledge. Each step in the paint is a moulding or the edge of a strake,
+  // and what the rain washes off the face above it gathers just below: a soft dark band,
+  // thickest at the line and gone within a couple of inches, broken along its length.
+  // `ledge[y]` is how far each row is below the nearest step above it.
+  const ledge = new Float32Array(size).fill(Infinity);
+  if (scanned) {
+    const mid = size >> 1, at = (y) => (y * size + mid) * 4;
+    for (let y = 1, last = -Infinity; y < copperFirstRow; y++) {
+      const a = at(y), b = at(y - 1);
+      // The paint strip softens each step over a dozen rows; the ledge is where it ends.
+      if (Math.abs(d[a] - d[b]) + Math.abs(d[a + 1] - d[b + 1]) + Math.abs(d[a + 2] - d[b + 2]) > 12) last = y;
+      ledge[y] = y - last;
+    }
+  }
+  // The band runs a couple of inches below the ledge, and here and there a drip runs on
+  // down the face for a foot or more: `run[x]` is how far, as a multiple of the band.
+  const fall = size * 0.012;
+  const hash = (n) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  const grimeAlong = Float32Array.from({ length: size }, (_, x) =>
+    0.55 + 0.45 * Math.sin(x / size * 71 + Math.sin(x / size * 13) * 2) * Math.sin(x / size * 23 + 1));
+  const run = new Float32Array(size).fill(1);
+  // About three to the metre, an inch or two wide with soft sides.
+  for (let k = 0, drips = Math.round(size / 110); k < drips; k++) {
+    const x0 = Math.floor(hash(k) * size), width = Math.max(3, Math.round((0.025 + hash(k + 0.5) * 0.035) * size / 12.192));
+    const length = 3 + hash(k + 0.25) * 9;
+    for (let x = x0; x < x0 + width; x++) {
+      const across = Math.sin(Math.PI * (x - x0 + 0.5) / width);
+      run[x % size] = Math.max(run[x % size], 1 + (length - 1) * across * across);
+    }
+  }
+  // Sun-bleached and rain-darkened patches a metre or two across, lightening and darkening
+  // about the paint's own colour so each band keeps its mean: the unevenness of a
+  // commission's weather on paint, which at any distance is the first thing that says
+  // a ship has been at sea and the last thing a repaint leaves.
+  const lattice = Float32Array.from({ length: 64 * 64 }, (_, n) => hash(n * 1.37 + 7));
+  const blotch = (u, v) => {
+    const i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, su = fu * fu * (3 - 2 * fu), sv = fv * fv * (3 - 2 * fv);
+    const at = (a, b) => lattice[((b % 64) + 64) % 64 * 64 + ((a % 64) + 64) % 64];
+    const top = at(i, j) + (at(i + 1, j) - at(i, j)) * su, bottom = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * su;
+    return top + (bottom - top) * sv;
+  };
+  // Eight cells along the map's 12.2 m and forty up its height: patches a metre and a half
+  // long and a little less than that high.
+  const weather = (x, y) => (blotch(x / size * 8, y / size * 40) - 0.5) * 2;
+
   for (let y = 0; y < size; y++) {
     const underwater = y >= copperFirstRow;
     const src = underwater ? copper : plank;
@@ -892,9 +939,11 @@ function combinePlankAndPaint(plankCanvas, copperCanvas, paintTex, size, scanned
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
       const l = lum(src, i), k = 1 + (l - 0.5) * 2 * depth;
-      const worn = scanned && !underwater ? Math.max(0, Math.min(1, (l - 0.70) / 0.25)) : 0;
+      const worn = scanned && !underwater ? Math.max(0, Math.min(1, (l - 0.68) / 0.24)) * 0.85 : 0;
+      const grime = scanned && !underwater ? 0.32 * Math.exp(-ledge[y] / (fall * run[x])) * grimeAlong[x] : 0;
+      const bleach = scanned && !underwater ? 1 + 0.12 * weather(x, y) : 1;
       for (let c=0;c<3;c++) d[i+c] = Math.min(255, underwater
-        ? copper[i+c] * (0.9 + 0.1*k) : d[i+c] * k + worn * WORN[c]);
+        ? copper[i+c] * (0.9 + 0.1*k) : (d[i+c] * k * bleach * (1 - worn) + worn * WORN[c]) * (1 - grime));
       d[i + 3] = 255;
     }
   }
