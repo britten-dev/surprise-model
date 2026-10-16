@@ -382,10 +382,17 @@ export function lodConfig(lod) {
 //
 // Mast tops retain open access and load-bearing structure at every tier. The
 // export budgets include the optional crew; the browser host measures its
-// crew-free animated ship separately (1.6m / 960k / 84k).
+// crew-free animated ship separately (1.6m / 1.0m / 84k).
+//
+// The hero figure was 960k until 16 October 2026, a guard rather than a measurement. Then
+// it was measured, in the game on the GPU of an M2 Max at hero's own settings: the whole
+// ship costs about 1.7 ms of a 14 ms frame, and each further 100k triangles about 0.4 ms
+// — perhaps 2.5 ms on the basic Intel graphics that get hero, going by published speeds.
+// 1.0m lets hero carry the deck clutter and the gallery brackets for well under a
+// millisecond there; the crew's posing and the ship's motion cost the CPU far more.
 export const TRI_BUDGET = {
   // Includes the optional watch (the photographed figures, about 134k from hero up). The
-  // crew-free browser host still checks its 1.6m cinematic / 960k hero ship limits
+  // crew-free browser host still checks its 1.6m cinematic / 1.0m hero ship limits
   // separately.
   cinematic: [380000, 1880000],
   hero: [200000, 1260000],

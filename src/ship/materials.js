@@ -475,7 +475,10 @@ function buildMaterials(cfg) {
     cfg, 512
   );
 
-  const oakGrain = woodGrain({ base: PAINT.timber.hex, dark: '#5a4529', light: '#b08a5a', size: N / 2, seed: 9 });
+  // Oak from the photographed grain (src/ship/hull-scan.js) where the level is close enough
+  // to see it — the rails, davits, capstan and fittings fill much of the view from the helm.
+  const oakDrawn = woodGrain({ base: PAINT.timber.hex, dark: '#5a4529', light: '#b08a5a', size: N / 2, seed: 9 });
+  const oakGrain = getHullScan() && N >= 1024 ? scannedWood(oakDrawn, getHullScan().spar) : oakDrawn;
   const brightGrain = woodGrain({ base: PAINT.mast_bright.hex, dark: '#6d5330', light: '#c19a63', size: N / 2, seed: 13 });
   const oak = asTexture(oakGrain);
   const brightWood = asTexture(brightGrain);
@@ -533,7 +536,10 @@ function buildMaterials(cfg) {
   // repeat is right for both. Ten is chosen so the largest of them — the inboard works
   // through the waist — reads as boards rather than as stretched bands; on the small
   // parts it lands as the fine tooth of paint, which is what those want anyway.
-  const paintedGrain = paintedSurface({ size: Math.max(256, N / 2) });
+  // The scanned painted planking in place of the drawn boards where the level is close enough
+  // to see it: the inner bulwarks are the largest thing in view from the helm.
+  const paintedDrawn = paintedSurface({ size: Math.max(256, N / 2) });
+  const paintedGrain = getHullScan() && N >= 1024 ? scannedPaint(paintedDrawn, getHullScan()) : paintedDrawn;
   const paintedTex = asTexture(paintedGrain, { repeat: [1, 1] });
   // The roughness and detail-normal companions to paintedTex, built once and shared the
   // same way the colour map is: a roughness *multiplier* (see the note over
@@ -767,6 +773,68 @@ function buildMaterials(cfg) {
   mats.hull.userData.hullFinish = getHullScan() && hullSize >= 1024 ? 'scanned-timber-v1' : 'caulked-timber-v3';
 
   return mats;
+}
+
+/** A canvas's mean grey, 0-255, over its red, green and blue. */
+function meanOf(canvas) {
+  const g = canvas.getContext('2d', { willReadFrequently: true });
+  const d = g.getImageData(0, 0, canvas.width, canvas.height).data;
+  let t = 0;
+  for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2];
+  return t / (d.length / 4 * 3);
+}
+
+/**
+ * The painted-surface modulation map (see paintedSurface in textures.js) from the
+ * photographed painted planks instead of drawn boards: the same nine boards to the tile,
+ * each a board of the scan run along its length, and the same joints between them. It is
+ * a light-and-shade map about white like the drawn one, and kept at the drawn one's mean,
+ * so every painted thing it is laid on keeps the shade of its spec colour.
+ */
+function scannedPaint(drawn, scan) {
+  const size = drawn.width, boards = 9, step = size / boards;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  for (let i = 0; i < boards; i++) {
+    const b = Math.floor(Math.abs(Math.sin(i * 12.9898 + 4.1) * 43758.5453) % 1 * scan.boards);
+    g.drawImage(scan.colour, 0, b * scan.strip, scan.length, scan.strip, 0, i * step, size, step);
+  }
+  const target = meanOf(drawn), img = g.getImageData(0, 0, size, size), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = Math.max(0, Math.min(255, target + (d[i] - 128) * 0.95));
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+  g.putImageData(img, 0, 0);
+  g.fillStyle = 'rgba(0,0,0,.06)';
+  for (let i = 0; i < boards; i++) g.fillRect(0, i * step, size, Math.max(1, size / 340));
+  return c;
+}
+
+/**
+ * A wood colour map from the photographed grain (the spar scan, turned so that its grain
+ * runs along x as woodGrain's does): every pixel of the drawn map's mean colour, lightened
+ * and darkened by the scan, so the timber keeps its spec colour and gains a real grain.
+ */
+function scannedWood(drawn, grain) {
+  const size = drawn.width;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.translate(size, 0); g.rotate(Math.PI / 2);
+  g.drawImage(grain, 0, 0, size, size);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const dg = drawn.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, size, size).data;
+  const mean = [0, 0, 0];
+  for (let i = 0; i < dg.length; i += 4) for (let k = 0; k < 3; k++) mean[k] += dg[i + k];
+  for (let k = 0; k < 3; k++) mean[k] /= dg.length / 4;
+  const img = g.getImageData(0, 0, size, size), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const k = 1 + (d[i] - 128) / 128 * 0.55;
+    for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, Math.min(255, mean[j] * k));
+  }
+  g.putImageData(img, 0, 0);
+  return c;
 }
 
 /**

@@ -21,9 +21,10 @@ const S = (k) => SPEC[k].value;
 export function buildClutter(cfg, mats, model, ctx) {
   const group = new THREE.Group();
   group.name = 'clutter';
-  // Cinematic only: at the hero level the ship is already within a few thousand triangles
-  // of its host budget (src/ship/lod.js), and the clutter is about thirty-four thousand.
-  if (cfg.boats === 'block' || cfg.textureSize < 2048 || !propModel('rope_coil', cfg)) return group;
+  // Hero and cinematic: the clutter is about twenty-three thousand triangles since the
+  // rope coils were remeshed, and hero's host budget was raised to carry it
+  // (src/ship/lod.js).
+  if (cfg.boats === 'block' || cfg.textureSize < 1024 || !propModel('rope_coil', cfg)) return group;
 
   // Ship coordinates: x to starboard, y up, z aft. In the waist an object stands between
   // two gunports, so nothing sits in a gun's recoil; on the upper decks it keeps to the

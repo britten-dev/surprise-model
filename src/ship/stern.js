@@ -802,9 +802,8 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   // The photographed bracket (src/ship/carving-assets.js) where it is loaded: its back on
   // the ship's side, its head under the rim, sized by its height to the bracket's drop and
   // standing out from the side a little less than in proportion, so it carries the badge
-  // rather than reaching past it. Cinematic only: hero has no triangles to spare, and at
-  // the distances hero is seen from a bracket is a few pixels of gold either way.
-  const bracket = cfg.textureSize >= 2048 ? carvingModel('bracket', cfg) : null;
+  // rather than reaching past it.
+  const bracket = carvingModel('bracket', cfg);
   for (const u of [0.20, 0.80]) {
     const zc = lerp(z0, z1, u);
     // The bracket hangs from the lower rim of the badge and drops its full depth below

@@ -2,9 +2,8 @@
 //
 // Builds the ship at each level with src/ship/carving-assets.js loaded, and asks:
 //
-//   - cinematic and hero carry the cartouche and a scroll either side of it, and cinematic
-//     two brackets under each quarter gallery (hero keeps its drawn ones), all finite and
-//     all facing out;
+//   - cinematic and hero carry the cartouche, a scroll either side of it and two brackets
+//     under each quarter gallery, all finite and all facing out;
 //   - the cartouche and scrolls lie across the counter, between the heads of the lights
 //     and the top of the taffrail and inside the counter's own breadth, and the two scrolls mirror
 //     each other;
@@ -71,7 +70,7 @@ try {
     const r = report.out[lod];
     assert.equal(r.cartouche.length, 1, `${lod}: one cartouche`);
     assert.equal(r.scrolls.length, 2, `${lod}: a scroll either side`);
-    assert.equal(r.brackets.length, lod === 'cinematic' ? 2 : 0, `${lod}: photographed brackets on cinematic only`);
+    assert.equal(r.brackets.length, 2, `${lod}: brackets under both galleries`);
     for (const f of r.facing) {
       assert.ok(f.finite, `${lod}: ${f.name} is finite`);
       assert.ok(f.out > 0.05, `${lod}: ${f.name} faces out (${f.out.toFixed(2)})`);
@@ -99,7 +98,7 @@ try {
   const g = report.out.game;
   assert.equal(g.cartouche.length + g.scrolls.length + g.brackets.length, 0, 'the game level has none of it');
   assert.equal(g.figurehead, null, 'the game level keeps its drawn figurehead');
-  console.log(`ok   carvings: cartouche, two scrolls and the figurehead on cinematic and hero (figurehead ${report.out.cinematic.figurehead.gap.toFixed(2)} m clear of the bowsprit), four brackets on cinematic; none on the game level`);
+  console.log(`ok   carvings: cartouche, two scrolls, the figurehead (figurehead ${report.out.cinematic.figurehead.gap.toFixed(2)} m clear of the bowsprit) and four brackets on cinematic and hero; none on the game level`);
 } finally {
   const errors = h.problems.filter((p) => /pageerror/.test(p));
   await h.close();

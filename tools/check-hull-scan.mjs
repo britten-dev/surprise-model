@@ -9,6 +9,7 @@
 //   - the scan shows: the planking and the copper both carry more fine variation than
 //     the drawing did;
 //   - the spars keep the spec's bright varnish and black, and the scan shows on them too;
+//   - so do the painted woodwork, the oak, the guns' iron and their carriages;
 //   - the game level, the one phones build, is pixel for pixel what it was.
 //
 //   node tools/check-hull-scan.mjs
@@ -24,6 +25,7 @@ try {
     const { preloadHullScan } = await import('/src/ship/hull-scan.js');
     const { V } = await import('/src/ship/hull.js');
     const { sparMaterials } = await import('/src/ship/spar-finish.js');
+    const { gunMaterials } = await import('/src/ship/gun-finish.js');
     const { PAINT } = await import('/src/spec/spec.js');
     const pixels = (texture) => {
       const { width, height } = texture.image;
@@ -56,11 +58,16 @@ try {
     };
     const spars = (finish) => ({ bright: spar(finish.bright.map), black: spar(finish.black.map) });
     const drawnSpars = spars(sparMaterials(lodConfig('cinematic')));
+    // The other finishes the scans now carry, each as its map's mean colour and fine detail.
+    const finishes = (mats, guns) => ({ paint: spar(mats.red.map), oak: spar(mats.timber.map),
+      iron: spar(guns.gunIron.map), carriage: spar(guns.gunPaint.map) });
     const drawnCinematic = build('cinematic'), drawnGame = build('game');
+    const drawnFinishes = finishes(drawnCinematic, gunMaterials(lodConfig('cinematic')));
     const before = { cin: rows(pixels(drawnCinematic.hull.map)), game: hash(pixels(drawnGame.hull.map)) };
     const loaded = await preloadHullScan();
     const scannedCinematic = build('cinematic'), scannedGame = build('game');
     const scannedSpars = spars(sparMaterials(lodConfig('cinematic')));
+    const scannedFinishes = finishes(scannedCinematic, gunMaterials(lodConfig('cinematic')));
     const after = { cin: rows(pixels(scannedCinematic.hull.map)), game: hash(pixels(scannedGame.hull.map)) };
 
     const size = before.cin.length;
@@ -90,6 +97,7 @@ try {
     }
     return {
       loaded, worst, spread, bands: bands.length, spars: { drawn: drawnSpars, scanned: scannedSpars },
+      finishes: { drawn: drawnFinishes, scanned: scannedFinishes },
       finish: [drawnCinematic.hull.userData.hullFinish, scannedCinematic.hull.userData.hullFinish, scannedGame.hull.userData.hullFinish],
       gameSame: before.game === after.game,
     };
@@ -108,11 +116,17 @@ try {
     assert.ok(delta <= 6, `${kind} spars keep their colour (${drawn.mean.map(Math.round)} drawn, ${scanned.mean.map(Math.round)} scanned)`);
   }
   assert.ok(report.spars.scanned.bright.fine > 0.5, `the spar grain shows (${report.spars.scanned.bright.fine.toFixed(2)})`);
+  for (const kind of ['paint', 'oak', 'iron', 'carriage']) {
+    const drawn = report.finishes.drawn[kind], scanned = report.finishes.scanned[kind];
+    const delta = Math.max(...scanned.mean.map((m, c) => Math.abs(m - drawn.mean[c])));
+    assert.ok(delta <= 6, `${kind} keeps its colour (${drawn.mean.map(Math.round)} drawn, ${scanned.mean.map(Math.round)} scanned)`);
+  }
   assert.ok(report.gameSame, 'the game level hull is unchanged');
   console.log(`ok   hull scan: ${report.bands} bands within ${report.worst.delta.toFixed(1)} grey levels; `
     + `fine detail planks ${report.spread.plank.map((v) => v.toFixed(0)).join(' -> ')}, `
     + `copper ${report.spread.copper.map((v) => v.toFixed(0)).join(' -> ')}; `
-    + `spars ${report.spars.drawn.bright.mean.map(Math.round)} -> ${report.spars.scanned.bright.mean.map(Math.round)}; game level unchanged`);
+    + `spars ${report.spars.drawn.bright.mean.map(Math.round)} -> ${report.spars.scanned.bright.mean.map(Math.round)}; `
+    + `paint, oak, iron and carriages within 6 grey levels; game level unchanged`);
 } finally {
   const errors = h.problems.filter((p) => /pageerror/.test(p));
   await h.close();

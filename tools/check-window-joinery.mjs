@@ -45,6 +45,6 @@ try {
     }
     return rows;
   });
-  for(const r of report)assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?960000:84000));
+  for(const r of report)assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?1000000:84000));
   assert.deepEqual(h.problems,[]);console.log(JSON.stringify(report,null,2));
 } finally {await h.close();}

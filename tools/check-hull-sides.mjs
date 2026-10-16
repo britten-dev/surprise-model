@@ -51,7 +51,7 @@ try {
   }
   return rows;
  });
- for(const r of rows){assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?960000:84000));
+ for(const r of rows){assert.ok(r.triangles<(r.lod==='cinematic'?1600000:r.lod==='hero'?1000000:84000));
   assert.ok(r.triangles+r.crew<TRI_BUDGET[r.lod][1],`${r.lod} ${r.weather}: ${r.triangles}+${r.crew} over export budget`);}
  assert.deepEqual(h.problems,[]);console.log(JSON.stringify(rows,null,2));
 }finally{await h.close();}
