@@ -186,7 +186,9 @@ function buntingMaterial(mats, fieldKey, canvasEl, dimensions) {
   if(!buntingMaps.has(key))buntingMaps.set(key,dressBunting(canvasEl,dimensions));
   Object.assign(mat,buntingMaps.get(key));
   mat.color.set(0xffffff);mat.roughness=1;mat.bumpScale=.0018;
-  mat.userData.bunting='sewn-wool-v1';
+  // The fly worn to threads is cut out of the cloth (see dressBunting), in the shadow too.
+  mat.alphaTest=.5;
+  mat.userData.bunting='sewn-wool-v2';
   installBuntingLight(mat);
   return mat;
 }
