@@ -1,10 +1,10 @@
 // The ship's carved work, made small enough to ship.
 //
-// Four pieces made with Meshy (provenance in src/assets/PROVENANCE.md): the cartouche at
-// the middle of the taffrail, a scroll of acanthus for either side of it, the bracket
-// under each quarter gallery, and the figurehead.
+// Five pieces made with Meshy (provenance in src/assets/PROVENANCE.md): the cartouche at
+// the middle of the taffrail, a scroll of acanthus for either side of it, the crown over
+// each quarter gallery and the drop under it, and the figurehead.
 //
-// The stern's three are bent onto the stern by src/ship/stern-detail.js and
+// The stern's four are bent onto the stern by src/ship/stern-detail.js and
 // src/ship/stern.js, so each is left here in a frame of its own rather than at a size: its
 // width along x, its height along y, centred on both, and its flat back on z = 0 with the
 // carving standing out towards +z. Meshy hands each one back with its back to -z already;
@@ -34,7 +34,9 @@ import { PAINT } from '../src/spec/spec.js';
 
 // `back`: a relief with a flat back to lay on the ship; `gilt`: coloured as the spec's gilt.
 export const CARVINGS = {
-  cartouche: { back: true, gilt: true }, scroll: { back: true, gilt: true }, bracket: { back: true, gilt: true },
+  cartouche: { back: true, gilt: true }, scroll: { back: true, gilt: true },
+  // The quarter galleries' crest over the lights and the drop under the lower finishing.
+  crown: { back: true, gilt: true }, drop: { back: true, gilt: true },
   figurehead: { back: false, gilt: false, colour: 1024 },
 };
 const MAX_BYTES = 800e3;

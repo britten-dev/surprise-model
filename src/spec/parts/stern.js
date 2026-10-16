@@ -110,6 +110,14 @@ export const STERN_SPEC = {
   quarter_gallery_projection: m(ft(1, 3), 'RECONSTRUCTED §12.3 a closed badge stands about 15 in off the ship\'s side', { noAudit: true }),
   quarter_gallery_rim_depth: m(ft(1, 0), 'RECONSTRUCTED §12.3 the lower stool and rim below the lights', { noAudit: true }),
   quarter_gallery_hood_depth: m(ft(1, 2), 'RECONSTRUCTED §12.3 the bell-top hood over the lights; Steel, the upper stool hollowed', { noAudit: true }),
+  // The finishings: what makes a badge a badge rather than a box nailed to the side. Below
+  // the lights the lower finishing swells out of the side and runs down to a point; above
+  // them the upper finishing rises in a bell to the crest. Both are deepest at mid-length
+  // and die into the rim at either end.
+  quarter_gallery_lower_finishing: m(ft(1, 8), 'RECONSTRUCTED §12.3 the lower finishing under a Sixth Rate badge, swelling from the side to the rim and coming down to a drop', { noAudit: true }),
+  quarter_gallery_upper_finishing: m(ft(1, 0), 'RECONSTRUCTED §12.3 the upper finishing over the lights, rising to the crest; kept clear of the taffrail', { noAudit: true }),
+  quarter_gallery_crest_width: m(ft(2, 6), 'RECONSTRUCTED §5.2 the carved crest of a crown and scrolls on the upper finishing', { noAudit: true }),
+  quarter_gallery_drop_height: m(ft(1, 6), 'RECONSTRUCTED §5.2 the carved drop that finishes the point of the lower finishing', { noAudit: true }),
   // The bracket under the badge is cut on the ship's own side, and the side falls away
   // fast here in both directions at once — the hull narrows toward the sternpost and
   // tumbles home above the wale. A bracket of any size therefore comes out warped, so it

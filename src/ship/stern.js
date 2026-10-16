@@ -623,6 +623,8 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
     - SPEC.stern_quarter_piece_width.value * 0.5;
   const z0 = z1 - len;
   const proj = SPEC.quarter_gallery_projection.value;
+  const lowerDepth = SPEC.quarter_gallery_lower_finishing.value;
+  const upperDepth = SPEC.quarter_gallery_upper_finishing.value;
 
   const yBotAt = () => yBot;
   const yTopAt = () => yTop;
@@ -636,42 +638,81 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   // How far the badge stands off the ship's side at a station: nothing at the forward
   // end, where it dies into the planking, full projection at the after end.
   const spread = (z) => smoothstep(z0, z1 - len * 0.2, z) ** 0.7;
-  // The section: out from the ship's side, round, and back to it — a closed badge with a
-  // rim under it and a hollowed bell-top over it.
-  const bulge = (p) => 1 - Math.abs(2 * p - 1) ** 2.4;
-
-  /** A point on the badge. `z` runs aft, `p` runs up the section from rim to hood. */
-  const at = (z, p) => {
-    const y = lerp(yBotAt(z), yTopAt(z), p);
-    const x = sideAt(z, y) + proj * bulge(p) * spread(z);
+  // How deep the finishings are at `u` of the way aft: deepest a little abaft the middle,
+  // where the drop hangs and the crest stands, and shallow at either end, so the badge's
+  // outline is an arch over the lights and comes to a point under them. Never quite
+  // nothing, so no row of the shell collapses onto the next.
+  const finishing = (u) => 0.12 + 0.88 * Math.sin(Math.PI * clamp(u, 0, 1) ** 1.25) ** 0.8;
+  const uMid = 0.5 ** (1 / 1.25);
+  // The section runs from the foot of the lower finishing (s = 0) to the top of the upper
+  // (s = 1), with the stage that carries the lights between SA and SB.
+  const SA = 0.32, SB = 0.74;
+  /** A point on the badge at `u` of the way aft and `s` of the way up its section. */
+  const face = (u, s) => {
+    const z = lerp(z0, z1, u);
+    let y, out;
+    if (s < SA) {
+      // The lower finishing: out of the side in an ogee to the full projection at the rim.
+      const t = s / SA;
+      y = yBot - lowerDepth * finishing(u) * (1 - t);
+      out = (1 - Math.cos(Math.PI * t)) / 2;
+    } else if (s <= SB) {
+      // The stage, barrelled a little between the rim and the hood.
+      const t = (s - SA) / (SB - SA);
+      y = lerp(yBot, yTop, t);
+      out = 1 + 0.06 * Math.sin(Math.PI * t);
+    } else {
+      // The upper finishing: a bell rising from the hood and leaning back into the side.
+      const t = (s - SB) / (1 - SB);
+      y = yTop + upperDepth * finishing(u) * t;
+      out = 1 - t ** 1.6;
+    }
+    const x = sideAt(z, y) + proj * out * spread(z);
     return new THREE.Vector3(x * side, y, z);
   };
+  /** A point on the stage, `p` of the way from the rim up to the hood: what the lights sit on. */
+  const at = (z, p) => face((z - z0) / (z1 - z0), SA + (SB - SA) * p);
 
   const nz = Math.max(5, Math.round(cfg.sternStations * 0.9));
-  const np = Math.max(5, Math.round(cfg.sternStations * 0.6));
+  // The rows up the section, with one exactly at the rim and one at the hood so that the
+  // mouldings there run along an edge of the shell rather than across a facet.
+  const nLow = Math.max(3, Math.round(cfg.sternStations * 0.4));
+  const nStage = Math.max(2, Math.round(cfg.sternStations * 0.3));
+  const nHigh = Math.max(3, Math.round(cfg.sternStations * 0.4));
+  const sRows = [
+    ...Array.from({ length: nLow }, (_, i) => SA * i / nLow),
+    ...Array.from({ length: nStage }, (_, i) => SA + (SB - SA) * i / nStage),
+    ...Array.from({ length: nHigh + 1 }, (_, i) => SB + (1 - SB) * i / nHigh),
+  ];
   const rows = [];
-  for (let i = 0; i < np; i++) {
-    const p = i / (np - 1);
+  for (const sv of sRows) {
     const row = [];
     for (let k = 0; k < nz; k++) {
-      const q = at(lerp(z0, z1, k / (nz - 1)), p);
+      const q = face(k / (nz - 1), sv);
       row.push({ p: q, v: paintV(q.y) });
     }
-    rows.push(Object.assign(row, { v: paintV(at(z1, p).y) }));
+    rows.push(Object.assign(row, { v: paintV(face(1, sv).y) }));
   }
   // Black ground, ochre framing, gilt carving — "Stern, Stern Galleries, Quarter Badges:
   // black with yellow carvings". Painting the badge on the hull's own strip instead would
   // carry the ochre gunport strake straight across it, which is what the replica does but
   // not what English practice of 1798 did, and it makes the badge vanish into the side.
-  const shell = new THREE.Mesh(gridGeometry(rows, { mirror: false, inward: side > 0 }), mats.black);
+  const shellGeometry = gridGeometry(rows, { mirror: false, inward: side > 0 });
+  // In metres, fore and aft and up, so the painted boards of `mats.black` run along the
+  // badge at their own breadth instead of being stretched to the hull's forty-foot repeat.
+  {
+    const pos = shellGeometry.attributes.position, uv = shellGeometry.attributes.uv;
+    for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getZ(i) / 2.4, pos.getY(i) / 2.4);
+  }
+  const shell = new THREE.Mesh(shellGeometry, mats.black);
   shell.name = `quarter_gallery_${side > 0 ? 'starboard' : 'port'}`;
   if (side > 0) audit(shell, 'quarter_gallery_length', 'extent_z');
   group.add(shell);
 
   // The after end of the badge, closed by a flat finishing against the quarter piece.
   const cap = [];
-  for (let i = 0; i < np - 1; i++) {
-    const a = at(z1, i / (np - 1)), b = at(z1, (i + 1) / (np - 1));
+  for (let i = 0; i < sRows.length - 1; i++) {
+    const a = face(1, sRows[i]), b = face(1, sRows[i + 1]);
     const ha = sideAt(z1, a.y) * side, hb = sideAt(z1, b.y) * side;
     const g = new THREE.BufferGeometry();
     const tri = side > 0
@@ -682,9 +723,9 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
     g.computeVertexNormals();
     cap.push(g);
   }
-  const finishing = new THREE.Mesh(mergeGeometries(cap), mats.black);
-  finishing.name = 'quarter_gallery_finishing';
-  group.add(finishing);
+  const afterEnd = new THREE.Mesh(mergeGeometries(cap), mats.black);
+  afterEnd.name = 'quarter_gallery_finishing';
+  group.add(afterEnd);
 
   // The lights, on the outboard face, where they catch the light abaft the beam. They
   // sit between the lower stool and the bell-top, which puts them across the gunport
@@ -760,76 +801,125 @@ function quarterGallery(cfg, mats, model, sp, paintV, side, group) {
   gb.name = 'quarter_gallery_glazing_bars';
   group.add(gb);
   if (cfg.galleryGlazing) {
-    const gg = new THREE.Mesh(mergeGeometries(glass), mats.glass);
+    // Behind the badge's lights there is no cabin to see, only the black of the badge, so
+    // its glass is the dark, glossy crown glass of a light seen from outside in daylight,
+    // giving back the sky, rather than the stern's clear glass with the great cabin behind.
+    const dark = mats.glass.clone();
+    dark.transmission = 0; dark.transparent = true; dark.opacity = .62; dark.depthWrite = false;
+    dark.color.set(0x24333a); dark.roughness = .05; dark.envMapIntensity = 1.35;
+    dark.normalMap = crownGlassNormal(cfg); dark.normalScale.set(.45, .45);
+    const gg = new THREE.Mesh(mergeGeometries(glass), dark);
     gg.name = 'quarter_gallery_glazing';
     group.add(gg);
   }
 
   if (cfg.sternOrnament === 'none') return;
 
-  // The rim under the badge and the moulding over the bell-top, both gilt on the black.
-  const rimCurve = (p) => new THREE.CatmullRomCurve3(
-    Array.from({ length: nz }, (_, k) => at(lerp(z0, z1, k / (nz - 1)), p)),
-  );
+  // The mouldings, gilt on the black: the rim along the foot of the stage, the hood along
+  // its head, and a lighter bead round each finishing, where the ogee below and the bell
+  // above turn. Toned as the photographed carving is (src/ship/carving-assets.js) — worn
+  // leaf over gesso, not polished metal — so moulding and carving are one gold.
+  // Its own material, so the contact-shadow pass (src/ship/occlusion.js), which finds the
+  // materials it works on by identity, never reaches it: hence no vertex colours either,
+  // which with no attribute to read would turn it black.
+  const gilt = mats.gilt.clone();
+  gilt.vertexColors = false;
+  // `sweep` winds a curve running aft inside out, so the band is drawn from both faces.
+  gilt.side = THREE.DoubleSide;
+  gilt.metalness = .35; gilt.roughness = .55; gilt.envMapIntensity = .65;
+  gilt.color.multiply(new THREE.Color(.79, .66, .87));
+  // Each runs from just abaft the forward end, where the badge has died into the side and a
+  // moulding would only stand off the planking as a stub, to the quarter piece.
+  const along = (sv) => new THREE.CatmullRomCurve3(Array.from({ length: nz }, (_, k) => face(0.07 + 0.93 * k / (nz - 1), sv)));
   const d = SPEC.stern_counter_rail_proud.value, h = SPEC.stern_counter_rail_depth.value;
-  const profile = [[-d, -h / 2], [d, -h / 2], [d, h / 2], [-d, h / 2]];
+  // A half-round bead on a flat back: a moulding, not a square batten. The game level, which
+  // phones build and which is a few hundred triangles inside its budget, keeps a plain
+  // square rim and hood and none of the beads round the finishings.
+  const fine = cfg.sternOrnament === 'carved';
+  const profile = (scale) => fine
+    ? [[-d * scale * 0.3, -h * scale / 2],
+      ...Array.from({ length: 7 }, (_, i) => { const a = -Math.PI / 2 + Math.PI * i / 6;
+        return [d * scale * Math.cos(a), h * scale / 2 * Math.sin(a)]; }),
+      [-d * scale * 0.3, h * scale / 2]]
+    : [[-d * scale, -h * scale / 2], [d * scale, -h * scale / 2], [d * scale, h * scale / 2], [-d * scale, h * scale / 2]];
   const steps = Math.max(8, Math.round(cfg.mouldingSweeps / 4));
   const rims = new THREE.Mesh(mergeGeometries([
-    sweep(rimCurve(0.06), profile, { steps, closed: true }),
-    sweep(rimCurve(0.94), profile, { steps, closed: true }),
-  ]), mats.ochre);
+    sweep(along(SA), profile(0.55), { steps, closed: true }),
+    sweep(along(SB), profile(0.55), { steps, closed: true }),
+    ...(fine ? [
+      sweep(along(SA * 0.55), profile(0.32), { steps, closed: true }),
+      sweep(along(SB + (1 - SB) * 0.45), profile(0.32), { steps, closed: true }),
+    ] : []),
+  ]), gilt);
   rims.name = 'quarter_gallery_rims';
   group.add(rims);
 
-  // The gilt carving on the badge: the brackets that appear to carry it, and a boss on
-  // the bell-top hood over the lights.
+  // The carving: a crest of a crown and scrolls on the upper finishing, standing over the
+  // lights, and a drop hanging from the point of the lower finishing.
   //
-  // The brackets are cut on the ship's own side, not built out from it as blocks. The
-  // blocks that were here before were tapered toward the planking by moving their
-  // vertices, which left the top of each one standing clear of the hull and the bottom
-  // of it a flat gilt lozenge lying on the black — two bright shapes floating below the
-  // badge with nothing carrying them. A boss whose rim is BY CONSTRUCTION on the ship's
-  // side cannot float, because every point of its rim is a point of the hull.
-  const drop = SPEC.quarter_gallery_bracket_drop.value;
-  const bLen = SPEC.quarter_gallery_bracket_length.value;
+  // Both are photographed carvings (src/ship/carving-assets.js) where they are loaded. The
+  // crest is laid onto the bell of the upper finishing, its width fore and aft and its
+  // height up the bell, so it rises with the finishing rather than standing clear of it.
+  // The drop is cut on the ship's own side under the point, its head tucked up into the
+  // finishing, so it hangs from it. Elsewhere — the game level, or before they load —
+  // a boss on the hood and one carved bracket under the point stand in for them.
   const relief = SPEC.quarter_gallery_carving_relief.value;
   const bevel = SPEC.stern_carving_bevel.value;
   const nu = Math.max(8, Math.round(cfg.sternStations * 0.75));
   const nv = Math.max(3, Math.round(cfg.sternStations * 0.28));
   const onSide = (z, y, out) => new THREE.Vector3((sideAt(z, y) + out) * side, y, z);
   const panel = SPEC.stern_carving_panel_corner.value;
-  const carvings = [], brackets = [];
-  // The photographed bracket (src/ship/carving-assets.js) where it is loaded: its back on
-  // the ship's side, its head under the rim, sized by its height to the bracket's drop and
-  // standing out from the side a little less than in proportion, so it carries the badge
-  // rather than reaching past it.
-  const bracket = carvingModel('bracket', cfg);
-  for (const u of [0.20, 0.80]) {
-    const zc = lerp(z0, z1, u);
-    // The bracket hangs from the lower rim of the badge and drops its full depth below
-    // it, so its head is under the rim rather than behind the badge.
-    const yRim = yBotAt(zc);
-    if (bracket) {
-      const box = bracket.geometry.boundingBox, s = drop / (box.max.y - box.min.y);
-      brackets.push(bendCarving(bracket, (x, y, z) => onSide(zc + x * s, yRim - drop / 2 + y * s, z * s * 0.6)));
-    } else {
-      carvings.push(carved(onSide, zc, bLen / 2, yRim - drop * 0.45, drop * 0.45,
-        { crown: relief, bevel, corner: panel, nu, nv, flip: side > 0 }));
-    }
+  const zMid = lerp(z0, z1, uMid), yPoint = yBot - lowerDepth * finishing(uMid);
+  const faceNormal = (u, sv) => {
+    const e = 0.01;
+    const a = face(clamp(u + e, 0, 1), sv).sub(face(clamp(u - e, 0, 1), sv));
+    const b = face(u, clamp(sv + e, 0, 1)).sub(face(u, clamp(sv - e, 0, 1)));
+    const nrm = new THREE.Vector3().crossVectors(a, b);
+    if (nrm.lengthSq() < 1e-12) return new THREE.Vector3(side, 0, 0);
+    nrm.normalize();
+    return nrm.x * side < 0 ? nrm.negate() : nrm;
+  };
+  const onFace = (u, sv, out) => face(u, sv).addScaledVector(faceNormal(u, sv), out);
+  const crest = carvingModel('crown', cfg), pendant = carvingModel('drop', cfg);
+  const carvings = [];
+  if (crest) {
+    const box = crest.geometry.boundingBox;
+    const sc = SPEC.quarter_gallery_crest_width.value / (box.max.x - box.min.x);
+    const H = box.max.y - box.min.y;
+    const geometry = bendCarving(crest, (x, y, z) => onFace(
+      uMid + x * sc / len,
+      SB + (1 - SB) * (0.03 + 0.9 * (y - box.min.y) / H),
+      0.004 + z * sc * 0.6));
+    const m = new THREE.Mesh(geometry, crest.material);
+    m.name = 'quarter_gallery_crown';
+    m.userData.authored = true;
+    group.add(m);
+  } else {
+    // The boss on the hood, worked in the fore-and-aft and up-the-stage coordinates of
+    // the badge so that it lies on the hood however the hood is shaped.
+    carvings.push(carved(onBadge, 0.5, 0.17, (p1 + 1) / 2, (1 - p1) * 0.40,
+      { crown: relief, bevel, nu, nv, flip: side > 0 }));
   }
-  if (brackets.length) {
-    const photographed = new THREE.Mesh(mergeGeometries(brackets), bracket.material);
-    photographed.name = 'quarter_gallery_brackets';
-    photographed.userData.authored = true;
-    group.add(photographed);
+  if (pendant) {
+    const box = pendant.geometry.boundingBox, Hd = SPEC.quarter_gallery_drop_height.value;
+    const sd = Hd / (box.max.y - box.min.y);
+    const geometry = bendCarving(pendant, (x, y, z) =>
+      onSide(zMid + x * sd, yPoint - 0.25 * Hd + y * sd, 0.003 + z * sd * 0.6));
+    const m = new THREE.Mesh(geometry, pendant.material);
+    m.name = 'quarter_gallery_drop';
+    m.userData.authored = true;
+    group.add(m);
+  } else if (cfg.sternOrnament === 'carved' || cfg.sternOrnament === 'simple') {
+    const drop = SPEC.quarter_gallery_bracket_drop.value;
+    const bLen = SPEC.quarter_gallery_bracket_length.value;
+    carvings.push(carved(onSide, zMid, bLen / 2, yPoint - drop * 0.3, drop * 0.45,
+      { crown: relief, bevel, corner: panel, nu, nv, flip: side > 0 }));
   }
-  // The boss on the hood, worked in the fore-and-aft and up-the-section coordinates of
-  // the badge itself so that it lies on the bell-top however the bell-top is shaped.
-  carvings.push(carved(onBadge, 0.5, 0.17, (p1 + 1) / 2, (1 - p1) * 0.40,
-    { crown: relief, bevel, nu, nv, flip: side > 0 }));
-  const bk = new THREE.Mesh(mergeGeometries(carvings), mats.gilt);
-  bk.name = 'quarter_gallery_carving';
-  group.add(bk);
+  if (carvings.length) {
+    const bk = new THREE.Mesh(mergeGeometries(carvings), mats.gilt);
+    bk.name = 'quarter_gallery_carving';
+    group.add(bk);
+  }
 }
 
 // ---------------------------------------------------------------------------
