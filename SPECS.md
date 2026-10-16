@@ -410,6 +410,10 @@ L'UNITE"; that of ZAZ3181 reads only "L'UNITE". Do not use ZAZ3181–3184.
 | `quarter_gallery_projection` | 0.381 | — | RECONSTRUCTED | §12.3 a closed badge stands about 15 in off the ship's side |
 | `quarter_gallery_rim_depth` | 0.3048 | 1 ft 0 in | RECONSTRUCTED | §12.3 the lower stool and rim below the lights |
 | `quarter_gallery_hood_depth` | 0.3556 | 1 ft 2 in | RECONSTRUCTED | §12.3 the bell-top hood over the lights; Steel, the upper stool hollowed |
+| `quarter_gallery_lower_finishing` | 0.508 | — | RECONSTRUCTED | §12.3 the lower finishing under a Sixth Rate badge, swelling from the side to the rim and coming down to a drop |
+| `quarter_gallery_upper_finishing` | 0.3048 | — | RECONSTRUCTED | §12.3 the upper finishing over the lights, rising to the crest; kept clear of the taffrail |
+| `quarter_gallery_crest_width` | 0.762 | 2 ft 6 in | RECONSTRUCTED | §5.2 the carved crest of a crown and scrolls on the upper finishing |
+| `quarter_gallery_drop_height` | 0.4572 | 1 ft 6 in | RECONSTRUCTED | §5.2 the carved drop that finishes the point of the lower finishing |
 | `quarter_gallery_bracket_drop` | 0.3048 | — | RECONSTRUCTED | §5.2 the carved bracket under the badge, gadrooned on its underside; about a foot deep on a Sixth Rate badge |
 | `quarter_gallery_bracket_length` | 0.2286 | 0 ft 9 in | RECONSTRUCTED | §5.2 the bracket seen fore and aft, rather less than it is deep |
 | `quarter_gallery_frame_proud` | 0.0381 | — | RECONSTRUCTED | §12.3 the sash frame of a badge light stands proud of the badge planking |

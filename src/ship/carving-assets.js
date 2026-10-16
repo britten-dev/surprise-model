@@ -1,15 +1,15 @@
 // The ship's carved work, as photographed carvings.
 //
-// Four pieces made with Meshy and shrunk by tools/compress-carvings.mjs (provenance in
+// Five pieces made with Meshy and shrunk by tools/compress-carvings.mjs (provenance in
 // src/assets/PROVENANCE.md): the cartouche at the middle of the taffrail, a scroll of
-// acanthus for either side of it and the bracket under each quarter gallery, all in the
-// spec's gilt, and the figurehead in her painter's colours.
+// acanthus for either side of it, the crest over each quarter gallery and the drop under
+// it, all in the spec's gilt, and the figurehead in her painter's colours.
 //
 // The stern's pieces are each in a frame of their own — width along x, height along y,
 // centred on both, the flat back on z = 0 — and `bendCarving` lays one onto the ship
 // through whatever function maps that frame onto her: src/ship/stern-detail.js bends the
-// cartouche and the scrolls round the counter, src/ship/stern.js the brackets onto her
-// side. The figurehead stands on her feet at the origin, facing +z, and src/ship/head.js
+// cartouche and the scrolls round the counter, src/ship/stern.js the crest and the drop
+// onto the quarter galleries. The figurehead stands on her feet at the origin, facing +z, and src/ship/head.js
 // sets her up on the knee of the head.
 //
 // Like the photographed watch and boats they are optional: `preloadCarvings()` has to have
@@ -17,7 +17,7 @@
 import * as THREE from 'three';
 import { fetchAsset } from './asset-fetch.js';
 
-export const CARVING_NAMES = ['cartouche', 'scroll', 'bracket', 'figurehead'];
+export const CARVING_NAMES = ['cartouche', 'scroll', 'crown', 'drop', 'figurehead'];
 const models = new Map();
 let pending = null;
 

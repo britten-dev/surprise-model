@@ -135,7 +135,7 @@ phones build, keeps its drawn planks.
 
 # The stern's carving
 
-`carvings/cartouche.glb`, `scroll.glb` and `bracket.glb` were generated with Meshy
+`carvings/cartouche.glb` and `scroll.glb` were generated with Meshy
 (meshy.ai) on 15 October 2026 on Meshy Pro with the Private licence: a reference
 picture from Meshy's image tool (Nano Banana Pro), image to 3D (Meshy 7.1, textured),
 then Meshy's remesh to about 10,000 triangles (cartouche and scroll) or 3,000
@@ -175,3 +175,16 @@ Mixamo names the other four men carry.
 
 `props/rope_coil.glb` was remeshed again through the API, from the shipped coil, to
 about 800 triangles.
+
+# The quarter galleries' crest and drop
+
+`carvings/crown.glb` and `drop.glb` were made on 16 October 2026 through Meshy's API with
+`tools/meshy.mjs` (Meshy Pro, Private licence): a picture from Meshy's text-to-image (Nano
+Banana Pro), image to 3D (Meshy latest, textured, remeshed to about 2,000 and 1,000
+triangles), then `tools/compress-carvings.mjs`. Each was asked for as a photorealistic
+product photo, straight on, on a plain light grey studio background with soft even light,
+of carved oak in worn gold leaf with a flat back, from the quarter gallery of a 1790s Royal
+Navy frigate: a crest of a small royal crown rising from a pair of acanthus scrolls, and a
+pendant drop of acanthus leaves tapering to a carved pine cone. They replace the bracket
+(`carvings/bracket.glb`, made the same way on 15 October) that hung under each gallery
+before it was given a lower finishing.
