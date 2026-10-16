@@ -12,7 +12,7 @@ import * as THREE from 'three';
 import { fetchAsset } from './asset-fetch.js';
 
 export const PROP_NAMES = ['launch', 'pinnace', 'jolly_boat', 'scuttlebutt', 'lashed_casks',
-  'hen_coop', 'fire_buckets', 'shot_garland', 'rope_coil'];
+  'hen_coop', 'fire_buckets', 'shot_garland', 'rope_coil', 'capstan', 'bitts', 'belfry'];
 const models = new Map();
 let pending = null;
 

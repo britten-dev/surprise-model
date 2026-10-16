@@ -188,3 +188,17 @@ Navy frigate: a crest of a small royal crown rising from a pair of acanthus scro
 pendant drop of acanthus leaves tapering to a carved pine cone. They replace the bracket
 (`carvings/bracket.glb`, made the same way on 15 October) that hung under each gallery
 before it was given a lower finishing.
+
+# The capstan, the bitts and the belfry
+
+`props/capstan.glb`, `bitts.glb` and `belfry.glb` were made on 16 October 2026 through
+Meshy's API with `tools/meshy.mjs` (Meshy Pro, Private licence): a picture from Meshy's
+text-to-image (Nano Banana Pro), image to 3D (Meshy latest, textured, remeshed to about
+3,000, 1,500 and 1,500 triangles), then `tools/compress-props.mjs`. Each was asked for as a
+photorealistic product photo on a plain light grey studio background with soft even
+light, from a 1790s Royal Navy frigate: the upper part of a capstan (drumhead with bar
+holes, barrel with six whelps, round partner, weathered oiled oak with iron hoops); a pair
+of riding bitts (two square oak posts joined by a crosspiece, iron bolts and straps,
+rope-scarred, tarred at the foot); and a belfry (two turned oak stanchions under a round
+arch with a carved cap, weathered paint, no bell). `src/ship/furniture.js` fits each to
+the box of the built fitting it replaces; the bell is still the built one.

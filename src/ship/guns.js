@@ -828,14 +828,17 @@ function gunTackle(cfg, model, nat, g, blocks) {
   const half = nat.carriageWidth * HALF;
   const r = SPEC.gun_tackle_diameter.value * HALF;
   const sag = SPEC.gun_tackle_sag.value;
-  const opts = { tubular: Math.max(4, Math.min(8,cfg.ropeSegments)), radial: Math.min(6,cfg.ropeRadial) };
+  // A gun tackle is an inch-and-a-half rope seen from a man's height at the nearest: four
+  // sides round it read as round there, and a ship has a hundred of these falls, so every
+  // side and every ring of segments here is a few thousand triangles of the whole ship.
+  const opts = { tubular: Math.max(4, Math.min(8,cfg.ropeSegments)), radial: Math.min(4,cfg.ropeRadial) };
   const local = inGunFrame(g);
   const fall = (a, b) => {
     const dir=b.clone().sub(a).normalize(),side=new THREE.Vector3().crossVectors(dir,UP).normalize();
     const aa=a.clone().addScaledVector(dir,.09),bb=b.clone().addScaledVector(dir,-.09);
     const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),dir);
     for(const p of [aa,bb]){
-      const block=new THREE.SphereGeometry(1,10,6);block.scale(.084,.051,.039);
+      const block=new THREE.SphereGeometry(1,8,5);block.scale(.084,.051,.039);
       block.applyQuaternion(q);block.translate(p.x,p.y,p.z);blocks.push(recoilTag(block,g.gunId,p===aa?1:0));
     }
     const ropes=[];
@@ -847,9 +850,9 @@ function gunTackle(cfg, model, nat, g, blocks) {
     }
     // Strops around the shell and short connections to the fixing bolts.
     for(const [end,p]of [[a,aa],[b,bb]]){
-      const ring=new THREE.TorusGeometry(.044,r*.65,5,12);ring.rotateY(Math.PI/2);
+      const ring=new THREE.TorusGeometry(.044,r*.65,3,10);ring.rotateY(Math.PI/2);
       ring.scale(1,1.18,.94);ring.applyQuaternion(q);ring.translate(p.x,p.y,p.z);ropes.push(ring);
-      ropes.push(ropeTube(new THREE.LineCurve3(end,p),r*.7,{tubular:1,radial:5}));
+      ropes.push(ropeTube(new THREE.LineCurve3(end,p),r*.7,{tubular:1,radial:4}));
     }
     const span=bb.clone().sub(aa),length2=span.lengthSq(),v=new THREE.Vector3();
     for(const rope of ropes)recoilTag(rope,g.gunId,i=>{
