@@ -1,7 +1,7 @@
 // The photographed boats and the deck clutter are where they should be.
 //
-// Builds the cinematic ship in storm and in fair weather with src/ship/prop-assets.js
-// loaded, and asks:
+// Builds the cinematic and the hero ship in storm and in fair weather with
+// src/ship/prop-assets.js loaded, and asks:
 //
 //   - every boat is the photographed one, and fills the box of the boat it replaced
 //     (the audits measure that box, so they pass or fail on it too);
@@ -21,8 +21,8 @@ try {
     const { buildShip } = await import('/src/ship/index.js');
     if (!await preloadProps()) return { loaded: false };
     const out = [];
-    for (const sails of ['storm', 'full']) {
-      const ship = buildShip({ lod: 'cinematic', sails });
+    for (const [lod, sails] of [['cinematic', 'storm'], ['cinematic', 'full'], ['hero', 'storm'], ['hero', 'full']]) {
+      const ship = buildShip({ lod, sails });
       ship.updateMatrixWorld(true);
       const boats = ['launch', 'pinnace', 'cutter', 'jolly_boat'].map((n) => ship.getObjectByName(`${n}_shell`));
       const clutter = ship.getObjectByName('clutter').children;
@@ -48,7 +48,7 @@ try {
           if (solids[i][1].intersectsBox(solids[j][1])) overlaps.push(`${solids[i][0]} / ${solids[j][0]}`);
         }
       }
-      out.push({ sails, photographed: boats.filter((b) => b?.userData.authored).length,
+      out.push({ sails: `${lod} ${sails}`, photographed: boats.filter((b) => b?.userData.authored).length,
         clutter: clutter.length, floating, overlaps });
     }
     return { loaded: true, out };
