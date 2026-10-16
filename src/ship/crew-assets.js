@@ -1,10 +1,10 @@
 // The watch, as people.
 //
-// Four figures made from photographs rather than from boxes: a seaman in his jacket, the
-// same seaman's mate in tarred foul-weather gear, an officer in a cocked hat and a
-// midshipman. Each is one skinned mesh on a standard Mixamo skeleton, about ten thousand
-// triangles, shrunk to ship by tools/compress-crew.mjs. Provenance and licences are in
-// src/assets/PROVENANCE.md.
+// Six figures made from photographs rather than from boxes: a seaman in his jacket, the
+// same seaman's mate in tarred foul-weather gear, an officer in a cocked hat, a
+// midshipman, a marine in his red coat and a ship's boy. Each is one skinned mesh on a
+// standard Mixamo skeleton, about ten thousand triangles, shrunk to ship by
+// tools/compress-crew.mjs. Provenance and licences are in src/assets/PROVENANCE.md.
 //
 // They are optional in the same way the quarterdeck fittings are: `preloadCrew()` has to
 // have finished before `buildShip`, and if it has not — offline, a slow connection, a host
@@ -13,11 +13,12 @@ import * as THREE from 'three';
 import { fetchAsset } from './asset-fetch.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
-// Rank -> which of the four bodies he is. The bosun is a seaman to look at; the captain
+// Rank -> which of the six bodies he is. The bosun is a seaman to look at; the captain
 // wears the officer's coat and is set taller in src/ship/crew.js.
 const BODY = {
   seaman: 'seaman', bosun: 'seaman', oilskin: 'oilskin',
   officer: 'officer', captain: 'officer', midshipman: 'midshipman',
+  marine: 'marine', boy: 'boy',
 };
 const bodies = new Map();
 let pending = null;

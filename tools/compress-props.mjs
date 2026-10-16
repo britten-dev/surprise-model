@@ -15,6 +15,7 @@ import { ALL_EXTENSIONS, EXTMeshoptCompression } from '@gltf-transform/extension
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const ft = (f, i = 0) => (f * 12 + i) * 0.0254;
@@ -34,7 +35,11 @@ const PROPS = {
   'hen-coop.glb': { name: 'hen_coop', along: 1.5 },
   'fire-buckets.glb': { name: 'fire_buckets', along: 0.95 },
   'shot-garland.glb': { name: 'shot_garland', along: 1.6 },
-  'rope-coil.glb': { name: 'rope_coil', along: 0.7 },
+  // Remeshed again, through tools/meshy.mjs, from about 3,000 triangles to about 800: five of
+  // them lie about the deck, and at 3,000 they cost more than the stern's whole carving.
+  // Meshy's remesh hands it back squashed to a third of its height, so it is fitted on all
+  // three axes to the coil it was: 0.7 m across and 6.5 cm high.
+  'rope-coil.glb': { name: 'rope_coil', fit: [0.7, 0.065, 0.7] },
 };
 const MAX_BYTES = { prop: 1.2e6, boat: 1.6e6 };
 
@@ -51,6 +56,8 @@ const target = new URL('../src/assets/props/', import.meta.url);
 await mkdir(target, { recursive: true });
 
 for (const [file, spec] of Object.entries(PROPS)) {
+  // Only the downloads that are here: a prop made again need not mean making them all again.
+  if (!existsSync(new URL(file, source))) { console.log(`${spec.name.padEnd(13)} no download, left as it is`); continue; }
   const raw = await readFile(new URL(file, source));
   const doc = await io.readBinary(raw);
   const root = doc.getRoot();

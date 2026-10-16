@@ -149,3 +149,29 @@ flat back, from the stern of a 1790s Royal Navy frigate: an oval cartouche of ac
 leaves round a scallop shell, seen straight on; a long scroll of acanthus curling into
 a spiral at one end, seen straight on; and an S-shaped acanthus console from under the
 quarter gallery, gadrooned underneath, seen from the side.
+
+# The figurehead, the marine and the ship's boy
+
+`carvings/figurehead.glb`, `crew/marine.glb` and `crew/boy.glb` were made on 16 October
+2026 through Meshy's API with `tools/meshy.mjs` (Meshy Pro, Private licence): a picture
+from Meshy's image-to-image (Nano Banana Pro), image to 3D (Meshy latest, textured,
+remeshed to about 2,000 triangles for the figurehead and 10,000 for each man), and for
+the two men Meshy's auto-rig. `tools/compress-carvings.mjs` and `tools/compress-crew.mjs`
+turn the downloads into these files; the crew tool renames the API rig's bones to the
+Mixamo names the other four men carry.
+
+- **The figurehead** is the lady O'Brian gives the ship in *Treason's Harbour*, where
+  Jack has the best inn-sign painter in Valletta paint her figurehead. Since the ship was
+  French-built she is modelled on Liberty in Eugène Delacroix's *Liberty Leading the
+  People* (1830, public domain): the picture was made from a crop of the painting and
+  asked for a carved and painted wooden figurehead of that woman, red Phrygian cap,
+  golden gown off the shoulders and bare-breasted as painted, red sash, arms close to the
+  body with no flag or musket, standing on a carved scroll bracket.
+- **The marine and the boy** were each asked for in the same photographic style as the
+  seaman's reference picture, which was given as the reference: a Royal Navy marine
+  private of about 1805 in a red coatee with white facings and cross belts, white
+  breeches, black gaiters and a round hat, no musket; and a ship's boy of about twelve in
+  a blue jacket too big for him, a checked shirt and rolled canvas trousers, barefoot.
+
+`props/rope_coil.glb` was remeshed again through the API, from the shipped coil, to
+about 800 triangles.

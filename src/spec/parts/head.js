@@ -29,20 +29,26 @@
 //    drapery. Per docs/PHOTO-ANALYSIS.md the photograph is trusted for paint,
 //    ornament and character and for nothing dimensioned.
 //
-// THE FIGUREHEAD IS CONJECTURAL. Research 08 §4.1 is explicit that the figurehead of
-// the 1796 Surprise / 1794 Unite is not documented in any reachable source, and §4.2
-// is equally explicit that the "female figure with sword and shield" belongs to the
-// film ship and must not be attributed to this one. Every figurehead_* row below is a
-// reconstruction from period practice, built to research 08 §4.4's recommendation: a
-// modest classical female figure, small, with trailboard scrollwork. It is a guess
-// that reads correctly in silhouette. It is not evidence.
+// THE FIGUREHEAD IS CONJECTURAL for the real ship. Research 08 §4.1 is explicit that the
+// figurehead of the 1796 Surprise / 1794 Unite is not documented in any reachable source,
+// and §4.2 is equally explicit that the "female figure with sword and shield" belongs to
+// Geoff Hunt's covers and the film ship and must not be attributed to this one.
+//
+// O'Brian's Surprise has one. In Treason's Harbour Jack has the best inn-sign painter in
+// Valletta paint her figurehead, an anonymous lady with a splendid bosom. The carved
+// figure the detailed levels carry (src/ship/carving-assets.js) is that lady, and since
+// the ship was French-built she is carved as Delacroix's Liberty. The rows below size and
+// place her; their measurements are still a reconstruction from period practice, built to
+// research 08 §4.4's small figure, and the drawn figure that stands in for her where the
+// carving is not loaded is still §4.4's modest classical one. Neither is evidence about
+// the real ship.
 import { ft, m, n } from '../units.js';
 
 const Z = 'MEASURED §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 px per foot; stem at x=1112 px, rail at y=141 px';
 const R6H = 'SECONDARY §6 research 06-deck-layout §11, head structure';
 const R6C = 'SECONDARY §6 research 06-deck-layout §5.4, catheads';
 const R6K = 'SECONDARY §6 research 06-deck-layout §5.3, knightheads';
-const R8F = 'RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship\'s name and period practice, NOT the film ship\'s woman with sword and shield';
+const R8F = 'RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL for the real ship, whose figurehead is not documented anywhere: sized and placed from period practice for the lady O\'Brian gives her in Treason\'s Harbour (carved as Delacroix\'s Liberty), NOT the film ship\'s woman with sword and shield';
 
 export const HEAD_SPEC = {
   // ------------------------------------------------------------------ the stem

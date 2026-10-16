@@ -1,19 +1,23 @@
-// The stern's carved work, as photographed carvings.
+// The ship's carved work, as photographed carvings.
 //
-// Three pieces made with Meshy and shrunk by tools/compress-carvings.mjs (provenance in
+// Four pieces made with Meshy and shrunk by tools/compress-carvings.mjs (provenance in
 // src/assets/PROVENANCE.md): the cartouche at the middle of the taffrail, a scroll of
-// acanthus for either side of it, and the bracket under each quarter gallery, all in the
-// spec's gilt. Each is in a frame of its own — width along x, height along y, centred on
-// both, its flat back on z = 0 — and `bendCarving` lays it onto the ship through whatever
-// function maps that frame onto her: src/ship/stern-detail.js bends the cartouche and the
-// scrolls round the counter, src/ship/stern.js the brackets onto her side.
+// acanthus for either side of it and the bracket under each quarter gallery, all in the
+// spec's gilt, and the figurehead in her painter's colours.
+//
+// The stern's pieces are each in a frame of their own — width along x, height along y,
+// centred on both, the flat back on z = 0 — and `bendCarving` lays one onto the ship
+// through whatever function maps that frame onto her: src/ship/stern-detail.js bends the
+// cartouche and the scrolls round the counter, src/ship/stern.js the brackets onto her
+// side. The figurehead stands on her feet at the origin, facing +z, and src/ship/head.js
+// sets her up on the knee of the head.
 //
 // Like the photographed watch and boats they are optional: `preloadCarvings()` has to have
 // finished before `buildShip`, and if it has not, the stern keeps its drawn carving.
 import * as THREE from 'three';
 import { fetchAsset } from './asset-fetch.js';
 
-export const CARVING_NAMES = ['cartouche', 'scroll', 'bracket'];
+export const CARVING_NAMES = ['cartouche', 'scroll', 'bracket', 'figurehead'];
 const models = new Map();
 let pending = null;
 
@@ -39,7 +43,8 @@ export function preloadCarvings() {
         // Meshy's maps make it solid polished metal, which under an open sky is a lemon-yellow
         // mirror. Worn leaf over gesso is mostly the gesso: the metalness and the sheen of the
         // drawn gilt (src/ship/stern-finishes.js), so the carving and the lettering match.
-        material.metalness = .35;
+        // The figurehead is painted wood, and no metal at all.
+        material.metalness = name === 'figurehead' ? 0 : .35;
         material.roughness = 1;
         material.envMapIntensity = .65;
         for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap']) {
@@ -57,9 +62,14 @@ export function preloadCarvings() {
   return pending;
 }
 
-/** The carving's geometry and material, or null when not loaded or not wanted at this level. */
+/**
+ * The carving's geometry and material, or null when not loaded or not wanted at this level:
+ * hero and cinematic, and only where the level carves that part of her at all — the stern
+ * where `sternOrnament` is 'carved', the figurehead where `figurehead` is.
+ */
 export function carvingModel(name, cfg) {
-  if (!cfg || cfg.textureSize < 1024 || cfg.sternOrnament !== 'carved') return null;
+  if (!cfg || cfg.textureSize < 1024) return null;
+  if ((name === 'figurehead' ? cfg.figurehead : cfg.sternOrnament) !== 'carved') return null;
   return models.get(name) ?? null;
 }
 

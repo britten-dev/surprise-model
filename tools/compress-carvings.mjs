@@ -1,17 +1,24 @@
-// The stern's carved work, made small enough to ship.
+// The ship's carved work, made small enough to ship.
 //
-// Three pieces made with Meshy (provenance in src/assets/PROVENANCE.md): the cartouche at
-// the middle of the taffrail, a scroll of acanthus for either side of it, and the bracket
-// under each quarter gallery. src/ship/stern-detail.js and src/ship/stern.js bend them
-// onto the stern, so each is left here in a frame of its own rather than at a size: its
+// Four pieces made with Meshy (provenance in src/assets/PROVENANCE.md): the cartouche at
+// the middle of the taffrail, a scroll of acanthus for either side of it, the bracket
+// under each quarter gallery, and the figurehead.
+//
+// The stern's three are bent onto the stern by src/ship/stern-detail.js and
+// src/ship/stern.js, so each is left here in a frame of its own rather than at a size: its
 // width along x, its height along y, centred on both, and its flat back on z = 0 with the
 // carving standing out towards +z. Meshy hands each one back with its back to -z already;
-// the face normals are checked for that rather than trusted.
+// the face normals are checked for that rather than trusted. Their colour is moved to the
+// spec's gilt, keeping Meshy's worn edges and dark hollows, so the carving and the gilt
+// lettering under it are the same gold.
 //
-// The maps go to JPEG (colour and normals 512, metal and roughness half that) — none of
-// these is ever more than a metre across on the screen's ship — and the colour is moved
-// to the spec's gilt, keeping Meshy's worn edges and dark hollows, so the carving and
-// the gilt lettering under it are the same gold.
+// The figurehead stands rather than lies flat: she is left on her feet at y = 0, centred
+// over them, facing +z as Meshy made her, and src/ship/head.js sets her on the knee of the
+// head. She keeps her own colours, which are an inn-sign painter's and not gilt.
+//
+// The maps go to JPEG (colour and normals 512, metal and roughness half that — none of the
+// stern's pieces is ever more than a metre across on the screen's ship — and the
+// figurehead's colour at 1024, since she is the one face the ship has).
 //
 // The downloads live in build/crew-prototype/carvings/, which git ignores; the output, in
 // src/assets/carvings/, is committed.
@@ -25,7 +32,11 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { PAINT } from '../src/spec/spec.js';
 
-export const CARVINGS = ['cartouche', 'scroll', 'bracket'];
+// `back`: a relief with a flat back to lay on the ship; `gilt`: coloured as the spec's gilt.
+export const CARVINGS = {
+  cartouche: { back: true, gilt: true }, scroll: { back: true, gilt: true }, bracket: { back: true, gilt: true },
+  figurehead: { back: false, gilt: false, colour: 1024 },
+};
 const MAX_BYTES = 800e3;
 // The spec's gilt, as the drawn lettering actually shows it: its finish map darkens and
 // warms the flat colour, by these gains, measured off a render of the two side by side.
@@ -43,7 +54,7 @@ const source = new URL('../build/crew-prototype/carvings/', import.meta.url);
 const target = new URL('../src/assets/carvings/', import.meta.url);
 await mkdir(target, { recursive: true });
 
-for (const name of CARVINGS) {
+for (const [name, kind] of Object.entries(CARVINGS)) {
   const raw = await readFile(new URL(`${name}.glb`, source));
   const doc = await io.readBinary(raw);
   const root = doc.getRoot();
@@ -63,17 +74,20 @@ for (const name of CARVINGS) {
     if (area && nz / area < -0.95) back += area;
     if (area && nz / area > 0.95) front += area;
   }
-  assert.ok(back > front * 1.3, `${name}: its flat back faces -z (${back.toFixed(2)} against ${front.toFixed(2)})`);
+  if (kind.back) assert.ok(back > front * 1.3, `${name}: its flat back faces -z (${back.toFixed(2)} against ${front.toFixed(2)})`);
 
   const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   for (let i = 0; i < count; i++) {
     position.getElement(i, p);
     for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], p[k]); max[k] = Math.max(max[k], p[k]); }
   }
-  const cx = (min[0] + max[0]) / 2, cy = (min[1] + max[1]) / 2;
+  // A relief: centred across and up, its back on z = 0. A standing figure: on her feet at
+  // y = 0, centred across and fore and aft.
+  const cx = (min[0] + max[0]) / 2, cy = (min[1] + max[1]) / 2, cz = (min[2] + max[2]) / 2;
+  const origin = kind.back ? [cx, cy, min[2]] : [cx, min[1], cz];
   for (let i = 0; i < count; i++) {
     position.getElement(i, p);
-    position.setElement(i, [p[0] - cx, p[1] - cy, p[2] - min[2]]);
+    position.setElement(i, [p[0] - origin[0], p[1] - origin[1], p[2] - origin[2]]);
   }
   for (const node of root.listNodes()) node.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([1, 1, 1]);
 
@@ -81,8 +95,8 @@ for (const name of CARVINGS) {
   const colour = material.getBaseColorTexture(), finish = material.getMetallicRoughnessTexture();
   for (const texture of root.listTextures()) {
     let image = sharp(texture.getImage());
-    const size = texture === finish ? 256 : 512;
-    if (texture === colour) {
+    const size = texture === finish ? 256 : texture === colour ? kind.colour ?? 512 : 512;
+    if (texture === colour && kind.gilt) {
       // Every channel scaled so the map's mean is that gilt: the same gold as the lettering,
       // with Meshy's wear and shadow left in it.
       const { channels } = await sharp(texture.getImage()).stats();
@@ -91,7 +105,7 @@ for (const name of CARVINGS) {
     }
     const jpeg = await image.resize(size, size, { fit: 'inside', withoutEnlargement: true })
       // The gold is all in the brightness, so its colour can be halved; a normal map's cannot.
-      .jpeg({ quality: texture === finish ? 82 : 86, chromaSubsampling: texture === colour ? '4:2:0' : '4:4:4' }).toBuffer();
+      .jpeg({ quality: texture === finish ? 82 : 86, chromaSubsampling: texture === colour && kind.gilt ? '4:2:0' : '4:4:4' }).toBuffer();
     texture.setImage(jpeg).setMimeType('image/jpeg').setURI('');
   }
   material.setName(`carving_${name}`);

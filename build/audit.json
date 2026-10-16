@@ -130,9 +130,9 @@
     "key": "figurehead_height",
     "metric": "extent_caliper",
     "expected": 1.2192,
-    "actual": 1.248755645740511,
+    "actual": 1.2409034725881327,
     "tolerance": 0.05,
-    "source": "RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL: the figurehead of this ship is not documented anywhere; this is a classical female figure reconstructed from the ship's name and period practice, NOT the film ship's woman with sword and shield; research 08 §4.4 — \"the scale was drastically reduced\", so a small figure"
+    "source": "RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL for the real ship, whose figurehead is not documented anywhere: sized and placed from period practice for the lady O'Brian gives her in Treason's Harbour (carved as Delacroix's Liberty), NOT the film ship's woman with sword and shield; research 08 §4.4 — \"the scale was drastically reduced\", so a small figure"
   },
   {
     "key": "fore_channel_deadeyes_per_side",

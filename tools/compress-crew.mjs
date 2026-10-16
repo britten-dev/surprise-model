@@ -25,6 +25,7 @@ import { ALL_EXTENSIONS, EXTMeshoptCompression } from '@gltf-transform/extension
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 // Download name -> the name the ship knows him by.
@@ -33,6 +34,21 @@ const CREW = {
   'storm-seaman-meshy.glb': 'oilskin',
   'officer-meshy.glb': 'officer',
   'midshipman-meshy.glb': 'midshipman',
+  // Made through Meshy's API by tools/meshy.mjs, whose rig names its bones its own way.
+  'meshy/marine-rig/marine-rig-rigged.glb': 'marine',
+  'meshy/boy-rig/boy-rig-rigged.glb': 'boy',
+};
+
+// The API's rig is the website's Mixamo skeleton without the fingers, under other names:
+// its spine counts down from the neck where Mixamo's counts up from the hips. Renamed here,
+// src/ship/crew-pose.js finds the same bones in every man aboard.
+const MIXAMO = {
+  Hips: 'Hips', Spine02: 'Spine', Spine01: 'Spine1', Spine: 'Spine2', neck: 'Neck', Head: 'Head',
+  head_end: 'HeadTop_End', LeftShoulder: 'LeftShoulder', LeftArm: 'LeftArm', LeftForeArm: 'LeftForeArm',
+  LeftHand: 'LeftHand', RightShoulder: 'RightShoulder', RightArm: 'RightArm', RightForeArm: 'RightForeArm',
+  RightHand: 'RightHand', LeftUpLeg: 'LeftUpLeg', LeftLeg: 'LeftLeg', LeftFoot: 'LeftFoot',
+  LeftToeBase: 'LeftToeBase', RightUpLeg: 'RightUpLeg', RightLeg: 'RightLeg', RightFoot: 'RightFoot',
+  RightToeBase: 'RightToeBase',
 };
 const MAX_BYTES = 1.6e6;
 const INFLUENCES = 4;
@@ -84,9 +100,14 @@ const target = new URL('../src/assets/crew/', import.meta.url);
 await mkdir(target, { recursive: true });
 
 for (const [file, name] of Object.entries(CREW)) {
+  // Only the downloads that are here: a man made again need not mean making them all again.
+  if (!existsSync(new URL(file, source))) { console.log(`${name.padEnd(10)} no download, left as it is`); continue; }
   const raw = await readFile(new URL(file, source));
   const doc = await io.readBinary(raw);
   const root = doc.getRoot();
+  for (const joint of root.listSkins().flatMap((skin) => skin.listJoints())) {
+    if (MIXAMO[joint.getName()]) joint.setName(`mixamorig:${MIXAMO[joint.getName()]}`);
+  }
 
   for (const clip of root.listAnimations()) clip.dispose();
   for (const primitive of root.listMeshes().flatMap(m => m.listPrimitives())) keepStrongestInfluences(doc, primitive);
@@ -94,13 +115,20 @@ for (const [file, name] of Object.entries(CREW)) {
 
   const roughness = new Set(root.listMaterials().map(m => m.getMetallicRoughnessTexture()));
   const normals = new Set(root.listMaterials().map(m => m.getNormalTexture()));
-  for (const texture of root.listTextures()) {
-    const [size, quality] = roughness.has(texture) ? [512, 85] : normals.has(texture) ? [1024, 82] : [1024, 88];
-    const jpeg = await sharp(texture.getImage())
-      .resize(size, size, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality, chromaSubsampling: '4:4:4' }).toBuffer();
-    texture.setImage(jpeg).setMimeType('image/jpeg').setURI('');
-  }
+  // A man whose clothes are all patches and dirt makes a noisy map that JPEG cannot squeeze
+  // into the budget at the usual quality; he gets a second, lower pass rather than a bigger
+  // file. Every map is kept as it came so the second pass starts from the original.
+  const originals = new Map(root.listTextures().map((t) => [t, t.getImage()]));
+  const encode = async (drop) => {
+    for (const texture of root.listTextures()) {
+      const [size, quality] = roughness.has(texture) ? [512, 85] : normals.has(texture) ? [1024, 82] : [1024, 88];
+      const jpeg = await sharp(originals.get(texture))
+        .resize(size, size, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: quality - drop, chromaSubsampling: '4:4:4' }).toBuffer();
+      texture.setImage(jpeg).setMimeType('image/jpeg').setURI('');
+    }
+  };
+  await encode(0);
 
   // Meshy calls every mesh `output_unwrapped`; give the parts names worth finding.
   for (const mesh of root.listMeshes()) mesh.setName(`crew_${name}`);
@@ -115,7 +143,8 @@ for (const [file, name] of Object.entries(CREW)) {
 
   doc.createExtension(EXTMeshoptCompression).setRequired(true)
     .setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
-  const output = await io.writeBinary(doc);
+  let output = await io.writeBinary(doc);
+  if (output.length >= MAX_BYTES) { await encode(8); output = await io.writeBinary(doc); }
   assert.ok(output.length < MAX_BYTES, `${file}: ${output.length} bytes is over budget`);
   await writeFile(new URL(`${name}.glb`, target), output);
   console.log(`${name.padEnd(10)} ${(raw.length / 1e6).toFixed(1)} MB -> ${(output.length / 1e6).toFixed(2)} MB, `

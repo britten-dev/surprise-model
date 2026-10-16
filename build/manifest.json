@@ -3,48 +3,48 @@
     "name": "surprise-hero-full.glb",
     "lod": "hero",
     "sails": "full",
-    "tris": 1089227,
-    "verts": 1305858,
-    "meshes": 304,
+    "tris": 1090665,
+    "verts": 1307656,
+    "meshes": 302,
     "lines": 1364,
     "materials": 100,
-    "kb": 89573,
+    "kb": 93332,
     "inBudget": true
   },
   {
     "name": "surprise-hero-topsails.glb",
     "lod": "hero",
     "sails": "topsails",
-    "tris": 1040587,
-    "verts": 1276843,
-    "meshes": 290,
+    "tris": 1042025,
+    "verts": 1278641,
+    "meshes": 288,
     "lines": 1364,
     "materials": 100,
-    "kb": 88354,
+    "kb": 92113,
     "inBudget": true
   },
   {
     "name": "surprise-hero-storm.glb",
     "lod": "hero",
     "sails": "storm",
-    "tris": 1033911,
-    "verts": 1247282,
-    "meshes": 291,
+    "tris": 1035401,
+    "verts": 1255178,
+    "meshes": 289,
     "lines": 1364,
     "materials": 100,
-    "kb": 89457,
+    "kb": 93229,
     "inBudget": true
   },
   {
     "name": "surprise-hero-furled.glb",
     "lod": "hero",
     "sails": "furled",
-    "tris": 1011571,
-    "verts": 1259524,
-    "meshes": 280,
+    "tris": 1013009,
+    "verts": 1261322,
+    "meshes": 278,
     "lines": 1364,
     "materials": 99,
-    "kb": 87624,
+    "kb": 91383,
     "inBudget": true
   },
   {
@@ -56,7 +56,7 @@
     "meshes": 245,
     "lines": 654,
     "materials": 67,
-    "kb": 12559,
+    "kb": 12197,
     "inBudget": true
   },
   {
@@ -68,7 +68,7 @@
     "meshes": 241,
     "lines": 654,
     "materials": 67,
-    "kb": 12538,
+    "kb": 12176,
     "inBudget": true
   },
   {
@@ -80,7 +80,7 @@
     "meshes": 244,
     "lines": 654,
     "materials": 67,
-    "kb": 12628,
+    "kb": 12266,
     "inBudget": true
   },
   {
@@ -92,7 +92,7 @@
     "meshes": 237,
     "lines": 654,
     "materials": 67,
-    "kb": 12527,
+    "kb": 12165,
     "inBudget": true
   },
   {
@@ -104,7 +104,7 @@
     "meshes": 83,
     "lines": 336,
     "materials": 37,
-    "kb": 1722,
+    "kb": 1712,
     "inBudget": true
   },
   {
@@ -116,7 +116,7 @@
     "meshes": 75,
     "lines": 336,
     "materials": 37,
-    "kb": 1712,
+    "kb": 1702,
     "inBudget": true
   }
 ]

@@ -60,6 +60,10 @@ const DRESS = {
   // what is seen. Kept as its own rank so that a fair-weather watch and a foul-weather one
   // are not the same figures in different colours.
   oilskin: { coat: 'slop_tarpaulin', legs: 'slop_wet_duck', trim: 'slop_duck', hat: 'round', tails: false, tall: 1.0 },
+  // A private of marines, in his red coat whatever the weather — he is known by it, as the
+  // officers are by theirs — and a ship's boy of twelve or so, a head shorter than the men.
+  marine: { coat: 'slop_red', legs: 'slop_duck', trim: 'slop_duck', hat: 'round', tails: false, tall: 1.0 },
+  boy: { coat: 'slop_jacket', legs: 'slop_duck', trim: 'slop_tarpaulin', hat: 'round', tails: false, tall: 0.8 },
 };
 
 /**
@@ -440,14 +444,16 @@ export function buildCrew(cfg, mats, model, ctx) {
   //
   // They are not all the same man. The bosun is a petty officer and dressed as one; the
   // midshipman on the quarterdeck is a boy in a blue jacket and a round hat, which is
-  // exactly what he was. Ranks vary the silhouette, and the seed varies the build.
+  // exactly what he was. A marine stands by the braces aft, where marines were put to haul,
+  // and a ship's boy takes a turn at the pump. Ranks vary the silhouette, and the seed
+  // varies the build.
   const watch = [
     ['lookout', S('crew_lookout_from_stem'), 1, 'hold', 0, hand],
     ['pump_hand_port', S('crew_waist_from_stem'), -1, 'haul', Math.PI * 0.5, hand],
-    ['pump_hand_starboard', S('crew_waist_from_stem') + 1.2, 1, 'haul', -Math.PI * 0.5, hand],
+    ['pump_hand_starboard', S('crew_waist_from_stem') + 1.2, 1, 'haul', -Math.PI * 0.5, 'boy'],
     ['bosun', S('crew_waist_from_stem') - 3.0, -1, 'stand', Math.PI, 'bosun'],
     ['brace_hand_port', S('crew_brace_from_stem'), -1, 'haul', Math.PI * 0.8, hand],
-    ['brace_hand_starboard', S('crew_brace_from_stem') + 1.6, 1, 'stand', Math.PI, hand],
+    ['brace_hand_starboard', S('crew_brace_from_stem') + 1.6, 1, 'stand', Math.PI, 'marine'],
     ['midshipman', SPEC.wheel_station_from_stem.value - 5.0, -1, 'hold', Math.PI, 'midshipman'],
   ];
   for (const [name, fromStem, side, pose, facing, rank] of watch) {
