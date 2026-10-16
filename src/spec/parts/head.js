@@ -48,7 +48,10 @@ const Z = 'MEASURED §2 ZAZ3067 sheer profile, traced off the RMG scan at 6.021 
 const R6H = 'SECONDARY §6 research 06-deck-layout §11, head structure';
 const R6C = 'SECONDARY §6 research 06-deck-layout §5.4, catheads';
 const R6K = 'SECONDARY §6 research 06-deck-layout §5.3, knightheads';
-const R8F = 'RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL for the real ship, whose figurehead is not documented anywhere: sized and placed from period practice for the lady O\'Brian gives her in Treason\'s Harbour (carved as Delacroix\'s Liberty), NOT the film ship\'s woman with sword and shield';
+// The source strings ship inside the game, and the game's store edition must not name the
+// novels or their author (helmsmans-watch tools/check-edition.mjs), so this one says "the
+// novels" and the comment above carries the reference.
+const R8F = 'RECONSTRUCTED §8 research 08-paint-and-ornament §4.4 — CONJECTURAL for the real ship, whose figurehead is not documented anywhere: sized and placed from period practice for the inn-sign painter\'s lady of the novels (carved as Delacroix\'s Liberty), NOT the film ship\'s woman with sword and shield';
 
 export const HEAD_SPEC = {
   // ------------------------------------------------------------------ the stem
