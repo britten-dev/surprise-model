@@ -7,6 +7,8 @@
 //     (the audits measure that box, so they pass or fail on it too);
 //   - every piece of clutter stands on the deck under it, within 3 cm;
 //   - no piece of clutter overlaps another, a boat or a man of the watch;
+//   - the capstan, the bitts and the belfry are the photographed ones, each standing in the
+//     box of the built one it replaced, on the deck;
 //   - the ship without the props loaded is the ship it always was: built boats, no clutter.
 //
 //   node tools/check-clutter.mjs
@@ -48,7 +50,13 @@ try {
           if (solids[i][1].intersectsBox(solids[j][1])) overlaps.push(`${solids[i][0]} / ${solids[j][0]}`);
         }
       }
-      out.push({ sails: `${lod} ${sails}`, photographed: boats.filter((b) => b?.userData.authored).length,
+      const fittings = {};
+      for (const name of ['capstan', 'bitts', 'belfry']) {
+        const found = []; ship.traverse((o) => { if (o.name === name && o.isMesh) found.push(o); });
+        fittings[name] = { count: found.length, authored: found.every((o) => o.userData.authored),
+          finite: found.every((o) => [o.position.x, o.position.y, o.position.z, o.scale.x, o.scale.y, o.scale.z].every(Number.isFinite) && o.scale.y > 0) };
+      }
+      out.push({ fittings, sails: `${lod} ${sails}`, photographed: boats.filter((b) => b?.userData.authored).length,
         clutter: clutter.length, floating, overlaps });
     }
     return { loaded: true, out };
@@ -59,7 +67,11 @@ try {
     assert.ok(r.clutter >= 10, `${r.sails}: the deck has its clutter (${r.clutter})`);
     assert.deepEqual(r.floating, [], `${r.sails}: clutter stands on the deck`);
     assert.deepEqual(r.overlaps, [], `${r.sails}: clutter keeps clear of boats, men and itself`);
+    assert.ok(r.fittings.capstan.count === 1 && r.fittings.belfry.count === 1 && r.fittings.bitts.count >= 4,
+      `${r.sails}: the photographed capstan, belfry and bitts (${JSON.stringify(r.fittings)})`);
+    for (const [name, f] of Object.entries(r.fittings)) assert.ok(f.authored && f.finite, `${r.sails}: ${name} is photographed and placed`);
   }
   assert.deepEqual(h.problems.filter((p) => p.startsWith('[pageerror]')), []);
-  console.log(report.out.map((r) => `${r.sails}: 4 photographed boats, ${r.clutter} pieces of clutter, all on deck and clear`).join('\n'));
+  console.log(report.out.map((r) => `${r.sails}: 4 photographed boats, ${r.clutter} pieces of clutter, all on deck and clear; `
+    + `photographed capstan, belfry and ${r.fittings.bitts.count} pairs of bitts`).join('\n'));
 } finally { await h.close(); }

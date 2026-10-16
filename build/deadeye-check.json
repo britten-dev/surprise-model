@@ -5,14 +5,14 @@
       "pairs": 58,
       "channelTriangles": 293108,
       "channelMeshes": 15,
-      "shipTriangles": 1591441
+      "shipTriangles": 1574128
     },
     {
       "lod": "hero",
       "pairs": 58,
       "channelTriangles": 257856,
       "channelMeshes": 15,
-      "shipTriangles": 987705
+      "shipTriangles": 975492
     },
     {
       "lod": "game",

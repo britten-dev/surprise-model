@@ -26,6 +26,7 @@ import { mergeGeometries } from '../util/loft.js';
 import { block, post, spar, ropeCurve, ropeTube, ropeLines } from '../util/solids.js';
 import { lerp, clamp } from '../util/math.js';
 import { audit, audits } from '../audit/measure.js';
+import { propModel } from './prop-assets.js';
 
 // ---------------------------------------------------------------------------------
 // Small geometry helpers. All of them return geometry whose origin is the centre of
@@ -196,6 +197,27 @@ export function buildFurniture(cfg, mats, model, ctx) {
     return deckEdgeHeight(model, z, rise !== 0) + camber * (1 - t * t);
   };
 
+  /**
+   * A photographed fitting (src/ship/prop-assets.js) in place of the built one: fitted to
+   * the built one's box on all three axes, as src/ship/boats.js fits a boat to her shell,
+   * so it stands exactly where the built one stood and is exactly its size. `turn` is a
+   * half turn or none. Null where the photographed ones are not loaded or not wanted.
+   */
+  const photographed = (name, geometry, turn = 0) => {
+    const mesh = propModel(name, cfg);
+    if (!mesh) return null;
+    geometry.computeBoundingBox();
+    const want = geometry.boundingBox, have = mesh.geometry.boundingBox.clone();
+    if (turn) { mesh.rotation.y = turn; have.applyMatrix4(new THREE.Matrix4().makeRotationY(turn)); }
+    const ws = want.getSize(new THREE.Vector3()), hs = have.getSize(new THREE.Vector3());
+    mesh.scale.set(ws.x / hs.x, ws.y / hs.y, ws.z / hs.z);
+    const wc = want.getCenter(new THREE.Vector3()), hc = have.getCenter(new THREE.Vector3());
+    mesh.position.copy(wc).sub(hc.multiply(mesh.scale));
+    mesh.name = name;
+    group.add(mesh);
+    return mesh;
+  };
+
   /** The rise of the gangway, which climbs from the forecastle to the quarterdeck. */
   const gangwayRise = (z) => lerp(fcRise, qdRise, clamp((z - zFcBreak) / (zQdBreak - zFcBreak), 0, 1));
 
@@ -352,11 +374,12 @@ export function buildFurniture(cfg, mats, model, ctx) {
     }
     parts.push(cyl(rDrum, rDrum, tDrum, Math.max(12, lathe), { y: y0 + hBarrel }));
 
-    const capstan = new THREE.Mesh(mergeGeometries(parts), mats.timber);
-    capstan.name = 'capstan';
-    capstan.position.z = z;
+    const built = mergeGeometries(parts);
+    const capstan = photographed('capstan', built.clone().translate(0, 0, z))
+      ?? Object.assign(new THREE.Mesh(built, mats.timber), { name: 'capstan' });
+    if (!capstan.userData.authored) capstan.position.z = z;
     audit(capstan, 'capstan_drumhead_diameter', 'extent_x');
-    group.add(capstan);
+    if (!capstan.parent) group.add(capstan);
 
     // Twelve bar-holes cut square through the rim of the drumhead. Their own mesh so
     // the audit can count them.
@@ -424,9 +447,12 @@ export function buildFurniture(cfg, mats, model, ctx) {
   // --------------------------------------------------------------------- the bitts
   {
     // The two pairs of riding bitts, which take the cables when she rides at anchor.
+    // Each is the photographed pair (src/ship/prop-assets.js), cross-piece forward, where
+    // it is loaded, fitted to the pair it replaces.
+    const bitts = (g) => { if (!photographed('bitts', g, Math.PI)) timber.push(g); };
     for (const feet of [SPEC.riding_bitt_fwd_station_from_stem.value, SPEC.riding_bitt_aft_station_from_stem.value]) {
       const z = at(feet);
-      timber.push(bittsGeom(
+      bitts(bittsGeom(
         SPEC.riding_bitt_pin_square.value, SPEC.riding_bitt_pin_height.value,
         SPEC.riding_bitt_pin_offset.value, SPEC.riding_bitt_crosspiece_above_deck.value,
         SPEC.riding_bitt_crosspiece_broad.value, SPEC.riding_bitt_crosspiece_deep.value,
@@ -437,7 +463,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
     // The main topsail-sheet bitts and the main jeer bitts, which straddle the pumps.
     for (const feet of [SPEC.main_topsail_sheet_bitt_station_from_stem.value, SPEC.main_jeer_bitt_station_from_stem.value]) {
       const z = at(feet);
-      timber.push(bittsGeom(
+      bitts(bittsGeom(
         SPEC.jeer_bitt_pin_square.value, SPEC.jeer_bitt_pin_height.value,
         SPEC.jeer_bitt_pin_offset.value, SPEC.jeer_bitt_crosspiece_above_deck.value,
         SPEC.riding_bitt_crosspiece_broad.value * 0.8, SPEC.riding_bitt_crosspiece_deep.value * 0.8,
@@ -451,7 +477,7 @@ export function buildFurniture(cfg, mats, model, ctx) {
       const off = SPEC.fore_topsail_sheet_bitt_from_foremast.value;
       for (const feet of [fm - off, fm + off]) {
         const z = at(feet);
-        timber.push(bittsGeom(
+        bitts(bittsGeom(
           SPEC.jeer_bitt_pin_square.value * 0.85, SPEC.jeer_bitt_pin_height.value * 0.8,
           SPEC.fore_topsail_sheet_bitt_offset.value, SPEC.jeer_bitt_crosspiece_above_deck.value * 0.85,
           SPEC.riding_bitt_crosspiece_broad.value * 0.7, SPEC.riding_bitt_crosspiece_deep.value * 0.7,
@@ -522,12 +548,17 @@ export function buildFurniture(cfg, mats, model, ctx) {
     const y0 = deckY(z, fcRise, 0);
     const w = SPEC.belfry_width.value, h = SPEC.belfry_height.value;
     const s = SPEC.belfry_stanchion_square.value;
-    for (const sx of [-1, 1]) timber.push(post(s, h, 0.85).translate(sx * (w - s) / 2, y0, z));
+    const frame = [];
+    for (const sx of [-1, 1]) frame.push(post(s, h, 0.85).translate(sx * (w - s) / 2, y0, z));
     const arch = new THREE.TorusGeometry((w - s) / 2, s * 0.45, 5, Math.max(8, Math.round(lathe / 2)), Math.PI);
     arch.rotateY(Math.PI / 2);
     arch.translate(0, y0 + h, z);
-    timber.push(arch);
-    timber.push(bx(w, s * 0.5, SPEC.belfry_depth.value, { y: y0 + h + (w - s) / 2, z }));
+    frame.push(arch);
+    frame.push(bx(w, s * 0.5, SPEC.belfry_depth.value, { y: y0 + h + (w - s) / 2, z }));
+    // The photographed belfry (src/ship/prop-assets.js) where it is loaded; the bell below
+    // is the built one either way, hung in its arch.
+    const carvedBelfry = photographed('belfry', mergeGeometries(frame));
+    if (!carvedBelfry) timber.push(...frame);
 
     // The bell, hung from the crown of the arch.
     const bellH = SPEC.bell_height.value;
@@ -537,7 +568,10 @@ export function buildFurniture(cfg, mats, model, ctx) {
       radiusAt: (t) => rMouth * (0.26 + 0.74 * Math.pow(1 - t, 0.75)),
       segments: 6, radial: Math.max(8, Math.round(lathe / 2)), capEnds: true,
     });
-    bellG.translate(0, y0 + h + (w - s) / 2 - bellH - s * 0.5, z);
+    // The photographed belfry's arch is deeper than the built one's, with a cap over it,
+    // so the bell hangs a fifth of the frame lower to show under it.
+    const lower = carvedBelfry ? 0.2 * (h + (w - s) / 2) : 0;
+    bellG.translate(0, y0 + h + (w - s) / 2 - bellH - s * 0.5 - lower, z);
     const bell = new THREE.Mesh(bellG, mats.brass);
     bell.name = 'ships_bell';
     audit(bell, 'bell_mouth_diameter', 'extent_x');

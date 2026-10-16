@@ -31,6 +31,11 @@ const PROPS = {
   'pinnace.glb': { name: 'pinnace', fit: [ft(24), ft(2, 3) * 1.35, ft(5, 9)], boat: true },
   'jolly-boat.glb': { name: 'jolly_boat', fit: [ft(16), ft(2) * 1.35, ft(5, 6)], boat: true },
   'scuttlebutt.glb': { name: 'scuttlebutt', height: 1.0 },
+  // Deck fittings that replace built ones. src/ship/furniture.js fits each to the box of
+  // the one it replaces, so these sizes are only a sensible start.
+  'capstan.glb': { name: 'capstan', height: 1.0, square: true },
+  'bitts.glb': { name: 'bitts', height: 1.4 },
+  'belfry.glb': { name: 'belfry', height: 1.5, square: true },
   'lashed-casks.glb': { name: 'lashed_casks', along: 1.25 },
   'hen-coop.glb': { name: 'hen_coop', along: 1.5 },
   'fire-buckets.glb': { name: 'fire_buckets', along: 0.95 },
@@ -80,7 +85,9 @@ for (const [file, spec] of Object.entries(PROPS)) {
     const dx = p[0] - mx, dz = p[2] - mz;
     sxx += dx * dx; szz += dz * dz; sxz += dx * dz;
   }
-  const yaw = 0.5 * Math.atan2(2 * sxz, sxx - szz);
+  // Not for a thing photographed square on, whose footprint is near enough square that the
+  // long axis is a guess: `square` keeps Meshy's own front facing +z.
+  const yaw = spec.square ? 0 : 0.5 * Math.atan2(2 * sxz, sxx - szz);
   const c = Math.cos(-yaw), s = Math.sin(-yaw);
   const spin = (v) => [v[0] * c - v[2] * s, v[1], v[0] * s + v[2] * c];
   const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
