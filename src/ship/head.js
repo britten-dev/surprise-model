@@ -29,6 +29,7 @@ import { sweep, block } from '../util/solids.js';
 import { monotoneCubic } from '../util/interp.js';
 import { lerp, clamp, deg } from '../util/math.js';
 import { audit } from '../audit/measure.js';
+import { carvingModel } from './carving-assets.js';
 
 /** Shorthand for a spec value. Every number in this file comes through here. */
 const S = (key) => SPEC[key].value;
@@ -190,7 +191,54 @@ const railParam = (curve, u) => clamp((u - curve.uAft) / (curve.uHair - curve.uA
 // ---------------------------------------------------------------------------
 
 /**
- * A standing classical female figure. CONJECTURAL — see the note at the head of
+ * The figurehead O'Brian gives her, as a photographed carving (src/ship/carving-assets.js).
+ *
+ * In Treason's Harbour Jack has the best inn-sign painter in Valletta paint her figurehead,
+ * "an anonymous lady with a splendid bosom". She was a French ship, so the lady is carved
+ * as Delacroix's Liberty — the red cap, the yellow gown off her shoulders, the red sash —
+ * painted in an inn-sign painter's colours, her arms close at her sides where a flag or a
+ * musket would have fouled the head rails.
+ *
+ * She is scaled so that, from the foot of her bracket to the crown of her cap, she spans
+ * the spec's height, as the built figure below is measured, and stands on its plinth. She
+ * is carved already leaning forward into the wind, so only the rest of the spec's rake is
+ * added when she is set up: her own lean is measured once, from her feet to her head.
+ */
+function photographedFigurehead(carving) {
+  if (!carving.shape) {
+    const p = carving.geometry.attributes.position, n = p.count;
+    let caliper = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const d = (p.getX(i) - p.getX(j)) ** 2 + (p.getY(i) - p.getY(j)) ** 2 + (p.getZ(i) - p.getZ(j)) ** 2;
+      if (d > caliper) caliper = d;
+    }
+    // Her lean: from the middle of the lowest tenth of her to the middle of the highest.
+    const box = carving.geometry.boundingBox, h = box.max.y - box.min.y;
+    const low = [0, 0, 0], high = [0, 0, 0];
+    for (let i = 0; i < n; i++) {
+      const y = p.getY(i), band = y < box.min.y + h * .1 ? low : y > box.max.y - h * .1 ? high : null;
+      if (band) { band[0] += p.getY(i); band[1] += p.getZ(i); band[2]++; }
+    }
+    const dy = high[0] / high[2] - low[0] / low[2], dz = high[1] / high[2] - low[1] / low[2];
+    carving.shape = { caliper: Math.sqrt(caliper), lean: Math.atan2(dz, dy) };
+  }
+  const g = new THREE.Group();
+  g.name = 'figurehead';
+  const body = new THREE.Mesh(carving.geometry, carving.material);
+  body.name = 'figurehead_body';
+  body.scale.setScalar(S('figurehead_height') * 1.02 / carving.shape.caliper);
+  // She faces +z in her own frame; the ship's forward is -z.
+  body.rotation.y = Math.PI;
+  body.castShadow = body.receiveShadow = true;
+  body.userData.authored = true;
+  g.add(body);
+  g.userData.ownLean = carving.shape.lean;
+  return g;
+}
+
+/**
+ * The built figure, for a level without the photographed one or before it has loaded: a
+ * standing classical female figure. CONJECTURAL — see the note at the head of
  * src/spec/parts/head.js. The figurehead of this ship is not documented anywhere, and
  * the "woman with sword and shield" that the search results offer belongs to the film
  * ship, not to her. What is built is research 08 §4.4's recommendation: a small
@@ -807,11 +855,35 @@ export function buildHead(cfg, mats, model, ctx) {
 
   // ---------------------------------------------------------------- the figurehead
   if (cfg.figurehead && cfg.figurehead !== 'none') {
-    const fig = figurehead(cfg, mats);
+    const carved = carvingModel('figurehead', cfg);
+    const fig = carved ? photographedFigurehead(carved) : figurehead(cfg, mats);
     fig.position.set(0, yRail + S('figurehead_above_rail'), fwd(S('figurehead_forward_of_stem')));
     // Forward, over the water, following the rake of the head — a figure leaning back
-    // reads as falling into the ship.
-    fig.rotation.x = -deg(S('figurehead_rake_deg'));
+    // reads as falling into the ship. A carved figure already leaning gets only the rest.
+    fig.rotation.x = -deg(S('figurehead_rake_deg')) + (fig.userData.ownLean ?? 0);
+    // The carved figure goes under the bowsprit, not through it. The spar rises over the
+    // plinth at its steeve with only a foot or so to spare, so she leans further forward
+    // along the head, five degrees at a time up to forty-five, until her cap clears its
+    // underside by two inches, as a figurehead does lie out under the bowsprit; anything
+    // still in the way after that, she comes down the knee to clear.
+    if (carved) {
+      const body = fig.getObjectByName('figurehead_body'), p = body.geometry.attributes.position;
+      const v = new THREE.Vector3();
+      const clearance = () => {
+        fig.updateMatrixWorld(true);
+        let least = Infinity;
+        for (let i = 0; i < p.count; i++) {
+          v.fromBufferAttribute(p, i).applyMatrix4(body.matrixWorld);
+          least = Math.min(least, bowspritY(v.z) - bowspritR - v.y);
+        }
+        return least;
+      };
+      for (let rake = S('figurehead_rake_deg'); rake < 45 && clearance() < .05; rake += 5) {
+        fig.rotation.x = -deg(rake + 5) + fig.userData.ownLean;
+      }
+      const left = clearance();
+      if (left < .05) fig.position.y -= .05 - left;
+    }
     // Measured on the body alone and with the caliper, not with a bounding box. The figure
     // is raked 30 degrees, so no side of any box round her is the height of anything; the
     // caliper span from the edge of the plinth to the crown of her head does not care which

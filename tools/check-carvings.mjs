@@ -1,4 +1,4 @@
-// The photographed carving is on the stern, and nowhere else.
+// The photographed carving is on the stern and the bow, and nowhere else.
 //
 // Builds the ship at each level with src/ship/carving-assets.js loaded, and asks:
 //
@@ -9,6 +9,8 @@
 //     and the top of the taffrail and inside the counter's own breadth, and the two scrolls mirror
 //     each other;
 //   - each bracket stands on its own side of the ship, below its gallery;
+//   - the figurehead is the photographed one on cinematic and hero, forward of the stem,
+//     facing forward, and clear of the bowsprit that rises over her;
 //   - the game level, the one phones build, has none of it.
 //
 //   node tools/check-carvings.mjs
@@ -37,7 +39,25 @@ try {
         const out = m.name === 'quarter_gallery_brackets' ? Math.sign(c.x) * mean.x : mean.z;
         return { name: m.name, out: out / p.count, finite: p.array.every(Number.isFinite) && n.array.every(Number.isFinite) };
       });
-      out[lod] = {
+      // The figurehead: how near any point of her comes to the bowsprit's axis, against the
+      // spar's radius there, and whether she is forward of the stem and faces forward.
+      const head = ship.getObjectByName('figurehead_body'), sprit = ship.getObjectByName('bowsprit');
+      let figurehead = null;
+      if (head?.userData.authored && sprit) {
+        sprit.geometry.computeBoundingBox();
+        const axisFrom = new THREE.Vector3().setFromMatrixPosition(sprit.matrixWorld);
+        const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(sprit.getWorldQuaternion(new THREE.Quaternion())).normalize();
+        const radius = Math.max(sprit.geometry.boundingBox.max.x, sprit.geometry.boundingBox.max.z);
+        const p = head.geometry.attributes.position, v = new THREE.Vector3();
+        let gap = Infinity;
+        for (let i = 0; i < p.count; i++) {
+          v.fromBufferAttribute(p, i).applyMatrix4(head.matrixWorld).sub(axisFrom);
+          gap = Math.min(gap, v.clone().sub(axis.clone().multiplyScalar(v.dot(axis))).length() - radius);
+        }
+        const front = new THREE.Vector3(0, 0, 1).applyQuaternion(head.getWorldQuaternion(new THREE.Quaternion()));
+        figurehead = { gap, box: box(head), stem: box(ship.getObjectByName('hull_shell')).min[2], facing: front.z };
+      }
+      out[lod] = { figurehead,
         cartouche: find('stern_cartouche').map(box), scrolls: find('stern_scroll').map(box),
         brackets: find('quarter_gallery_brackets').map(box), facing,
         frames: find('stern_light_frames').map(box), taffrail: find('taffrail').map(box),
@@ -70,9 +90,16 @@ try {
       assert.ok(gallery && bracket.max[1] < gallery.min[1] + 0.1, `${lod}: each bracket is under its own gallery`);
     }
   }
+  for (const lod of ['cinematic', 'hero']) {
+    const f = report.out[lod].figurehead;
+    assert.ok(f, `${lod}: the photographed figurehead`);
+    assert.ok(f.gap > 0.02, `${lod}: the figurehead clears the bowsprit (${f.gap.toFixed(3)} m)`);
+    assert.ok(f.box.max[2] < f.stem + 0.5 && f.facing < -0.5, `${lod}: the figurehead is at the bow and faces forward`);
+  }
   const g = report.out.game;
   assert.equal(g.cartouche.length + g.scrolls.length + g.brackets.length, 0, 'the game level has none of it');
-  console.log(`ok   carvings: cartouche and two scrolls on cinematic and hero, four brackets on cinematic; none on the game level`);
+  assert.equal(g.figurehead, null, 'the game level keeps its drawn figurehead');
+  console.log(`ok   carvings: cartouche, two scrolls and the figurehead on cinematic and hero (figurehead ${report.out.cinematic.figurehead.gap.toFixed(2)} m clear of the bowsprit), four brackets on cinematic; none on the game level`);
 } finally {
   const errors = h.problems.filter((p) => /pageerror/.test(p));
   await h.close();
