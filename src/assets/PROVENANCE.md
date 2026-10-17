@@ -202,3 +202,20 @@ of riding bitts (two square oak posts joined by a crosspiece, iron bolts and str
 rope-scarred, tarred at the foot); and a belfry (two turned oak stanchions under a round
 arch with a carved cap, weathered paint, no bell). `src/ship/furniture.js` fits each to
 the box of the built fitting it replaces; the bell is still the built one.
+
+# The long guns, their carriages and the carronades
+
+`props/gun.glb`, `carriage.glb` and `carronade.glb` were made on 17 October 2026 through
+Meshy's API with `tools/meshy.mjs` (Meshy Pro, Private licence): a picture from Meshy's
+text-to-image (Nano Banana Pro), the better of two each, then image to 3D (Meshy latest,
+textured, remeshed to about 900, 1,000 and 800 triangles), then `tools/compress-props.mjs`.
+Each was asked for as a photorealistic product photo on a plain light grey studio
+background with soft even light, from the Royal Navy of the 1790s: a long 9-pounder cast
+iron barrel (reinforce rings and astragals, trunnions, a cascabel, the broad arrow cast on
+the first reinforce, blackened and a little rusty); an empty truck carriage (stepped oak
+cheeks, transoms, four solid trucks, iron bolts and capsquares, red ochre, worn and
+scuffed); and a 12-pounder carronade barrel (short, cup-shaped muzzle, a loop lug beneath,
+a breeching ring at the cascabel). `src/ship/guns.js` turns each end for end if it needs to
+and fits it to the box of the built piece it replaces, so the 9- and 4-pounders share one
+barrel and one carriage, sized to each. The carronade's elevating screw, slide and bed are
+still the built ones.

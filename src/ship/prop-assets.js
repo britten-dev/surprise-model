@@ -1,9 +1,10 @@
 // The ship's boats and the clutter of a working deck, as photographed objects.
 //
-// Nine models made with Meshy and shrunk by tools/compress-props.mjs (provenance in
+// Models made with Meshy and shrunk by tools/compress-props.mjs (provenance in
 // src/assets/PROVENANCE.md): three boats, white paint chipped and stained, bare wood
-// inside, oars lashed along the thwarts; and a scuttlebutt, a pair of lashed casks, a hen
-// coop, a rack of fire buckets, a shot garland and a coil of rope.
+// inside, oars lashed along the thwarts; a scuttlebutt, a pair of lashed casks, a hen
+// coop, a rack of fire buckets, a shot garland and a coil of rope; the capstan, bitts and
+// belfry; and a long gun, a truck carriage and a carronade for the battery.
 //
 // Like the photographed watch they are optional: `preloadProps()` has to have finished
 // before `buildShip`, and if it has not — offline, a slow connection, a host that never
@@ -12,7 +13,8 @@ import * as THREE from 'three';
 import { fetchAsset } from './asset-fetch.js';
 
 export const PROP_NAMES = ['launch', 'pinnace', 'jolly_boat', 'scuttlebutt', 'lashed_casks',
-  'hen_coop', 'fire_buckets', 'shot_garland', 'rope_coil', 'capstan', 'bitts', 'belfry'];
+  'hen_coop', 'fire_buckets', 'shot_garland', 'rope_coil', 'capstan', 'bitts', 'belfry',
+  'gun', 'carriage', 'carronade'];
 const models = new Map();
 let pending = null;
 
