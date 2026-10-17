@@ -28,6 +28,7 @@ import { clamp, deg } from '../util/math.js';
 import { gunMaterials, metreGrain } from './gun-finish.js';
 import { upperGunLinings } from './gun-openings.js';
 import { audit } from '../audit/measure.js';
+import { propModel } from './prop-assets.js';
 
 const HALF = 0.5;
 // Fillets, as fractions of the bore. Where one stage of a gun meets the next there is a
@@ -220,7 +221,7 @@ function longGunBarrel(cfg, L, d) {
  * breech. The origin is the muzzle face, because a carronade on a slide is positioned
  * by how far it stands out beyond the pivot, not by a trunnion it does not have.
  */
-function carronadeBarrel(cfg, L, d, dropToBed) {
+function carronadeBarrel(cfg, L, d, dropToBed, { bodyOnly = false } = {}) {
   const radial = Math.max(4, cfg.latheSegments);
   const coarse = cfg.gunBarrelStages !== 'full';
   const parts = [lathed(carronadeProfile(L, d, coarse), radial)];
@@ -232,14 +233,63 @@ function carronadeBarrel(cfg, L, d, dropToBed) {
   loop.translate(loopX, -SPEC.carronade_body_radius_cal.value * d - loopDrop * HALF + d * 0.1, 0);
   parts.push(loop);
 
-  // The elevating screw, which stands in place of a long gun's quoin and bed.
-  const screwR = SPEC.carronade_elevating_screw_diameter.value * HALF;
-  const screw = new THREE.CylinderGeometry(screwR, screwR, dropToBed, Math.max(4, radial >> 1));
-  screw.translate(-d * 0.1, -dropToBed * HALF, 0);
-  parts.push(screw);
+  // The elevating screw, left off for `bodyOnly`: the box a photographed carronade is
+  // fitted to, which stands on a screw of its own (carronadeScrew).
+  if (!bodyOnly) parts.push(carronadeScrew(cfg, d, dropToBed));
 
   const g = mergeColoured(parts);
   g.translate(-L, 0, 0);
+  return g;
+}
+
+/** The elevating screw under the breech, which stands in place of a long gun's quoin and bed. */
+function carronadeScrew(cfg, d, dropToBed) {
+  const screwR = SPEC.carronade_elevating_screw_diameter.value * HALF;
+  const screw = new THREE.CylinderGeometry(screwR, screwR, dropToBed, Math.max(4, Math.max(4, cfg.latheSegments) >> 1));
+  screw.translate(-d * 0.1, -dropToBed * HALF, 0);
+  return screw;
+}
+
+// ----------------------------------------------------------------- photographed pieces
+
+/**
+ * Which way round a photographed piece lies, from its shape: positive when it is already
+ * the right way round. A long gun's breech is its thickest part and goes to -x, away from
+ * the port; a truck carriage is tallest at its fore end, under the trunnions, which goes
+ * to +x. The extreme tenth at either end is left out, for a gun's cascabel and muzzle
+ * swell, and so is the middle, for the trunnions.
+ */
+function endBias(g, kind) {
+  g.computeBoundingBox();
+  const b = g.boundingBox, len = b.max.x - b.min.x, cy = (b.min.y + b.max.y) / 2, cz = (b.min.z + b.max.z) / 2;
+  const p = g.attributes.position, sum = [0, 0], n = [0, 0];
+  for (let i = 0; i < p.count; i++) {
+    const t = (p.getX(i) - b.min.x) / len, end = t > 0.1 && t < 0.35 ? 0 : t > 0.65 && t < 0.9 ? 1 : -1;
+    if (end < 0) continue;
+    sum[end] += kind === 'breech' ? Math.hypot(p.getY(i) - cy, p.getZ(i) - cz) : p.getY(i) - b.min.y;
+    n[end]++;
+  }
+  const [low, high] = [sum[0] / Math.max(1, n[0]), sum[1] / Math.max(1, n[1])];
+  return kind === 'breech' ? low - high : high - low;
+}
+
+/**
+ * A photographed piece (src/ship/prop-assets.js) in place of a built one: its geometry
+ * turned end for end if it lies the wrong way (see endBias), then scaled on each axis and
+ * moved to fill the built piece's box exactly — so a barrel sits in the same notches and
+ * runs out through the same port, and a carriage stands on the same trucks on the deck.
+ */
+function fitPiece(mesh, built, kind) {
+  const g = mesh.geometry.clone();
+  if (kind && endBias(g, kind) < 0) g.rotateY(Math.PI);
+  g.computeBoundingBox();
+  built.computeBoundingBox();
+  const have = g.boundingBox, want = built.boundingBox;
+  const hs = have.getSize(new THREE.Vector3()), ws = want.getSize(new THREE.Vector3());
+  const scale = new THREE.Vector3(ws.x / hs.x, ws.y / hs.y, ws.z / hs.z);
+  g.translate(-(have.min.x + have.max.x) / 2, -(have.min.y + have.max.y) / 2, -(have.min.z + have.max.z) / 2);
+  g.scale(scale.x, scale.y, scale.z);
+  g.translate((want.min.x + want.max.x) / 2, (want.min.y + want.max.y) / 2, (want.min.z + want.max.z) / 2);
   return g;
 }
 
@@ -536,6 +586,15 @@ export function buildGuns(cfg, mats, model, ctx) {
       at: [],
     },
   };
+  // The photographed long gun, truck carriage and carronade (src/ship/prop-assets.js),
+  // where they are loaded, each fitted to the built piece it stands in for. Hero and
+  // cinematic only; the game level keeps the built ones.
+  const photo = { gun: propModel('gun', cfg), carriage: propModel('carriage', cfg), carronade: propModel('carronade', cfg) };
+  for (const nat of Object.values(natures)) {
+    if (photo.gun) nat.barrel = fitPiece(photo.gun, nat.barrel, 'breech');
+    if (photo.carriage) nat.carriage = fitPiece(photo.carriage, nat.carriage, 'front');
+  }
+
   // A housed gun is elevated: her muzzle is lashed up to the ring bolt over the port, so
   // the piece lies with her breech down and her muzzle against the ship's side. The
   // elevation is put into the barrel geometry rather than into the instance matrix
@@ -552,11 +611,15 @@ export function buildGuns(cfg, mats, model, ctx) {
   const screwDrop = axisC - SPEC.carronade_rear_truck_diameter.value * HALF
     - SPEC.carronade_slide_depth.value - SPEC.carronade_bed_depth.value;
   const carronade = {
-    barrel: carronadeBarrel(cfg, Lc, dc, screwDrop),
+    barrel: photo.carronade
+      ? fitPiece(photo.carronade, carronadeBarrel(cfg, Lc, dc, screwDrop, { bodyOnly: true }), 'breech')
+      : carronadeBarrel(cfg, Lc, dc, screwDrop),
+    screw: photo.carronade ? mergeColoured([carronadeScrew(cfg, dc, screwDrop)]).translate(-Lc, 0, 0) : null,
     slide: carronadeSlide(cfg, { barrelLength: Lc, bore: dc }),
     at: [],
   };
   carronade.barrel.translate(SPEC.carronade_muzzle_beyond_pivot.value, axisC, 0);
+  carronade.screw?.translate(SPEC.carronade_muzzle_beyond_pivot.value, axisC, 0);
 
   // ---- The upper-deck battery: a long 9-pounder behind every port, both sides.
   //
@@ -617,7 +680,7 @@ export function buildGuns(cfg, mats, model, ctx) {
   carronade.at.forEach((g,index)=>{
     g.gunId=gunInfo.length;
     gunInfo.push({id:g.gunId,side:g.side>0?'starboard':'port',index,station:g.z,
-      barrel:'carronade_barrels',moving:['carronade_beds'],
+      barrel:'carronade_barrels',moving:carronade.screw?['carronade_beds','carronade_screws']:['carronade_beds'],
       muzzle:[SPEC.carronade_muzzle_beyond_pivot.value,axisC,0],recoil:.38,power:.85});
   });
   group.userData.gunnery={guns:gunInfo,secured:!!ctx.portsShut};
@@ -649,9 +712,10 @@ export function buildGuns(cfg, mats, model, ctx) {
   // ---- Instance them all.
   const carriages = [];
   for (const [name, nat] of Object.entries(natures)) {
-    const barrels = new THREE.InstancedMesh(nat.barrel, mats.gunIron, nat.at.length);
+    const barrels = new THREE.InstancedMesh(nat.barrel, photo.gun?.material ?? mats.gunIron, nat.at.length);
     barrels.name = `${name}_pounder_barrels`;
-    const carr = new THREE.InstancedMesh(metreGrain(nat.carriage), mats.gunPaint, nat.at.length);
+    const carr = new THREE.InstancedMesh(photo.carriage ? nat.carriage : metreGrain(nat.carriage),
+      photo.carriage?.material ?? mats.gunPaint, nat.at.length);
     carr.name = `${name}_pounder_carriages`;
     nat.at.forEach((g, i) => {
       const mtx = placement(g);
@@ -696,11 +760,14 @@ export function buildGuns(cfg, mats, model, ctx) {
       const deckEyes=new THREE.InstancedMesh(trainEye,mats.gunIron,nat.at.length);
       deckEyes.name=`${name}_pounder_deckeyes`;
       nat.at.forEach((g,i)=>deckEyes.setMatrixAt(i,placement(g)));group.add(deckEyes);
+      // The photographed carriage has its own capsquares, straps, bolts and pins.
+      if (!photo.carriage) {
       const fittings = new THREE.InstancedMesh(mergeGeometries(hardware),mats.gunIron,nat.at.length);
       fittings.name=`${name}_pounder_ironwork`;
       nat.at.forEach((g,i)=>fittings.setMatrixAt(i,placement(g)));
       fittings.instanceMatrix.needsUpdate=true;
       group.add(fittings);
+      }
     }
     carriages.push(carr);
   }
@@ -708,7 +775,7 @@ export function buildGuns(cfg, mats, model, ctx) {
   carriages[0].userData.count = natures.nine.at.length + natures.four.at.length;
   audit(carriages[0], 'gun_truck_carriage_count', 'count');
 
-  const carBarrels = new THREE.InstancedMesh(carronade.barrel, mats.gunIron, carronade.at.length);
+  const carBarrels = new THREE.InstancedMesh(carronade.barrel, photo.carronade?.material ?? mats.gunIron, carronade.at.length);
   carBarrels.name = 'carronade_barrels';
   const carSlides = new THREE.InstancedMesh(metreGrain(carronade.slide.fixed), mats.gunPaint, carronade.at.length);
   carSlides.name = 'carronade_slides';
@@ -722,6 +789,12 @@ export function buildGuns(cfg, mats, model, ctx) {
   });
   carBarrels.instanceMatrix.needsUpdate = true;
   carSlides.instanceMatrix.needsUpdate = true;
+  if (carronade.screw) {
+    const screws = new THREE.InstancedMesh(carronade.screw, mats.gunIron, carronade.at.length);
+    screws.name = 'carronade_screws';
+    carronade.at.forEach((g, i) => screws.setMatrixAt(i, placement(g)));
+    group.add(screws);
+  }
 
   if (tompions.length) {
     const t = new THREE.Mesh(mergeGeometries(tompions), mats.timber);

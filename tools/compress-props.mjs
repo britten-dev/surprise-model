@@ -36,6 +36,11 @@ const PROPS = {
   'capstan.glb': { name: 'capstan', height: 1.0, square: true },
   'bitts.glb': { name: 'bitts', height: 1.4 },
   'belfry.glb': { name: 'belfry', height: 1.5, square: true },
+  // The battery. src/ship/guns.js fits each to the built piece it replaces and turns it
+  // end for end if need be, so these are only a sensible start.
+  'gun.glb': { name: 'gun', along: 2.6 },
+  'carriage.glb': { name: 'carriage', along: 1.6 },
+  'carronade.glb': { name: 'carronade', along: 1.0 },
   'lashed-casks.glb': { name: 'lashed_casks', along: 1.25 },
   'hen-coop.glb': { name: 'hen_coop', along: 1.5 },
   'fire-buckets.glb': { name: 'fire_buckets', along: 0.95 },

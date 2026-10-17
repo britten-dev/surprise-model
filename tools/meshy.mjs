@@ -4,7 +4,7 @@
 // This does the same steps through Meshy's API, with the settings written down: a picture
 // (from a prompt, or from a prompt and reference pictures), the picture to a textured 3D
 // model, a rig for a figure, and a remesh to fewer triangles. Every task's id goes into
-// build/crew-prototype/meshy/tasks.json and every download into the folder beside it, so
+// build/crew-prototype/meshy/tasks/<name>.json and every download into a folder beside it, so
 // a step can be picked up again and a later step can start from an earlier one by name.
 //
 // It needs MESHY_API_KEY in the environment (Meshy -> API; on Pro the API spends the
@@ -25,12 +25,19 @@ const KEY = process.env.MESHY_API_KEY;
 if (!KEY) { console.error('MESHY_API_KEY is not set.'); process.exit(1); }
 const OUT = new URL('../build/crew-prototype/meshy/', import.meta.url);
 await mkdir(OUT, { recursive: true });
-const LOG = new URL('tasks.json', OUT);
-const tasks = existsSync(LOG) ? JSON.parse(await readFile(LOG, 'utf8')) : {};
-// Read again before writing, so several of these running at once keep each other's tasks.
-const save = async () => {
-  const now = existsSync(LOG) ? JSON.parse(await readFile(LOG, 'utf8')) : {};
-  await writeFile(LOG, JSON.stringify({ ...now, [name]: tasks[name] }, null, 2) + '\n');
+// One small file per task, so several of these running at once never write over each
+// other: build/crew-prototype/meshy/tasks/<name>.json.
+const TASKS = new URL('tasks/', OUT);
+await mkdir(TASKS, { recursive: true });
+const tasks = {};
+const save = () => writeFile(new URL(`${name}.json`, TASKS), JSON.stringify(tasks[name], null, 2) + '\n');
+const load = async (from) => {
+  const file = new URL(`${from}.json`, TASKS);
+  if (existsSync(file)) return JSON.parse(await readFile(file, 'utf8'));
+  // The single log the tool kept before.
+  const old = new URL('tasks.json', OUT);
+  if (existsSync(old)) { try { return JSON.parse(await readFile(old, 'utf8'))[from]; } catch { return undefined; } }
+  return undefined;
 };
 
 const [command, name, ...rest] = process.argv.slice(2);
@@ -100,9 +107,9 @@ async function run(kind, route, body, outputs) {
   console.log(`${name}: done, ${before - after} credits (${after} left)`);
 }
 
-const need = (from) => {
-  const t = tasks[from];
-  if (!t?.id) throw new Error(`no task called "${from}" in build/crew-prototype/meshy/tasks.json`);
+const need = async (from) => {
+  const t = await load(from);
+  if (!t?.id) throw new Error(`no task called "${from}" in build/crew-prototype/meshy/tasks/`);
   return t;
 };
 
@@ -122,7 +129,7 @@ switch (command) {
     break;
   }
   case 'model': {
-    const from = need(option('--from'));
+    const from = await need(option('--from'));
     await run('model', '/v1/image-to-3d', {
       input_task_id: from.id, ai_model: 'latest', should_remesh: true,
       target_polycount: Number(option('--polycount', 10000)), topology: 'triangle',
@@ -132,7 +139,7 @@ switch (command) {
     break;
   }
   case 'rig': {
-    const from = need(option('--from'));
+    const from = await need(option('--from'));
     await run('rig', '/v1/rigging', { input_task_id: from.id, height_meters: Number(option('--height', 1.7)) },
       (t) => [[`${name}/${name}-rigged.glb`, find(t, ['rigged_character_glb_url'])]]);
     break;
