@@ -145,4 +145,7 @@ const count = async (dir) => {
   for (const e of await fs.readdir(dir, { withFileTypes: true, recursive: true })) if (e.isFile()) n++;
   return n;
 };
+// Cloudflare reads its response headers from dist/_headers (copied from netlify.toml).
+await fs.copyFile(path.join(ROOT, '_headers'), path.join(DIST, '_headers'));
+
 console.log(`dist/ built — ${await count(DIST)} files`);

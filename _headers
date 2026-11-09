@@ -1,0 +1,6 @@
+# Response headers on Cloudflare, copied from netlify.toml.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/src/*
+  Cache-Control: public, max-age=0, must-revalidate

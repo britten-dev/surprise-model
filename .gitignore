@@ -24,3 +24,6 @@ reference/*.jpg
 reference/*.jpeg
 reference/*.png
 build/scans/
+
+# Cloudflare (wrangler) local state
+.wrangler/
